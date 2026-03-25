@@ -222,13 +222,36 @@ export default function BuilderPage() {
     <div className="builder">
       <header className="builder-header">
         <div>
+          <span className="page-kicker">Akış Tasarımı</span>
           <h1>{flowName || 'Yeni Akış'}</h1>
           <p>Adım tasarımını tamamlayın.</p>
         </div>
-        <button className="button primary" type="button" onClick={handleSave} disabled={saving}>
-          {saving ? 'Kaydediliyor...' : 'Kaydet'}
-        </button>
+        <div className="header-actions">
+          <button className="button secondary" type="button" onClick={() => navigate('/')}>
+            Panele Dön
+          </button>
+          <button className="button primary" type="button" onClick={handleSave} disabled={saving}>
+            {saving ? 'Kaydediliyor...' : 'Kaydet'}
+          </button>
+        </div>
       </header>
+
+      <div className="builder-summary">
+        <div className="summary-card">
+          <span>Akış Adı</span>
+          <strong>{flowName || 'Yeni Akış'}</strong>
+        </div>
+        <div className="summary-card">
+          <span>Adım</span>
+          <strong>
+            {currentStepId} / {steps.length}
+          </strong>
+        </div>
+        <div className="summary-card">
+          <span>Alan Sayısı</span>
+          <strong>{fields.length}</strong>
+        </div>
+      </div>
 
       <div className="step-bar">
         <div className="step-list">

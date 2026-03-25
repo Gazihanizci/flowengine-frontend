@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import type { FieldOption } from '../types/form'
 
 export interface SaveFlowField {
@@ -31,7 +31,29 @@ export interface FlowListItem {
   akisId: number
   akisAdi: string
   aciklama: string
-  aktif: boolean
+}
+
+export interface FlowFieldItem {
+  fieldId: number
+  type: string
+  label: string
+  placeholder: string
+  required: boolean
+  orderNo: number
+  options: FieldOption[]
+}
+
+export interface FlowStepDetail {
+  stepId: number
+  stepName: string
+  fields: FlowFieldItem[]
+}
+
+export interface FlowDetailResponse {
+  flowId: number
+  flowName: string
+  aciklama: string
+  steps: FlowStepDetail[]
 }
 
 export const flowApi = axios.create({
@@ -51,5 +73,10 @@ export async function saveFlow(flowData: SaveFlowPayload) {
 
 export async function fetchFlows() {
   const { data } = await flowApi.get<FlowListItem[]>('/api/flows')
+  return data
+}
+
+export async function fetchFlowDetail(flowId: number) {
+  const { data } = await flowApi.get<FlowDetailResponse>(`/api/flows/${flowId}`)
   return data
 }
