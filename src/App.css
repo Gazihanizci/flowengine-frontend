@@ -84,13 +84,20 @@ body {
 }
 
 .dashboard-card {
-  width: min(560px, 100%);
+  width: min(900px, 100%);
   background: var(--panel);
   border-radius: var(--radius);
   padding: 28px;
   box-shadow: var(--shadow);
   border: 1px solid var(--line);
   display: grid;
+  gap: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
 }
 
@@ -102,6 +109,54 @@ body {
 .dashboard-card p {
   margin: 0;
   color: var(--muted);
+}
+
+.flow-list {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-card {
+  background: #f9fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.flow-card h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.05rem;
+}
+
+.flow-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.flow-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.flow-status.active {
+  background: rgba(18, 183, 106, 0.15);
+  color: #0f8d4b;
+}
+
+.flow-status.passive {
+  background: rgba(201, 54, 44, 0.15);
+  color: var(--danger);
 }
 
 .builder {
@@ -386,6 +441,12 @@ label {
 .hint {
   color: var(--muted);
   margin: 8px 0 0 0;
+}
+
+.error-text {
+  color: var(--danger);
+  margin: 8px 0 0 0;
+  font-weight: 600;
 }
 
 .step-bar {

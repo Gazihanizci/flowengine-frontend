@@ -27,6 +27,13 @@ export interface SaveFlowResponse {
   message: string
 }
 
+export interface FlowListItem {
+  akisId: number
+  akisAdi: string
+  aciklama: string
+  aktif: boolean
+}
+
 export const flowApi = axios.create({
   baseURL: '',
   headers: {
@@ -39,5 +46,10 @@ export async function saveFlow(flowData: SaveFlowPayload) {
     '/api/designer/flows',
     flowData,
   )
+  return data
+}
+
+export async function fetchFlows() {
+  const { data } = await flowApi.get<FlowListItem[]>('/api/flows')
   return data
 }
