@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -177,7 +177,7 @@ export default function BuilderPage() {
       setSaving(true)
       const payload = buildPayload()
       const response = await saveFlow(payload)
-      alert('Başaraılı')
+      alert('Başarılı')
       console.log(response)
     } catch (error) {
       console.error(error)
@@ -191,14 +191,14 @@ export default function BuilderPage() {
     return (
       <div className="empty-flow">
         <div className="dashboard-card">
-          <h1>Henüz flow oluşturulmadı</h1>
-          <p>Önce flow oluşturma adımı sayısını belirleyin.</p>
+          <h1>Henüz akış oluşturulmadı</h1>
+          <p>Önce akış oluşturup adım sayısını belirleyin.</p>
           <button
             className="button primary"
             type="button"
             onClick={() => navigate('/create-flow')}
           >
-            Flow Oluştur
+            Akış Oluştur
           </button>
         </div>
       </div>
@@ -222,8 +222,8 @@ export default function BuilderPage() {
     <div className="builder">
       <header className="builder-header">
         <div>
-          <h1>{flowName || 'Yeni Flow'}</h1>
-          <p>Adım tasarımı tamamlayınız.</p>
+          <h1>{flowName || 'Yeni Akış'}</h1>
+          <p>Adım tasarımını tamamlayın.</p>
         </div>
         <button className="button primary" type="button" onClick={handleSave} disabled={saving}>
           {saving ? 'Kaydediliyor...' : 'Kaydet'}

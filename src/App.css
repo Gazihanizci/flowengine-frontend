@@ -183,7 +183,7 @@ body {
 
 .builder-grid {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 320px;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
   gap: 20px;
   align-items: start;
 }
@@ -209,7 +209,7 @@ body {
 
 .toolbox-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .toolbox-item {
@@ -217,9 +217,11 @@ body {
   background: #f9fafb;
   padding: 12px 14px;
   border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
   align-items: center;
+  text-align: left;
   font-weight: 600;
   cursor: grab;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -242,6 +244,63 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   color: var(--muted);
+}
+
+.toolbox-preview {
+  min-width: 92px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.toolbox-preview.input {
+  background: #f3f5f9;
+}
+
+.toolbox-preview.textarea {
+  background: #f3f5f9;
+  min-height: 38px;
+}
+
+.toolbox-preview.select {
+  background: #f3f5f9;
+}
+
+.toolbox-preview.file {
+  background: #eef4ff;
+  color: var(--primary);
+}
+
+.toolbox-preview.button {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.toolbox-preview.checkbox,
+.toolbox-preview.radio {
+  background: #f3f5f9;
+  justify-content: flex-start;
+}
+
+.toolbox-preview .box,
+.toolbox-preview .dot {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.toolbox-preview .dot {
+  border-radius: 999px;
 }
 
 .canvas {

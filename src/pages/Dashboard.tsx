@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchFlows } from '../services/flowApi'
 import type { FlowListItem } from '../services/flowApi'
@@ -21,7 +21,7 @@ export default function Dashboard() {
         }
       } catch (err) {
         if (mounted) {
-          setError('Flow listesi alınamadı.')
+          setError('Akış listesi alınamadı.')
         }
       } finally {
         if (mounted) {
@@ -42,15 +42,15 @@ export default function Dashboard() {
       <div className="dashboard-card">
         <div className="dashboard-header">
           <div>
-            <h1>Workflow Dashboard</h1>
-            <p>Flow yönetimi ve tasarımı buradan yapabilirsiniz.</p>
+            <h1>İş Akışı Paneli</h1>
+            <p>Akış yönetimi ve tasarımı buradan yapılır.</p>
           </div>
           <button
             className="button primary"
             type="button"
             onClick={() => navigate('/create-flow')}
           >
-            Yeni Flow Oluştur
+            Yeni Akış Oluştur
           </button>
         </div>
 
@@ -59,7 +59,7 @@ export default function Dashboard() {
           {error && <p className="error-text">{error}</p>}
 
           {!loading && !error && flows.length === 0 && (
-            <p className="hint">Henüz kayıtlı flow yok.</p>
+            <p className="hint">Henüz kayıtlı akış yok.</p>
           )}
 
           {!loading && !error && flows.length > 0 && (

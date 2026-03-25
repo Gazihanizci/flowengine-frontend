@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlowStore } from '../store/flowStore'
 
@@ -14,7 +14,7 @@ export default function CreateFlow() {
 
   const handleCreate = () => {
     const count = Math.max(1, Number(stepCount))
-    setFlowName(flowName.trim() || 'Yeni Flow')
+    setFlowName(flowName.trim() || 'Yeni Akış')
     setAciklama(aciklama.trim())
     initializeSteps(count)
     navigate('/builder/1')
@@ -23,11 +23,11 @@ export default function CreateFlow() {
   return (
     <div className="create-flow">
       <div className="dashboard-card">
-        <h1>Flow Oluştur</h1>
-        <p>Flow adı, açıklama ve adım sayısını belirleyin.</p>
+        <h1>Akış Oluştur</h1>
+        <p>Akış adı, açıklama ve adım sayısını belirleyin.</p>
 
         <label>
-          <span>Flow Adı</span>
+          <span>Akış Adı</span>
           <input
             className="input"
             value={flowName}
@@ -43,7 +43,7 @@ export default function CreateFlow() {
             rows={3}
             value={aciklama}
             onChange={(event) => setAciklamaInput(event.target.value)}
-            placeholder="Flow kısa açıklaması"
+            placeholder="Akış kısa açıklaması"
           />
         </label>
 

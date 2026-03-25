@@ -1,4 +1,4 @@
-interface StepNavigationProps {
+﻿interface StepNavigationProps {
   currentStep: number
   totalSteps: number
   onPrev: () => void
@@ -18,12 +18,17 @@ export default function StepNavigation({
 
   return (
     <div className="step-navigation">
-      <button className="button secondary" type="button" onClick={onPrev} disabled={isFirst}>
+      <button
+        className="button secondary"
+        type="button"
+        onClick={onPrev}
+        disabled={isFirst}
+      >
         Önceki Adım
       </button>
       {isLast ? (
         <button className="button primary" type="button" onClick={onFinish}>
-          Flow'u Bitir
+          Akışı Tamamla
         </button>
       ) : (
         <button className="button primary" type="button" onClick={onNext}>
