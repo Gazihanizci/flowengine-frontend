@@ -25,10 +25,7 @@ export default function Canvas({
         <h2>Çalışma Alanı</h2>
         <p className="panel-subtitle">Alanlar sürükle ve bırakarak sıralayabilirsiniz.</p>
       </div>
-      <div
-        ref={setNodeRef}
-        className={`canvas-drop ${isOver ? 'hovered' : ''}`}
-      >
+      <div ref={setNodeRef} className={`canvas-drop ${isOver ? 'hovered' : ''}`}>
         {fields.length === 0 ? (
           <div className="empty">
             <p>Henüz alan yok. Soldan sürükle ve bırakın.</p>

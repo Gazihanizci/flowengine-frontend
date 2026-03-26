@@ -1,28 +1,38 @@
-﻿import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchMe, type MeResponseItem } from '../services/userApi'
+import { useUserStore } from '../store/userStore'
 
 export default function AppLayout() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<MeResponseItem | null>(null)
+  const [user, setUserState] = useState<MeResponseItem | null>(null)
+  const setUser = useUserStore((state) => state.setUser)
+  const setLoaded = useUserStore((state) => state.setLoaded)
+  const clearUser = useUserStore((state) => state.clearUser)
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
     if (!token) {
+      setLoaded(false)
       return
     }
 
+    setLoaded(false)
     fetchMe(token)
       .then((data) => {
-        setUser(data[0] ?? null)
+        const info = data[0] ?? null
+        setUserState(info)
+        setUser(info)
       })
       .catch(() => {
+        clearUser()
         localStorage.removeItem('auth_token')
         navigate('/login')
       })
-  }, [navigate])
+  }, [clearUser, navigate, setLoaded, setUser])
 
   const handleLogout = () => {
+    clearUser()
     localStorage.removeItem('auth_token')
     navigate('/login')
   }
@@ -45,12 +55,14 @@ export default function AppLayout() {
           >
             Gösterge Paneli
           </NavLink>
-          <NavLink
-            to="/create-flow"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-          >
-            Akış Oluştur
-          </NavLink>
+          {user?.rolId === 4 ? (
+            <NavLink
+              to="/create-flow"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Akış Oluştur
+            </NavLink>
+          ) : null}
         </nav>
         <button className="button secondary logout-button" onClick={handleLogout}>
           Çıkış Yap

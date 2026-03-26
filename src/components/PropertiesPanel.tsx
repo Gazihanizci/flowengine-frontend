@@ -95,6 +95,11 @@ export default function PropertiesPanel({
           </label>
         )}
 
+        <label>
+          <span>Rol ID</span>
+          <input className="input" placeholder="" value="" readOnly />
+        </label>
+
         <label className="checkbox">
           <input
             type="checkbox"

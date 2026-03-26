@@ -80,7 +80,7 @@ export default function BuilderPage() {
   useEffect(() => {
     setFields(currentStep?.fields ?? [])
     setSelectedId(null)
-  }, [currentStepId, currentStep?.fields])
+  }, [currentStepId])
 
   const selectedField = useMemo(
     () => fields.find((field) => field.id === selectedId) ?? null,

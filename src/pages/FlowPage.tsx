@@ -80,7 +80,7 @@ export default function FlowPage() {
         aksiyonId: actionId,
         formData: formState,
       })
-      setSuccess('Aksiyon başarıyla gnderildi.')
+      setSuccess('Aksiyon başarıyla gönderildi.')
       await loadWorkflow()
     } catch (err) {
       setError('Aksiyon gönderilemedi. Lütfen tekrar deneyin.')
@@ -91,14 +91,16 @@ export default function FlowPage() {
 
   if (!surecId) {
     return (
-      <div className="card">
-        <h2>Süreç bulunamadı</h2>
+      <div className="page">
+        <div className="card">
+          <h2>Süreç bulunamadı</h2>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="page">
+    <div className="page flow-page">
       <div className="card">
         <div className="card-header">
           <div>

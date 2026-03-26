@@ -110,9 +110,7 @@ export default function FieldRenderer({
               disabled={uploading}
             />
             {uploading && <p className="hint">Yükleniyor...</p>}
-            {value && !uploading && (
-              <p className="hint">Yüklendi. FileId: {value}</p>
-            )}
+            {value && !uploading && <p className="hint">Yüklendi. FileId: {value}</p>}
             {uploadError && <p className="error-text">{uploadError}</p>}
           </div>
         )

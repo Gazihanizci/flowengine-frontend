@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { FormField } from '../types/form'
+import FieldPreview from './FieldPreview'
 
 interface FieldItemProps {
   field: FormField
@@ -45,9 +46,14 @@ export default function FieldItem({
         }
       }}
     >
-      <div>
-        <h4>{field.label}</h4>
-        <p>{field.type}</p>
+      <div className="field-info">
+        <div className="field-meta">
+          <h4>{field.label}</h4>
+          <p>{field.type}</p>
+        </div>
+        <div className="field-preview">
+          <FieldPreview field={field} />
+        </div>
       </div>
       <button
         className="icon-button"

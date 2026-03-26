@@ -3,6 +3,7 @@ import axios from 'axios'
 export interface MeResponseItem {
   rolAdi: string
   adSoyad: string
+  rolId: number
 }
 
 const userApi = axios.create({
