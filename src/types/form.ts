@@ -21,4 +21,6 @@ export interface FormField {
   placeholder?: string
   required?: boolean
   options?: FieldOption[]
+  roleIds?: number[]
+  userIds?: number[]
 }

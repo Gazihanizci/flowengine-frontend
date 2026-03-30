@@ -64,6 +64,7 @@ export default function BuilderPage() {
   const aciklama = useFlowStore((state) => state.aciklama)
   const steps = useFlowStore((state) => state.steps)
   const updateStepFields = useFlowStore((state) => state.updateStepFields)
+  const updateStepName = useFlowStore((state) => state.updateStepName)
 
   const currentStepId = Number(stepId)
   const currentStep = steps.find((step) => step.stepId === currentStepId)
@@ -160,15 +161,17 @@ export default function BuilderPage() {
       steps: steps.map((step, stepIndex) => ({
         stepName: step.stepName,
         stepOrder: stepIndex + 1,
-        fields: step.fields.map((field, fieldIndex) => ({
-          type: field.type,
-          label: field.label,
-          placeholder: field.placeholder ?? '',
-          required: Boolean(field.required),
-          orderNo: fieldIndex + 1,
-          options: field.options ?? [],
+          fields: step.fields.map((field, fieldIndex) => ({
+            type: field.type,
+            label: field.label,
+            placeholder: field.placeholder ?? '',
+            required: Boolean(field.required),
+            orderNo: fieldIndex + 1,
+            roleIds: field.roleIds ?? [],
+            userIds: field.userIds ?? [],
+            options: field.options ?? [],
+          })),
         })),
-      })),
     }
   }, [flowName, aciklama, steps])
 
@@ -251,6 +254,18 @@ export default function BuilderPage() {
           <span>Alan Sayısı</span>
           <strong>{fields.length}</strong>
         </div>
+      </div>
+
+      <div className="step-name-editor">
+        <label>
+          <span>Adım Adı</span>
+          <input
+            className="input"
+            value={currentStep.stepName}
+            onChange={(event) => updateStepName(currentStep.stepId, event.target.value)}
+            placeholder={`Adım ${currentStep.stepId}`}
+          />
+        </label>
       </div>
 
       <div className="step-bar">

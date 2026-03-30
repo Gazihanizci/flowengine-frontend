@@ -336,7 +336,7 @@ body {
 
 .fields-row {
   display: grid;
-  grid-template-columns: 60px 1fr 2fr 100px;
+  grid-template-columns: 60px 1fr 2fr 100px 140px 160px;
   gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
@@ -392,6 +392,14 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.step-name-editor {
+  margin-bottom: 18px;
+}
+
+.step-name-editor label {
+  max-width: 360px;
 }
 
 .summary-card {
@@ -696,6 +704,46 @@ label {
 .option-form {
   display: grid;
   gap: 8px;
+}
+
+.access-section {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+}
+
+.access-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.access-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.access-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.selected-list {
+  display: grid;
+  gap: 8px;
+}
+
+.selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #ffffff;
 }
 
 .option-list {
@@ -1121,7 +1169,7 @@ label {
   }
 
   .fields-row {
-    grid-template-columns: 50px 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .auth-shell {
@@ -1130,5 +1178,9 @@ label {
 
   .auth-hero {
     order: 2;
+  }
+
+  .access-grid {
+    grid-template-columns: 1fr;
   }
 }

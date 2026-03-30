@@ -6,6 +6,14 @@ export interface MeResponseItem {
   rolId: number
 }
 
+export interface UserRoleItem {
+  kullaniciId: number
+  adSoyad: string
+  email: string
+  rolId: number
+  rolAdi: string
+}
+
 const userApi = axios.create({
   baseURL: '',
   headers: {
@@ -19,5 +27,10 @@ export async function fetchMe(token: string) {
       Authorization: `Bearer ${token}`,
     },
   })
+  return data
+}
+
+export async function fetchUserRoles() {
+  const { data } = await userApi.get<UserRoleItem[]>('/api/kullanici-rolleri')
   return data
 }

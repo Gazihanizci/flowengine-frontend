@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchFlowDetail, fetchFlows } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
@@ -75,6 +75,11 @@ export default function Dashboard() {
     if (!flowDetail || activeStepId === null) return null
     return flowDetail.steps.find((step) => step.stepId === activeStepId) ?? null
   }, [flowDetail, activeStepId])
+
+  const formatIds = (ids?: number[]) => {
+    if (!ids || ids.length === 0) return '-'
+    return ids.join(', ')
+  }
 
   if (!isLoaded) {
     return (
@@ -238,6 +243,8 @@ export default function Dashboard() {
                         <span>Tür</span>
                         <span>Etiket</span>
                         <span>Zorunlu</span>
+                        <span>Yetkili Roller</span>
+                        <span>Yetkili Kullanıcılar</span>
                       </div>
                       {activeStep.fields.map((field) => (
                         <div key={field.fieldId} className="fields-row">
@@ -245,6 +252,8 @@ export default function Dashboard() {
                           <span>{field.type}</span>
                           <span>{field.label}</span>
                           <span>{field.required ? 'Evet' : 'Hayır'}</span>
+                          <span>{formatIds(field.roleIds)}</span>
+                          <span>{formatIds(field.userIds)}</span>
                         </div>
                       ))}
                     </div>
@@ -303,3 +312,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
+

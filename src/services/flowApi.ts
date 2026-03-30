@@ -7,6 +7,8 @@ export interface SaveFlowField {
   placeholder: string
   required: boolean
   orderNo: number
+  roleIds: number[]
+  userIds: number[]
   options: FieldOption[]
 }
 
@@ -37,9 +39,11 @@ export interface FlowFieldItem {
   fieldId: number
   type: string
   label: string
-  placeholder: string
+  placeholder: string | null
   required: boolean
   orderNo: number
+  roleIds: number[]
+  userIds: number[]
   options: FieldOption[]
 }
 
