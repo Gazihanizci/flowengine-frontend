@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+﻿import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchMe, type MeResponseItem } from '../services/userApi'
 import { useUserStore } from '../store/userStore'
@@ -40,34 +40,45 @@ export default function AppLayout() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="sidebar-brand">İş Akışı</div>
+        <div className="sidebar-brand">Is Akisi</div>
         {user ? (
           <div className="user-card">
             <span className="user-role">{user.rolAdi}</span>
             <strong>{user.adSoyad}</strong>
           </div>
         ) : null}
+
         <nav className="sidebar-nav">
           <NavLink
             to="/"
             end
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            Gösterge Paneli
+            Gosterge Paneli
           </NavLink>
+
+          <NavLink
+            to="/tasks"
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            Gorev Formlari
+          </NavLink>
+
           {user?.rolId === 4 ? (
             <NavLink
               to="/create-flow"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Akış Oluştur
+              Akis Olustur
             </NavLink>
           ) : null}
         </nav>
+
         <button className="button secondary logout-button" onClick={handleLogout}>
-          Çıkış Yap
+          Cikis Yap
         </button>
       </aside>
+
       <main className="content">
         <Outlet />
       </main>

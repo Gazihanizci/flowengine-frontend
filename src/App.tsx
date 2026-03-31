@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import Dashboard from './pages/Dashboard'
@@ -7,9 +8,10 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import { useUserStore } from './store/userStore'
 import FlowPreview from './pages/FlowPreview'
+import MyTasks from './pages/MyTasks'
 import './App.css'
 
-function RequireAuth({ children }: { children: JSX.Element }) {
+function RequireAuth({ children }: { children: ReactElement }) {
   const token = localStorage.getItem('auth_token')
   if (!token) {
     return <Navigate to="/login" replace />
@@ -17,7 +19,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children
 }
 
-function RequireAdmin({ children }: { children: JSX.Element }) {
+function RequireAdmin({ children }: { children: ReactElement }) {
   const user = useUserStore((state) => state.user)
   const isLoaded = useUserStore((state) => state.isLoaded)
 
@@ -36,7 +38,7 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   return children
 }
 
-function RedirectIfAuthed({ children }: { children: JSX.Element }) {
+function RedirectIfAuthed({ children }: { children: ReactElement }) {
   const token = localStorage.getItem('auth_token')
   if (token) {
     return <Navigate to="/" replace />
@@ -72,6 +74,7 @@ function App() {
           }
         >
           <Route path="/" element={<Dashboard />} />
+          <Route path="/tasks" element={<MyTasks />} />
           <Route
             path="/preview/:flowId"
             element={

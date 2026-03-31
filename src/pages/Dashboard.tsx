@@ -1,14 +1,19 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import TaskForm from '../components/TaskForm'
+import TaskList from '../components/TaskList'
 import { fetchFlowDetail, fetchFlows } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
+import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
+import type { TaskFormData, WorkflowTask } from '../types/task'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const isLoaded = useUserStore((state) => state.isLoaded)
   const isAdmin = user?.rolId === 4
+
   const [flows, setFlows] = useState<FlowListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,10 +23,29 @@ export default function Dashboard() {
   const [detailError, setDetailError] = useState<string | null>(null)
   const [activeStepId, setActiveStepId] = useState<number | null>(null)
 
+  const [tasks, setTasks] = useState<WorkflowTask[]>([])
+  const [taskLoading, setTaskLoading] = useState(false)
+  const [taskError, setTaskError] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
+  const [taskFormData, setTaskFormData] = useState<TaskFormData>({})
+  const [taskSubmitLoading, setTaskSubmitLoading] = useState(false)
+  const [taskSubmitError, setTaskSubmitError] = useState<string | null>(null)
+  const [taskSuccessMessage, setTaskSuccessMessage] = useState<string | null>(null)
+
+  const selectedTask = useMemo(
+    () => tasks.find((task) => task.taskId === selectedTaskId) ?? null,
+    [tasks, selectedTaskId],
+  )
+
   useEffect(() => {
     let mounted = true
 
     const load = async () => {
+      if (!isAdmin) {
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
         const data = await fetchFlows()
@@ -33,7 +57,7 @@ export default function Dashboard() {
         }
       } catch (err) {
         if (mounted) {
-          setError('Akış listesi alınamadı.')
+          setError('Akis listesi alinamadi.')
         }
       } finally {
         if (mounted) {
@@ -47,10 +71,10 @@ export default function Dashboard() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => {
-    if (selectedFlowId === null) return
+    if (!isAdmin || selectedFlowId === null) return
 
     const loadDetail = async () => {
       setFlowDetail(null)
@@ -62,14 +86,14 @@ export default function Dashboard() {
         setFlowDetail(data)
         setActiveStepId(data.steps[0]?.stepId ?? null)
       } catch (err) {
-        setDetailError('Akış detayı alınamadı.')
+        setDetailError('Akis detayi alinamadi.')
       } finally {
         setDetailLoading(false)
       }
     }
 
     loadDetail()
-  }, [selectedFlowId])
+  }, [isAdmin, selectedFlowId])
 
   const activeStep = useMemo(() => {
     if (!flowDetail || activeStepId === null) return null
@@ -81,11 +105,94 @@ export default function Dashboard() {
     return ids.join(', ')
   }
 
+  const loadTasks = async () => {
+    setTaskLoading(true)
+    setTaskError(null)
+
+    try {
+      const data = await fetchMyTasks()
+      setTasks(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setTaskError('Gorevler alinamadi.')
+    } finally {
+      setTaskLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isLoaded || isAdmin) return
+    loadTasks()
+  }, [isLoaded, isAdmin])
+
+  useEffect(() => {
+    if (!selectedTaskId) return
+
+    const exists = tasks.some((task) => task.taskId === selectedTaskId)
+    if (!exists) {
+      setSelectedTaskId(null)
+      setTaskFormData({})
+    }
+  }, [tasks, selectedTaskId])
+
+  useEffect(() => {
+    if (!taskSuccessMessage) return
+
+    const timer = window.setTimeout(() => {
+      setTaskSuccessMessage(null)
+    }, 2500)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [taskSuccessMessage])
+
+  const handleTaskSelect = (task: WorkflowTask) => {
+    setSelectedTaskId(task.taskId)
+    setTaskSubmitError(null)
+
+    const initialData: TaskFormData = {}
+    task.form.forEach((field) => {
+      initialData[field.fieldId] = field.type === 'CHECKBOX' ? false : ''
+    })
+
+    setTaskFormData(initialData)
+  }
+
+  const handleTaskFieldChange = (fieldId: number, value: TaskFormData[number]) => {
+    setTaskFormData((prev) => ({
+      ...prev,
+      [fieldId]: value,
+    }))
+  }
+
+  const handleTaskAction = async (aksiyonId: 1 | 2) => {
+    if (!selectedTask) return
+
+    setTaskSubmitLoading(true)
+    setTaskSubmitError(null)
+
+    try {
+      await submitTaskAction(selectedTask.taskId, {
+        aksiyonId,
+        formData: taskFormData,
+      })
+
+      setTaskSuccessMessage('Islem basariyla tamamlandi.')
+      setSelectedTaskId(null)
+      setTaskFormData({})
+      await loadTasks()
+    } catch (err) {
+      setTaskSubmitError('Aksiyon gonderilemedi.')
+    } finally {
+      setTaskSubmitLoading(false)
+    }
+  }
+
   if (!isLoaded) {
     return (
       <div className="dashboard">
         <div className="dashboard-shell">
-          <p className="hint">Kullanıcı bilgileri yükleniyor...</p>
+          <p className="hint">Kullanici bilgileri yukleniyor...</p>
         </div>
       </div>
     )
@@ -96,11 +203,11 @@ export default function Dashboard() {
       <div className="dashboard-shell">
         <div className="dashboard-top">
           <div>
-            <h1>{isAdmin ? 'İş Akışı Paneli' : 'Akış Başlat'}</h1>
+            <h1>{isAdmin ? 'Is Akisi Paneli' : 'Workflow Dashboard'}</h1>
             <p>
               {isAdmin
-                ? 'Akışları yönetin, adımları ve form alanlarını inceleyin.'
-                : 'Mevcut akışlardan birini seçip başlat.'}
+                ? 'Akislari yonetin, adimlari ve form alanlarini inceleyin.'
+                : 'Uzerinizdeki gorevleri secin, formu doldurun ve aksiyon alin.'}
             </p>
           </div>
           {isAdmin ? (
@@ -109,7 +216,7 @@ export default function Dashboard() {
               type="button"
               onClick={() => navigate('/create-flow')}
             >
-              Yeni Akış Oluştur
+              Yeni Akis Olustur
             </button>
           ) : null}
         </div>
@@ -118,11 +225,11 @@ export default function Dashboard() {
           <>
             <div className="dashboard-stats">
               <div className="stat-card">
-                <span>Toplam Akış</span>
+                <span>Toplam Akis</span>
                 <strong>{flows.length}</strong>
               </div>
               <div className="stat-card">
-                <span>Toplam Adım</span>
+                <span>Toplam Adim</span>
                 <strong>{flowDetail?.steps.length ?? 0}</strong>
               </div>
               <div className="stat-card">
@@ -134,15 +241,15 @@ export default function Dashboard() {
             <div className="dashboard-grid">
               <section className="panel flow-list-panel">
                 <div className="panel-header">
-                  <h2>Akışlar</h2>
-                  <span>{flows.length} kayıt</span>
+                  <h2>Akislar</h2>
+                  <span>{flows.length} kayit</span>
                 </div>
 
-                {loading && <p className="hint">Yükleniyor...</p>}
+                {loading && <p className="hint">Yukleniyor...</p>}
                 {error && <p className="error-text">{error}</p>}
 
                 {!loading && !error && flows.length === 0 && (
-                  <p className="hint">Henüz kayıtlı akış yok.</p>
+                  <p className="hint">Henuz kayitli akis yok.</p>
                 )}
 
                 {!loading && !error && flows.length > 0 && (
@@ -158,7 +265,7 @@ export default function Dashboard() {
                           <h3>{flow.akisAdi}</h3>
                           <p>{flow.aciklama}</p>
                         </div>
-                        <span className="flow-status passive">Akış</span>
+                        <span className="flow-status passive">Akis</span>
                       </button>
                     ))}
                   </div>
@@ -167,7 +274,7 @@ export default function Dashboard() {
 
               <section className="panel flow-detail-panel">
                 <div className="panel-header">
-                  <h2>Akış Detayı</h2>
+                  <h2>Akis Detayi</h2>
                   <div className="panel-actions">
                     <button
                       className="button secondary"
@@ -179,17 +286,17 @@ export default function Dashboard() {
                       }}
                       disabled={!selectedFlowId}
                     >
-                      Önizleme
+                      Onizleme
                     </button>
                   </div>
                   {flowDetail && (
                     <span className={`flow-status ${flowDetail.steps.length ? 'active' : 'passive'}`}>
-                      {flowDetail.steps.length ? 'Adımlar Var' : 'Adım Yok'}
+                      {flowDetail.steps.length ? 'Adimlar Var' : 'Adim Yok'}
                     </span>
                   )}
                 </div>
 
-                {detailLoading && <p className="hint">Detay yükleniyor...</p>}
+                {detailLoading && <p className="hint">Detay yukleniyor...</p>}
                 {detailError && <p className="error-text">{detailError}</p>}
 
                 {!detailLoading && !detailError && flowDetail && (
@@ -200,11 +307,11 @@ export default function Dashboard() {
                     </div>
                     <div className="summary-meta">
                       <div>
-                        <span>Akış ID</span>
+                        <span>Akis ID</span>
                         <strong>{flowDetail.flowId}</strong>
                       </div>
                       <div>
-                        <span>Adım Sayısı</span>
+                        <span>Adim Sayisi</span>
                         <strong>{flowDetail.steps.length}</strong>
                       </div>
                     </div>
@@ -227,31 +334,31 @@ export default function Dashboard() {
                 )}
 
                 <div className="flow-fields">
-                  <h3>Form Alanları</h3>
+                  <h3>Form Alanlari</h3>
                   {!detailLoading && !detailError && !activeStep && (
-                    <p className="hint">Bir adım seçerek alanları görüntüleyin.</p>
+                    <p className="hint">Bir adim secerek alanlari goruntuleyin.</p>
                   )}
 
                   {!detailLoading && !detailError && activeStep && activeStep.fields.length === 0 && (
-                    <p className="hint">Bu adım için alan bulunamadı.</p>
+                    <p className="hint">Bu adim icin alan bulunamadi.</p>
                   )}
 
                   {!detailLoading && !detailError && activeStep && activeStep.fields.length > 0 && (
                     <div className="fields-table">
                       <div className="fields-row fields-head">
                         <span>#</span>
-                        <span>Tür</span>
+                        <span>Tur</span>
                         <span>Etiket</span>
                         <span>Zorunlu</span>
                         <span>Yetkili Roller</span>
-                        <span>Yetkili Kullanıcılar</span>
+                        <span>Yetkili Kullanicilar</span>
                       </div>
                       {activeStep.fields.map((field) => (
                         <div key={field.fieldId} className="fields-row">
                           <span>{field.orderNo}</span>
                           <span>{field.type}</span>
                           <span>{field.label}</span>
-                          <span>{field.required ? 'Evet' : 'Hayır'}</span>
+                          <span>{field.required ? 'Evet' : 'Hayir'}</span>
                           <span>{formatIds(field.roleIds)}</span>
                           <span>{formatIds(field.userIds)}</span>
                         </div>
@@ -263,54 +370,35 @@ export default function Dashboard() {
             </div>
           </>
         ) : (
-          <section className="panel flow-select-panel">
-            <div className="panel-header">
-              <h2>Akış Seçimi</h2>
-              <span>{flows.length} kayıt</span>
-            </div>
-
-            {loading && <p className="hint">Yükleniyor...</p>}
-            {error && <p className="error-text">{error}</p>}
-
-            {!loading && !error && flows.length === 0 && (
-              <p className="hint">Henüz kayıtlı akış yok.</p>
-            )}
-
-            {!loading && !error && flows.length > 0 && (
-              <div className="flow-chooser">
-                <label>
-                  Akış
-                  <select
-                    className="input flow-select"
-                    value={selectedFlowId ?? ''}
-                    onChange={(event) =>
-                      setSelectedFlowId(event.target.value ? Number(event.target.value) : null)
-                    }
-                  >
-                    <option value="">Akış seçin</option>
-                    {flows.map((flow) => (
-                      <option key={flow.akisId} value={flow.akisId}>
-                        {flow.akisAdi}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="flow-actions">
-                  <button
-                    className="button primary"
-                    type="button"
-                    disabled
-                  >
-                    Başlat
-                  </button>
-                </div>
+          <section className="space-y-4">
+            {taskSuccessMessage ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {taskSuccessMessage}
               </div>
-            )}
+            ) : null}
+
+            <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
+              <TaskList
+                tasks={tasks}
+                selectedTaskId={selectedTaskId}
+                loading={taskLoading}
+                error={taskError}
+                onSelectTask={handleTaskSelect}
+                onRetry={loadTasks}
+              />
+
+              <TaskForm
+                task={selectedTask}
+                formData={taskFormData}
+                submitError={taskSubmitError}
+                submitting={taskSubmitLoading}
+                onChangeField={handleTaskFieldChange}
+                onSubmitAction={handleTaskAction}
+              />
+            </div>
           </section>
         )}
       </div>
     </div>
   )
 }
-
-
