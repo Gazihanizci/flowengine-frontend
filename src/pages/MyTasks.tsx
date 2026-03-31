@@ -14,6 +14,20 @@ function createInitialFormData(task: WorkflowTask): TaskFormData {
   return initialData
 }
 
+function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): TaskFormData {
+  const payload: TaskFormData = {}
+
+  task.form.forEach((field) => {
+    if (!field.editable) {
+      return
+    }
+
+    payload[field.fieldId] = formData[field.fieldId] ?? (field.type === 'CHECKBOX' ? false : '')
+  })
+
+  return payload
+}
+
 export default function MyTasks() {
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [loading, setLoading] = useState(false)
@@ -29,7 +43,7 @@ export default function MyTasks() {
     [tasks, selectedTaskId],
   )
 
-  const loadTasks = async () => {
+  const loadTasks = async (autoSelectFirst = true) => {
     setLoading(true)
     setError(null)
 
@@ -39,6 +53,12 @@ export default function MyTasks() {
       setTasks(taskList)
 
       if (taskList.length === 0) {
+        setSelectedTaskId(null)
+        setFormData({})
+        return
+      }
+
+      if (!autoSelectFirst) {
         setSelectedTaskId(null)
         setFormData({})
         return
@@ -87,11 +107,11 @@ export default function MyTasks() {
     try {
       await submitTaskAction(selectedTask.taskId, {
         aksiyonId,
-        formData,
+        formData: buildEditableFormData(selectedTask, formData),
       })
 
       setSuccessMessage('Islem basariyla tamamlandi.')
-      await loadTasks()
+      await loadTasks(false)
     } catch (requestError) {
       setSubmitError('Aksiyon gonderilemedi.')
     } finally {
@@ -102,8 +122,8 @@ export default function MyTasks() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
-        <p className="mt-1 text-sm text-slate-600">`/api/mytasks` endpointinden gelen gorevler.</p>
+        <h1 className="text-2xl font-bold text-slate-900">Workflow Dashboard</h1>
+        <p className="mt-1 text-sm text-slate-600">Gorevlerini sec, sana ait alanlari doldur, onayla veya reddet.</p>
       </div>
 
       {successMessage ? (

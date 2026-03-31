@@ -1,4 +1,4 @@
-﻿export type TaskFieldType = 'TEXT' | 'DATE' | 'RADIO' | 'CHECKBOX' | 'FILE'
+﻿export type TaskFieldType = 'TEXT' | 'DATE' | 'RADIO' | 'CHECKBOX' | 'FILE' | 'COMBOBOX'
 
 export interface TaskFieldOption {
   label: string

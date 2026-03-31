@@ -253,21 +253,26 @@ export default function Dashboard() {
                 )}
 
                 {!loading && !error && flows.length > 0 && (
-                  <div className="flow-grid">
-                    {flows.map((flow) => (
-                      <button
-                        key={flow.akisId}
-                        className={`flow-card ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
-                        type="button"
-                        onClick={() => setSelectedFlowId(flow.akisId)}
-                      >
-                        <div>
-                          <h3>{flow.akisAdi}</h3>
-                          <p>{flow.aciklama}</p>
-                        </div>
-                        <span className="flow-status passive">Akis</span>
-                      </button>
-                    ))}
+                  <div className="flow-list-scroll">
+                    <div className="flow-list-head">
+                      <span>ID</span>
+                      <span>Akis Adi</span>
+                      <span>Aciklama</span>
+                    </div>
+                    <div className="flow-list">
+                      {flows.map((flow) => (
+                        <button
+                          key={flow.akisId}
+                          className={`flow-row ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
+                          type="button"
+                          onClick={() => setSelectedFlowId(flow.akisId)}
+                        >
+                          <span>{flow.akisId}</span>
+                          <span>{flow.akisAdi}</span>
+                          <span>{flow.aciklama || '-'}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </section>
