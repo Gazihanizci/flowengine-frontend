@@ -60,6 +60,10 @@ export interface FlowDetailResponse {
   steps: FlowStepDetail[]
 }
 
+export interface StartFlowPayload {
+  akisId: number
+}
+
 export const flowApi = axios.create({
   baseURL: '',
   headers: {
@@ -82,5 +86,10 @@ export async function fetchFlows() {
 
 export async function fetchFlowDetail(flowId: number) {
   const { data } = await flowApi.get<FlowDetailResponse>(`/api/flows/${flowId}`)
+  return data
+}
+
+export async function startFlow(payload: StartFlowPayload) {
+  const { data } = await flowApi.post('/api/flow/start', payload)
   return data
 }

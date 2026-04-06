@@ -1,18 +1,18 @@
 ﻿import type { ChangeEvent, ReactElement } from 'react'
-import type { TaskField, TaskFormData } from '../types/task'
+import type { TaskField, TaskFormValue } from '../types/task'
 
 interface TaskFieldRendererProps {
   field: TaskField
-  value: TaskFormData[number]
-  onChange: (fieldId: number, value: TaskFormData[number]) => void
+  value: TaskFormValue
+  onChange: (fieldId: number, value: TaskFormValue) => void
 }
 
 type RendererProps = {
   field: TaskField
-  value: TaskFormData[number]
+  value: TaskFormValue
   disabled: boolean
   inputClassName: string
-  onChange: (fieldId: number, value: TaskFormData[number]) => void
+  onChange: (fieldId: number, value: TaskFormValue) => void
 }
 
 type FieldRendererMap = Record<TaskField['type'], (props: RendererProps) => ReactElement>
@@ -112,32 +112,52 @@ const fieldRendererMap: FieldRendererMap = {
 
 export default function TaskFieldRenderer({ field, value, onChange }: TaskFieldRendererProps) {
   const disabled = !field.editable
+  const typeLabel: Record<TaskField['type'], string> = {
+    TEXT: 'Text',
+    DATE: 'Date',
+    RADIO: 'Radio',
+    CHECKBOX: 'Checkbox',
+    FILE: 'File',
+    COMBOBOX: 'Combobox',
+  }
   const containerClassName = field.editable
-    ? 'border-green-500 bg-green-50'
-    : 'border-gray-300 bg-gray-100'
+    ? 'border-cyan-300 bg-cyan-50/60'
+    : 'border-slate-400 bg-slate-200'
   const inputClassName = `mt-2 w-full rounded-xl border px-3 py-2 text-sm text-slate-700 outline-none transition ${
     field.editable
-      ? 'border-green-400 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100'
-      : 'border-gray-300 bg-gray-100 cursor-not-allowed'
+      ? 'border-cyan-300 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100'
+      : 'border-slate-400 bg-slate-300 text-slate-700 cursor-not-allowed'
   }`
 
   const renderField = fieldRendererMap[field.type]
 
   return (
-    <div className={`rounded-xl border p-3 ${containerClassName}`}>
+    <div className={`rounded-2xl border p-4 ${containerClassName}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-slate-800">{field.label}</p>
-        {field.editable ? (
-          <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
-            Bu alan sana ait
-          </span>
-        ) : (
-          <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
-            Salt okunur
-          </span>
-        )}
+        <div>
+          <p className="text-sm font-semibold text-slate-800">{field.label}</p>
+          <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            {typeLabel[field.type]} Field
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          {field.editable ? (
+            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-700">
+              Bu alan sana ait
+            </span>
+          ) : (
+            <span className="rounded-full border border-slate-400 bg-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700">
+              Yetki yok / Salt okunur
+            </span>
+          )}
+          <span className="text-[11px] text-slate-500">Alan ID: {field.fieldId}</span>
+        </div>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Alan ID: {field.fieldId}</p>
+      {!field.editable ? (
+        <div className="mt-3 rounded-lg border border-slate-400 bg-slate-300 px-3 py-2 text-xs font-medium text-slate-700">
+          Bu alan onceki adimlarda doldurulmustur. Yalnizca goruntuleyebilirsiniz.
+        </div>
+      ) : null}
       {renderField ? (
         renderField({ field, value, disabled, inputClassName, onChange })
       ) : (

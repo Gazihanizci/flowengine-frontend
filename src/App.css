@@ -76,7 +76,24 @@ body {
   padding: 10px 12px;
   border-radius: 10px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
 }
 
 .nav-link:hover {

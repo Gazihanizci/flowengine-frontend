@@ -24,7 +24,7 @@ export async function fetchMyTasks() {
 export async function submitTaskAction(
   taskId: number,
   payload: {
-    aksiyonId: 1 | 2
+    aksiyonId: number
     formData: TaskFormData
   },
 ) {

@@ -11,6 +11,7 @@ export interface TaskField {
   label: string
   options?: TaskFieldOption[]
   editable: boolean
+  value?: TaskFormValue
 }
 
 export interface WorkflowTask {
@@ -21,4 +22,5 @@ export interface WorkflowTask {
   form: TaskField[]
 }
 
-export type TaskFormData = Record<number, string | boolean>
+export type TaskFormValue = string | boolean | number | null
+export type TaskFormData = Record<string, TaskFormValue>

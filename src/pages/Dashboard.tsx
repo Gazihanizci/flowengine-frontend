@@ -2,11 +2,33 @@
 import { useNavigate } from 'react-router-dom'
 import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
-import { fetchFlowDetail, fetchFlows } from '../services/flowApi'
+import { fetchFlowDetail, fetchFlows, startFlow } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
 import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
-import type { TaskFormData, WorkflowTask } from '../types/task'
+import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+
+function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
+  if (field.value !== undefined) {
+    return field.value
+  }
+
+  return field.type === 'CHECKBOX' ? false : ''
+}
+
+function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): TaskFormData {
+  const payload: TaskFormData = {}
+
+  task.form.forEach((field) => {
+    if (!field.editable) {
+      return
+    }
+
+    payload[field.fieldId] = formData[field.fieldId] ?? resolveInitialValue(field)
+  })
+
+  return payload
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -22,6 +44,9 @@ export default function Dashboard() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [activeStepId, setActiveStepId] = useState<number | null>(null)
+  const [flowStartLoading, setFlowStartLoading] = useState(false)
+  const [flowStartError, setFlowStartError] = useState<string | null>(null)
+  const [flowStartSuccess, setFlowStartSuccess] = useState<string | null>(null)
 
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [taskLoading, setTaskLoading] = useState(false)
@@ -100,9 +125,31 @@ export default function Dashboard() {
     return flowDetail.steps.find((step) => step.stepId === activeStepId) ?? null
   }, [flowDetail, activeStepId])
 
+  const selectedFlow = useMemo(
+    () => flows.find((flow) => flow.akisId === selectedFlowId) ?? null,
+    [flows, selectedFlowId],
+  )
+
   const formatIds = (ids?: number[]) => {
     if (!ids || ids.length === 0) return '-'
     return ids.join(', ')
+  }
+
+  const handleStartFlow = async () => {
+    if (!selectedFlowId) return
+
+    setFlowStartLoading(true)
+    setFlowStartError(null)
+    setFlowStartSuccess(null)
+
+    try {
+      await startFlow({ akisId: selectedFlowId })
+      setFlowStartSuccess(`Akis baslatildi: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`)
+    } catch (err) {
+      setFlowStartError('Akis baslatilamadi.')
+    } finally {
+      setFlowStartLoading(false)
+    }
   }
 
   const loadTasks = async () => {
@@ -152,20 +199,20 @@ export default function Dashboard() {
 
     const initialData: TaskFormData = {}
     task.form.forEach((field) => {
-      initialData[field.fieldId] = field.type === 'CHECKBOX' ? false : ''
+      initialData[field.fieldId] = resolveInitialValue(field)
     })
 
     setTaskFormData(initialData)
   }
 
-  const handleTaskFieldChange = (fieldId: number, value: TaskFormData[number]) => {
+  const handleTaskFieldChange = (fieldId: number, value: TaskFormValue) => {
     setTaskFormData((prev) => ({
       ...prev,
       [fieldId]: value,
     }))
   }
 
-  const handleTaskAction = async (aksiyonId: 1 | 2) => {
+  const handleTaskAction = async (aksiyonId: number) => {
     if (!selectedTask) return
 
     setTaskSubmitLoading(true)
@@ -174,7 +221,7 @@ export default function Dashboard() {
     try {
       await submitTaskAction(selectedTask.taskId, {
         aksiyonId,
-        formData: taskFormData,
+        formData: buildEditableFormData(selectedTask, taskFormData),
       })
 
       setTaskSuccessMessage('Islem basariyla tamamlandi.')
@@ -211,15 +258,27 @@ export default function Dashboard() {
             </p>
           </div>
           {isAdmin ? (
-            <button
-              className="button primary"
-              type="button"
-              onClick={() => navigate('/create-flow')}
-            >
-              Yeni Akis Olustur
-            </button>
+            <div className="header-actions">
+              <button
+                className="button secondary"
+                type="button"
+                onClick={handleStartFlow}
+                disabled={!selectedFlowId || flowStartLoading}
+              >
+                {flowStartLoading ? 'Baslatiliyor...' : 'Flow Baslat'}
+              </button>
+              <button
+                className="button primary"
+                type="button"
+                onClick={() => navigate('/create-flow')}
+              >
+                Yeni Akis Olustur
+              </button>
+            </div>
           ) : null}
         </div>
+        {isAdmin && flowStartError ? <p className="error-text">{flowStartError}</p> : null}
+        {isAdmin && flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
 
         {isAdmin ? (
           <>

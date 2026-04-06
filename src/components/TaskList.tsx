@@ -18,10 +18,13 @@ export default function TaskList({
   onRetry,
 }: TaskListProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold text-slate-900">Gorevlerim</h2>
-        <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">
+    <section className="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+      <div className="mb-4 flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Inbox</p>
+          <h2 className="text-lg font-semibold text-slate-900">Gorevlerim</h2>
+        </div>
+        <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-700">
           {tasks.length}
         </span>
       </div>
@@ -52,24 +55,37 @@ export default function TaskList({
         </div>
       ) : null}
 
-      <div className="max-h-[65vh] space-y-2 overflow-y-auto pr-1">
-        {tasks.map((task) => {
+      <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1">
+        {tasks.map((task, index) => {
           const isSelected = selectedTaskId === task.taskId
 
           return (
-            <button
-              key={task.taskId}
-              type="button"
-              onClick={() => onSelectTask(task)}
-              className={`w-full rounded-xl border p-4 text-left transition ${
-                isSelected
-                  ? 'border-sky-400 bg-sky-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-slate-50'
-              }`}
-            >
-              <p className="font-semibold text-slate-900">{task.adimAdi}</p>
-              <p className="mt-1 text-sm text-slate-500">Task ID: {task.taskId}</p>
-            </button>
+            <div key={task.taskId} className="relative">
+              {index < tasks.length - 1 ? (
+                <span className="pointer-events-none absolute left-4 top-10 h-[calc(100%+8px)] w-px bg-slate-200" />
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onSelectTask(task)}
+                className={`relative flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                  isSelected
+                    ? 'border-cyan-300 bg-cyan-50/80 shadow-[0_8px_20px_rgba(8,145,178,0.16)]'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span
+                  className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                    isSelected ? 'bg-cyan-600 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-slate-900">{task.adimAdi}</span>
+                  <span className="mt-1 block text-sm text-slate-500">Task ID: {task.taskId}</span>
+                </span>
+              </button>
+            </div>
           )
         })}
       </div>

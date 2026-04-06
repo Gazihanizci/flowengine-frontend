@@ -1,11 +1,13 @@
-﻿import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchMe, type MeResponseItem } from '../services/userApi'
+import { fetchMyTasks } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
 
 export default function AppLayout() {
   const navigate = useNavigate()
   const [user, setUserState] = useState<MeResponseItem | null>(null)
+  const [taskCount, setTaskCount] = useState(0)
   const setUser = useUserStore((state) => state.setUser)
   const setLoaded = useUserStore((state) => state.setLoaded)
   const clearUser = useUserStore((state) => state.clearUser)
@@ -30,6 +32,36 @@ export default function AppLayout() {
         navigate('/login')
       })
   }, [clearUser, navigate, setLoaded, setUser])
+
+  useEffect(() => {
+    if (!user || user.rolId === 4) {
+      setTaskCount(0)
+      return
+    }
+
+    let cancelled = false
+
+    const loadTasks = async () => {
+      try {
+        const tasks = await fetchMyTasks()
+        if (!cancelled) {
+          setTaskCount(Array.isArray(tasks) ? tasks.length : 0)
+        }
+      } catch {
+        if (!cancelled) {
+          setTaskCount(0)
+        }
+      }
+    }
+
+    loadTasks()
+    const intervalId = window.setInterval(loadTasks, 30000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [user])
 
   const handleLogout = () => {
     clearUser()
@@ -61,7 +93,8 @@ export default function AppLayout() {
             to="/tasks"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            Gorev Formlari
+            <span>Gorev Formlari</span>
+            {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
           </NavLink>
 
           {user?.rolId === 4 ? (
