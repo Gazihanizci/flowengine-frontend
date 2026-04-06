@@ -29,6 +29,30 @@ export default function TaskForm({
     )
   }
 
+  const hasButtonBasedAction = task.form.some((field) => {
+    if (field.type !== 'BUTTON') return false
+    if (typeof field.actionId === 'number') return true
+    if (typeof field.value === 'number') return true
+    if (typeof field.value === 'string' && !Number.isNaN(Number(field.value))) return true
+    if (field.options?.[0]?.value && !Number.isNaN(Number(field.options[0].value))) return true
+    return false
+  })
+  const nextActionId =
+    task.actions?.find((action) => {
+      const label = action.label.toLowerCase()
+      return label.includes('ilerle') || label.includes('devam') || label.includes('onay')
+    })?.actionId ?? task.actions?.[0]?.actionId ?? 1
+  const finishActionId =
+    task.actions?.find((action) => {
+      const label = action.label.toLowerCase()
+      return (
+        label.includes('iptal') ||
+        label.includes('reddet') ||
+        label.includes('vazgec') ||
+        label.includes('cancel')
+      )
+    })?.actionId ?? 2
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
       <div className="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50 p-5">
@@ -64,7 +88,6 @@ export default function TaskForm({
         className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault()
-          onSubmitAction(1)
         }}
       >
         <div className="grid gap-4">
@@ -74,6 +97,7 @@ export default function TaskForm({
               field={field}
               value={formData[field.fieldId]}
               onChange={onChangeField}
+              onTriggerAction={onSubmitAction}
             />
           ))}
         </div>
@@ -90,21 +114,44 @@ export default function TaskForm({
           </p>
           <div className="flex flex-wrap gap-3">
             <button
-              type="submit"
+              type="button"
               disabled={submitting}
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+              onClick={() => onSubmitAction(nextActionId)}
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
             >
-              {submitting ? 'Gonderiliyor...' : 'Onayla'}
+              {submitting ? 'Gonderiliyor...' : 'Ilerle'}
             </button>
-
             <button
               type="button"
               disabled={submitting}
-              onClick={() => onSubmitAction(2)}
-              className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+              onClick={() => onSubmitAction(finishActionId)}
+              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {submitting ? 'Gonderiliyor...' : 'Reddet'}
+              {submitting ? 'Gonderiliyor...' : 'Bitir'}
             </button>
+            {(task.actions ?? []).map((action) => {
+              const lowerLabel = action.label.toLowerCase()
+              const actionClassName = lowerLabel.includes('reddet')
+                ? 'bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300'
+                : lowerLabel.includes('onay')
+                  ? 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300'
+                  : 'bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-300'
+
+              return (
+                <button
+                  key={action.actionId}
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => onSubmitAction(action.actionId)}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed ${actionClassName}`}
+                >
+                  {submitting ? 'Gonderiliyor...' : action.label}
+                </button>
+              )
+            })}
+            {(task.actions ?? []).length === 0 && !hasButtonBasedAction ? (
+              <p className="text-sm text-slate-500">Bu adim icin tanimli aksiyon bulunamadi.</p>
+            ) : null}
           </div>
         </div>
       </form>

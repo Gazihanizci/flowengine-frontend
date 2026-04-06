@@ -16,8 +16,9 @@ import {
 } from '@dnd-kit/sortable'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { FormField, FieldType } from '../types/form'
+import type { ExternalFlowCancelBehavior, FlowStep } from '../types/flow'
 import { useFlowStore } from '../store/flowStore'
-import { saveFlow } from '../services/flowApi'
+import { fetchFlows, saveFlow, type FlowListItem, type SaveFlowPayload } from '../services/flowApi'
 import Toolbox from '../components/Toolbox'
 import Canvas from '../components/Canvas'
 import PropertiesPanel from '../components/PropertiesPanel'
@@ -57,6 +58,55 @@ function createField(type: FieldType, id: string): FormField {
   }
 }
 
+function isBlank(value?: string) {
+  return !value || value.trim().length === 0
+}
+
+function validateFieldDefinition(field: FormField): string | null {
+  if (isBlank(field.label)) {
+    return 'Alan etiketleri bos birakilamaz.'
+  }
+
+  const needsPlaceholder = field.type !== 'CHECKBOX' && field.type !== 'BUTTON'
+  if (needsPlaceholder && isBlank(field.placeholder)) {
+    return `${field.label || field.type} alani icin yer tutucu bos birakilamaz.`
+  }
+
+  if ((field.type === 'COMBOBOX' || field.type === 'RADIO')) {
+    if (!field.options || field.options.length === 0) {
+      return `${field.label || field.type} alani icin en az bir secenek eklenmelidir.`
+    }
+
+    const hasInvalidOption = field.options.some((option) => isBlank(option.label) || isBlank(option.value))
+    if (hasInvalidOption) {
+      return `${field.label || field.type} alanindaki tum secenekler dolu olmalidir.`
+    }
+  }
+
+  return null
+}
+
+function validateStepDefinition(step: FlowStep): string | null {
+  if (isBlank(step.stepName)) {
+    return 'Adim adi bos birakilamaz.'
+  }
+
+  if (!step.fields || step.fields.length === 0) {
+    return `${step.stepName || `Adim ${step.stepId}`} icin en az bir alan eklenmelidir.`
+  }
+
+  for (const field of step.fields) {
+    const fieldError = validateFieldDefinition(field)
+    if (fieldError) return fieldError
+  }
+
+  if (step.externalFlowEnabled && !step.externalFlowId) {
+    return `${step.stepName || `Adim ${step.stepId}`} icin dis akis secimi zorunludur.`
+  }
+
+  return null
+}
+
 export default function BuilderPage() {
   const navigate = useNavigate()
   const { stepId } = useParams<{ stepId: string }>()
@@ -65,6 +115,7 @@ export default function BuilderPage() {
   const steps = useFlowStore((state) => state.steps)
   const updateStepFields = useFlowStore((state) => state.updateStepFields)
   const updateStepName = useFlowStore((state) => state.updateStepName)
+  const updateStepExternalFlow = useFlowStore((state) => state.updateStepExternalFlow)
 
   const currentStepId = Number(stepId)
   const currentStep = steps.find((step) => step.stepId === currentStepId)
@@ -73,6 +124,9 @@ export default function BuilderPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [availableFlows, setAvailableFlows] = useState<FlowListItem[]>([])
+  const [loadingFlows, setLoadingFlows] = useState(false)
+  const [flowLoadError, setFlowLoadError] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -82,6 +136,35 @@ export default function BuilderPage() {
     setFields(currentStep?.fields ?? [])
     setSelectedId(null)
   }, [currentStepId])
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadFlows = async () => {
+      try {
+        setLoadingFlows(true)
+        setFlowLoadError(null)
+        const data = await fetchFlows()
+        if (mounted) {
+          setAvailableFlows(Array.isArray(data) ? data : [])
+        }
+      } catch (error) {
+        if (mounted) {
+          setFlowLoadError('Akis listesi yuklenemedi.')
+        }
+      } finally {
+        if (mounted) {
+          setLoadingFlows(false)
+        }
+      }
+    }
+
+    loadFlows()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const selectedField = useMemo(
     () => fields.find((field) => field.id === selectedId) ?? null,
@@ -149,33 +232,67 @@ export default function BuilderPage() {
   }
 
   const handleNext = () => {
+    if (!currentStep) return
+    const stepError = validateStepDefinition(currentStep)
+    if (stepError) {
+      alert(stepError)
+      return
+    }
+
     if (currentStepId < steps.length) {
       navigate(`/builder/${currentStepId + 1}`)
     }
   }
 
-  const buildPayload = useCallback(() => {
+  const buildPayload = useCallback((): SaveFlowPayload => {
     return {
       flowName,
       aciklama,
       steps: steps.map((step, stepIndex) => ({
         stepName: step.stepName,
         stepOrder: stepIndex + 1,
-          fields: step.fields.map((field, fieldIndex) => ({
-            type: field.type,
-            label: field.label,
-            placeholder: field.placeholder ?? '',
-            required: Boolean(field.required),
-            orderNo: fieldIndex + 1,
-            roleIds: field.roleIds ?? [],
-            userIds: field.userIds ?? [],
-            options: field.options ?? [],
-          })),
+        fields: step.fields.map((field, fieldIndex) => ({
+          type: field.type,
+          label: field.label,
+          placeholder: field.placeholder ?? '',
+          required: Boolean(field.required),
+          orderNo: fieldIndex + 1,
+          roleIds: field.roleIds ?? [],
+          userIds: field.userIds ?? [],
+          options: field.options ?? [],
         })),
+        ...(step.externalFlowEnabled
+          ? {
+              externalFlowEnabled: true,
+              externalFlowId: step.externalFlowId ?? null,
+              subFlowId: step.externalFlowId ?? null,
+              nextFlowId: step.externalFlowId ?? null,
+              waitForExternalFlowCompletion: Boolean(step.waitForExternalFlowCompletion),
+              resumeParentAfterSubFlow: Boolean(step.resumeParentAfterSubFlow),
+              cancelBehavior: step.cancelBehavior ?? 'PROPAGATE',
+            }
+          : {}),
+      })),
     }
   }, [flowName, aciklama, steps])
 
   const handleSave = useCallback(async () => {
+    const invalidStep = steps.find((step) => validateStepDefinition(step) !== null)
+    if (invalidStep) {
+      const invalidStepError = validateStepDefinition(invalidStep)
+      alert(invalidStepError ?? 'Step dogrulamasi basarisiz.')
+      return
+    }
+
+    const invalidExternalStep = steps.find(
+      (step) => step.externalFlowEnabled && !step.externalFlowId,
+    )
+
+    if (invalidExternalStep) {
+      alert(`${invalidExternalStep.stepName} icin dis akis secmeden kaydedemezsiniz.`)
+      return
+    }
+
     try {
       setSaving(true)
       const payload = buildPayload()
@@ -266,6 +383,98 @@ export default function BuilderPage() {
             placeholder={`Adım ${currentStep.stepId}`}
           />
         </label>
+      </div>
+
+      <div className="step-link-editor">
+        <div className="step-link-top">
+          <div>
+            <h3>Adim Sonrasi Dis Akis</h3>
+            <p>Bu adim tamamlandiginda, sonraki adıma gecmeden once secilen akis calissin mi?</p>
+          </div>
+          <label className="step-link-toggle">
+            <input
+              type="checkbox"
+              checked={Boolean(currentStep.externalFlowEnabled)}
+              onChange={(event) =>
+                updateStepExternalFlow(currentStep.stepId, {
+                  externalFlowEnabled: event.target.checked,
+                })
+              }
+            />
+            <span>Dis akis baslat</span>
+          </label>
+        </div>
+
+        {currentStep.externalFlowEnabled ? (
+          <div className="step-link-controls">
+            <label>
+              <span>Baslatilacak Akis</span>
+              <select
+                className="input"
+                value={currentStep.externalFlowId ?? ''}
+                onChange={(event) =>
+                  updateStepExternalFlow(currentStep.stepId, {
+                    externalFlowEnabled: true,
+                    externalFlowId: event.target.value ? Number(event.target.value) : null,
+                  })
+                }
+                disabled={loadingFlows}
+              >
+                <option value="">
+                  {loadingFlows ? 'Akislar yukleniyor...' : 'Akis secin'}
+                </option>
+                {availableFlows.map((flow) => (
+                  <option key={flow.akisId} value={flow.akisId}>
+                    {flow.akisAdi} (ID: {flow.akisId})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={Boolean(currentStep.waitForExternalFlowCompletion)}
+                onChange={(event) =>
+                  updateStepExternalFlow(currentStep.stepId, {
+                    waitForExternalFlowCompletion: event.target.checked,
+                  })
+                }
+              />
+              <span>Alt akis tamamlanmadan bekle</span>
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={Boolean(currentStep.resumeParentAfterSubFlow)}
+                onChange={(event) =>
+                  updateStepExternalFlow(currentStep.stepId, {
+                    resumeParentAfterSubFlow: event.target.checked,
+                  })
+                }
+              />
+              <span>Alt akistan sonra ana akis devam etsin</span>
+            </label>
+            <label>
+              <span>Iptal Davranisi</span>
+              <select
+                className="input"
+                value={currentStep.cancelBehavior ?? 'PROPAGATE'}
+                onChange={(event) =>
+                  updateStepExternalFlow(currentStep.stepId, {
+                    cancelBehavior: event.target.value as ExternalFlowCancelBehavior,
+                  })
+                }
+              >
+                <option value="PROPAGATE">Alt akis reddedilirse ana akis da iptal olsun</option>
+                <option value="WAIT">Ana akis beklemede kalsin</option>
+              </select>
+            </label>
+            {flowLoadError ? <p className="error-text">{flowLoadError}</p> : null}
+            <p className="hint">
+              Secilen akis tamamlandiktan sonra mevcut akisin bir sonraki adimina donulur.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="step-bar">

@@ -1,5 +1,5 @@
 ﻿import { create } from 'zustand'
-import type { FlowState, FlowStep } from '../types/flow'
+import type { ExternalFlowCancelBehavior, FlowState, FlowStep } from '../types/flow'
 import type { FormField } from '../types/form'
 
 interface FlowStore extends FlowState {
@@ -9,6 +9,16 @@ interface FlowStore extends FlowState {
   initializeSteps: (count: number) => void
   updateStepFields: (stepId: number, fields: FormField[]) => void
   updateStepName: (stepId: number, name: string) => void
+  updateStepExternalFlow: (
+    stepId: number,
+    patch: {
+      externalFlowEnabled?: boolean
+      externalFlowId?: number | null
+      waitForExternalFlowCompletion?: boolean
+      resumeParentAfterSubFlow?: boolean
+      cancelBehavior?: ExternalFlowCancelBehavior
+    },
+  ) => void
   resetFlow: () => void
 }
 
@@ -28,6 +38,11 @@ export const useFlowStore = create<FlowStore>((set) => ({
         stepId: index + 1,
         stepName: `Adım ${index + 1}`,
         fields: [],
+        externalFlowEnabled: false,
+        externalFlowId: null,
+        waitForExternalFlowCompletion: false,
+        resumeParentAfterSubFlow: true,
+        cancelBehavior: 'PROPAGATE',
       }))
       return { steps }
     }),
@@ -41,6 +56,25 @@ export const useFlowStore = create<FlowStore>((set) => ({
     set((state) => ({
       steps: state.steps.map((step) =>
         step.stepId === stepId ? { ...step, stepName: name } : step,
+      ),
+    })),
+  updateStepExternalFlow: (stepId, patch) =>
+    set((state) => ({
+      steps: state.steps.map((step) =>
+        step.stepId === stepId
+          ? {
+              ...step,
+              ...patch,
+              ...(patch.externalFlowEnabled === false
+                ? {
+                    externalFlowId: null,
+                    waitForExternalFlowCompletion: false,
+                    resumeParentAfterSubFlow: true,
+                    cancelBehavior: 'PROPAGATE' as ExternalFlowCancelBehavior,
+                  }
+                : {}),
+            }
+          : step,
       ),
     })),
   resetFlow: () => set({ ...initialState, aciklama: '' }),

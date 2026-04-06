@@ -3,6 +3,7 @@ import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+import { shouldBypassTaskValidation, validateTaskForm } from '../utils/taskValidation'
 
 function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
   if (field.value !== undefined) {
@@ -110,6 +111,14 @@ export default function MyTasks() {
 
   const handleSubmitAction = async (aksiyonId: number) => {
     if (!selectedTask) return
+
+    if (!shouldBypassTaskValidation(selectedTask, aksiyonId)) {
+      const validationError = validateTaskForm(selectedTask, formData)
+      if (validationError) {
+        setSubmitError(validationError)
+        return
+      }
+    }
 
     setSubmitting(true)
     setSubmitError(null)

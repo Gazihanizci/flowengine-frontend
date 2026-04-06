@@ -1,4 +1,13 @@
-﻿export type TaskFieldType = 'TEXT' | 'DATE' | 'RADIO' | 'CHECKBOX' | 'FILE' | 'COMBOBOX'
+export type TaskFieldType =
+  | 'TEXT'
+  | 'TEXTAREA'
+  | 'NUMBER'
+  | 'DATE'
+  | 'RADIO'
+  | 'CHECKBOX'
+  | 'FILE'
+  | 'COMBOBOX'
+  | 'BUTTON'
 
 export interface TaskFieldOption {
   label: string
@@ -12,6 +21,12 @@ export interface TaskField {
   options?: TaskFieldOption[]
   editable: boolean
   value?: TaskFormValue
+  actionId?: number
+}
+
+export interface TaskAction {
+  actionId: number
+  label: string
 }
 
 export interface WorkflowTask {
@@ -20,6 +35,7 @@ export interface WorkflowTask {
   adimId: number
   adimAdi: string
   form: TaskField[]
+  actions?: TaskAction[]
 }
 
 export type TaskFormValue = string | boolean | number | null

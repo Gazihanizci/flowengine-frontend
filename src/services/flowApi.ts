@@ -16,6 +16,13 @@ export interface SaveFlowStep {
   stepName: string
   stepOrder: number
   fields: SaveFlowField[]
+  externalFlowEnabled?: boolean
+  externalFlowId?: number | null
+  subFlowId?: number | null
+  nextFlowId?: number | null
+  waitForExternalFlowCompletion?: boolean
+  resumeParentAfterSubFlow?: boolean
+  cancelBehavior?: 'PROPAGATE' | 'WAIT'
 }
 
 export interface SaveFlowPayload {

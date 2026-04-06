@@ -7,6 +7,7 @@ import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
 import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
 import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+import { shouldBypassTaskValidation, validateTaskForm } from '../utils/taskValidation'
 
 function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
   if (field.value !== undefined) {
@@ -214,6 +215,14 @@ export default function Dashboard() {
 
   const handleTaskAction = async (aksiyonId: number) => {
     if (!selectedTask) return
+
+    if (!shouldBypassTaskValidation(selectedTask, aksiyonId)) {
+      const validationError = validateTaskForm(selectedTask, taskFormData)
+      if (validationError) {
+        setTaskSubmitError(validationError)
+        return
+      }
+    }
 
     setTaskSubmitLoading(true)
     setTaskSubmitError(null)
