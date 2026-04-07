@@ -1,21 +1,144 @@
-﻿import { useDraggable } from '@dnd-kit/core'
-import type { FieldType } from '../types/form'
+﻿import { useMemo, useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import type { FieldType, FormField } from '../types/form'
 
-const TOOLBOX_ITEMS: { type: FieldType; label: string }[] = [
-  { type: 'TEXT', label: 'Metin Girişi' },
-  { type: 'TEXTAREA', label: 'Metin Alanı' },
-  { type: 'COMBOBOX', label: 'Açılır Liste' },
-  { type: 'RADIO', label: 'Radyo Grubu' },
-  { type: 'CHECKBOX', label: 'Onay Kutusu' },
-  { type: 'DATE', label: 'Tarih' },
-  { type: 'NUMBER', label: 'Sayı' },
-  { type: 'FILE', label: 'Dosya Yükleme' },
-  { type: 'BUTTON', label: 'Buton' },
+type ToolboxItemDefinition = {
+  id: string
+  type: FieldType
+  label: string
+  description: string
+  defaults?: Partial<FormField>
+}
+
+const TOOLBOX_ITEMS: ToolboxItemDefinition[] = [
+  {
+    id: 'text-short',
+    type: 'TEXT',
+    label: 'Kisa Metin',
+    description: 'Ad, baslik, kisa giris',
+    defaults: { label: 'Kisa Metin', placeholder: 'Metin girin' },
+  },
+  {
+    id: 'text-email',
+    type: 'TEXT',
+    label: 'E-posta',
+    description: 'E-posta adresi girisi',
+    defaults: { label: 'E-posta', placeholder: 'ornek@site.com' },
+  },
+  {
+    id: 'text-phone',
+    type: 'TEXT',
+    label: 'Telefon',
+    description: 'Telefon numarasi girisi',
+    defaults: { label: 'Telefon', placeholder: '05xx xxx xx xx' },
+  },
+  {
+    id: 'text-password',
+    type: 'TEXT',
+    label: 'Sifre',
+    description: 'Parola girisi icin alan',
+    defaults: { label: 'Sifre', placeholder: 'Parola girin' },
+  },
+  {
+    id: 'textarea-notes',
+    type: 'TEXTAREA',
+    label: 'Aciklama',
+    description: 'Uzun metin ve notlar',
+    defaults: { label: 'Aciklama', placeholder: 'Detaylari yazin' },
+  },
+  {
+    id: 'combobox',
+    type: 'COMBOBOX',
+    label: 'Acilir Liste',
+    description: 'Tek secimli liste',
+    defaults: {
+      label: 'Acilir Liste',
+      placeholder: 'Seciniz',
+      options: [{ label: 'Secenek A', value: 'A' }],
+    },
+  },
+  {
+    id: 'radio',
+    type: 'RADIO',
+    label: 'Radyo Grubu',
+    description: 'Tek secenek isaretleme',
+    defaults: {
+      label: 'Radyo Grubu',
+      placeholder: 'Bir secenek secin',
+      options: [{ label: 'Secenek 1', value: '1' }],
+    },
+  },
+  {
+    id: 'checkbox',
+    type: 'CHECKBOX',
+    label: 'Onay Kutusu',
+    description: 'Kosul/onay icin',
+    defaults: { label: 'Onay Kutusu' },
+  },
+  {
+    id: 'date',
+    type: 'DATE',
+    label: 'Tarih',
+    description: 'Takvimden tarih secimi',
+    defaults: { label: 'Tarih' },
+  },
+  {
+    id: 'number',
+    type: 'NUMBER',
+    label: 'Sayi',
+    description: 'Tam sayi veya adet',
+    defaults: { label: 'Sayi', placeholder: '0' },
+  },
+  {
+    id: 'number-price',
+    type: 'NUMBER',
+    label: 'Tutar',
+    description: 'Para degeri girisi',
+    defaults: { label: 'Tutar', placeholder: '0.00' },
+  },
+  {
+    id: 'file-generic',
+    type: 'FILE',
+    label: 'Dosya Yukleme',
+    description: 'Genel dosya secimi',
+    defaults: { label: 'Dosya Yukleme', accept: '*/*' },
+  },
+  {
+    id: 'file-photo',
+    type: 'FILE',
+    label: 'Fotograf Yukleme',
+    description: 'Yalnizca gorsel dosyalar',
+    defaults: {
+      label: 'Fotograf Yukleme',
+      accept: 'image/*,.png,.jpg,.jpeg,.webp',
+    },
+  },
+  {
+    id: 'file-photo-multi',
+    type: 'FILE',
+    label: 'Coklu Fotograf',
+    description: 'Birden fazla gorsel yukleme',
+    defaults: {
+      label: 'Coklu Fotograf',
+      accept: 'image/*,.png,.jpg,.jpeg,.webp',
+      multiple: true,
+    },
+  },
+  {
+    id: 'button',
+    type: 'BUTTON',
+    label: 'Buton',
+    description: 'Aksiyon tetikleme',
+    defaults: { label: 'Buton' },
+  },
 ]
 
 interface ToolboxItemProps {
+  id: string
   type: FieldType
   label: string
+  description: string
+  defaults?: Partial<FormField>
 }
 
 function ToolboxOnizleme({ type }: { type: FieldType }) {
@@ -23,14 +146,14 @@ function ToolboxOnizleme({ type }: { type: FieldType }) {
     case 'TEXT':
       return <div className="toolbox-preview input">Metin</div>
     case 'TEXTAREA':
-      return <div className="toolbox-preview textarea">Metin alanı</div>
+      return <div className="toolbox-preview textarea">Metin alani</div>
     case 'COMBOBOX':
-      return <div className="toolbox-preview select">Seçiniz</div>
+      return <div className="toolbox-preview select">Seciniz</div>
     case 'RADIO':
       return (
         <div className="toolbox-preview radio">
           <span className="dot" />
-          Seçenek
+          Secenek
         </div>
       )
     case 'CHECKBOX':
@@ -45,18 +168,18 @@ function ToolboxOnizleme({ type }: { type: FieldType }) {
     case 'NUMBER':
       return <div className="toolbox-preview input">123</div>
     case 'FILE':
-      return <div className="toolbox-preview file">Dosya seç</div>
+      return <div className="toolbox-preview file">Dosya sec</div>
     case 'BUTTON':
-      return <div className="toolbox-preview button">Gönder</div>
+      return <div className="toolbox-preview button">Gonder</div>
     default:
       return null
   }
 }
 
-function ToolboxItem({ type, label }: ToolboxItemProps) {
+function ToolboxItem({ id, type, label, description, defaults }: ToolboxItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `toolbox-${type}`,
-    data: { from: 'toolbox', fieldType: type },
+    id: `toolbox-${id}`,
+    data: { from: 'toolbox', fieldType: type, template: defaults },
   })
 
   return (
@@ -69,6 +192,7 @@ function ToolboxItem({ type, label }: ToolboxItemProps) {
     >
       <div>
         <span className="toolbox-label">{label}</span>
+        <span className="toolbox-description">{description}</span>
         <span className="toolbox-meta">{type}</span>
       </div>
       <ToolboxOnizleme type={type} />
@@ -77,15 +201,45 @@ function ToolboxItem({ type, label }: ToolboxItemProps) {
 }
 
 export default function Toolbox() {
+  const [query, setQuery] = useState('')
+
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    if (!normalizedQuery) return TOOLBOX_ITEMS
+
+    return TOOLBOX_ITEMS.filter((item) =>
+      `${item.label} ${item.type} ${item.description}`.toLowerCase().includes(normalizedQuery),
+    )
+  }, [query])
+
   return (
-    <aside className="panel">
-      <h2>Araç Kutusu</h2>
-      <p className="panel-subtitle">Bileşenleri sürükleyip bırakın.</p>
+    <aside className="panel toolbox-panel">
+      <h2>Arac Kutusu</h2>
+      <p className="panel-subtitle">Bilesenleri surukleyip birakin. Toplam: {filteredItems.length}</p>
+      <input
+        className="input toolbox-search"
+        type="search"
+        value={query}
+        placeholder="Arac ara..."
+        onChange={(event) => setQuery(event.target.value)}
+      />
       <div className="toolbox-list">
-        {TOOLBOX_ITEMS.map((item) => (
-          <ToolboxItem key={item.type} type={item.type} label={item.label} />
-        ))}
+        {filteredItems.length ? (
+          filteredItems.map((item) => (
+            <ToolboxItem
+              key={item.id}
+              id={item.id}
+              type={item.type}
+              label={item.label}
+              description={item.description}
+              defaults={item.defaults}
+            />
+          ))
+        ) : (
+          <div className="empty-state">Aramaya uygun arac bulunamadi.</div>
+        )}
       </div>
     </aside>
   )
 }
+

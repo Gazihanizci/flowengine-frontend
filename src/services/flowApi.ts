@@ -58,6 +58,10 @@ export interface FlowStepDetail {
   stepId: number
   stepName: string
   fields: FlowFieldItem[]
+  externalFlowEnabled?: boolean
+  externalFlowId?: number | null
+  subFlowId?: number | null
+  nextFlowId?: number | null
 }
 
 export interface FlowDetailResponse {

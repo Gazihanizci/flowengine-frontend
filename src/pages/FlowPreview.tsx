@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { fetchFlowDetail } from '../services/flowApi'
 import type { FlowDetailResponse } from '../services/flowApi'
 import FlowFieldPreview from '../components/FlowFieldPreview'
 
+function resolveLinkedFlowId(step: FlowDetailResponse['steps'][number]) {
+  return step.externalFlowId ?? step.subFlowId ?? step.nextFlowId ?? null
+}
+
 export default function FlowPreview() {
+  const navigate = useNavigate()
   const { flowId } = useParams<{ flowId: string }>()
   const [flowDetail, setFlowDetail] = useState<FlowDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -75,16 +80,33 @@ export default function FlowPreview() {
         {!loading && !error && flowDetail && (
           <>
             <div className="step-tabs">
-              {flowDetail.steps.map((step) => (
-                <button
-                  key={step.stepId}
-                  className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
-                  type="button"
-                  onClick={() => setActiveStepId(step.stepId)}
-                >
-                  {step.stepName}
-                </button>
-              ))}
+              {flowDetail.steps.map((step, index) => {
+                const linkedFlowId =
+                  step.externalFlowEnabled === false ? null : resolveLinkedFlowId(step)
+                const hasNextStep = index < flowDetail.steps.length - 1
+
+                return (
+                  <Fragment key={step.stepId}>
+                    <button
+                      className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
+                      type="button"
+                      onClick={() => setActiveStepId(step.stepId)}
+                    >
+                      {step.stepName}
+                    </button>
+                    {hasNextStep && linkedFlowId ? (
+                      <button
+                        className="embedded-flow-pill"
+                        type="button"
+                        onClick={() => navigate(`/preview/${linkedFlowId}`)}
+                        title="Ara akis onizlemesini ac"
+                      >
+                        Ara Akis #{linkedFlowId}
+                      </button>
+                    ) : null}
+                  </Fragment>
+                )
+              })}
             </div>
 
             <div className="form">

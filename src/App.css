@@ -549,6 +549,18 @@ body {
 .toolbox-list {
   display: grid;
   gap: 12px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.toolbox-panel {
+  position: sticky;
+  top: 16px;
+}
+
+.toolbox-search {
+  margin-bottom: 12px;
 }
 
 .toolbox-item {
@@ -577,6 +589,14 @@ body {
 
 .toolbox-label {
   display: block;
+}
+
+.toolbox-description {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 500;
 }
 
 .toolbox-meta {
@@ -1082,6 +1102,22 @@ label {
   background: var(--primary);
   color: #fff;
   border-color: transparent;
+}
+
+.embedded-flow-pill {
+  border: 1px dashed #7aa2ff;
+  background: #eef4ff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #23418a;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.embedded-flow-pill:hover {
+  background: #dbe8ff;
+  border-color: #4d7dff;
 }
 
 .step-progress {

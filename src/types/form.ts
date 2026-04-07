@@ -23,4 +23,6 @@ export interface FormField {
   options?: FieldOption[]
   roleIds?: number[]
   userIds?: number[]
+  accept?: string
+  multiple?: boolean
 }

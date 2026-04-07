@@ -62,7 +62,15 @@ export default function FieldPreview({ field }: FieldPreviewProps) {
         </label>
       )
     case 'FILE':
-      return <input className="input preview-input" type="file" disabled />
+      return (
+        <input
+          className="input preview-input"
+          type="file"
+          accept={field.accept}
+          multiple={Boolean(field.multiple)}
+          disabled
+        />
+      )
     case 'BUTTON':
       return (
         <button className="button preview-button" type="button" disabled>

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -45,16 +45,21 @@ const typeDefaults: Record<FieldType, Partial<FormField>> = {
 type DragMeta = {
   from?: 'toolbox' | 'canvas'
   fieldType?: FieldType
+  template?: Partial<FormField>
 }
 
-function createField(type: FieldType, id: string): FormField {
+function createField(type: FieldType, id: string, template?: Partial<FormField>): FormField {
+  const mergedOptions = template?.options ?? typeDefaults[type].options
+
   return {
     id,
     type,
-    label: typeDefaults[type].label ?? type,
-    placeholder: typeDefaults[type].placeholder,
+    label: template?.label ?? typeDefaults[type].label ?? type,
+    placeholder: template?.placeholder ?? typeDefaults[type].placeholder,
     required: false,
-    options: typeDefaults[type].options,
+    options: mergedOptions ? [...mergedOptions] : undefined,
+    accept: template?.accept,
+    multiple: template?.multiple,
   }
 }
 
@@ -67,7 +72,7 @@ function validateFieldDefinition(field: FormField): string | null {
     return 'Alan etiketleri bos birakilamaz.'
   }
 
-  const needsPlaceholder = field.type !== 'CHECKBOX' && field.type !== 'BUTTON'
+  const needsPlaceholder = ['TEXT', 'TEXTAREA', 'NUMBER'].includes(field.type)
   if (needsPlaceholder && isBlank(field.placeholder)) {
     return `${field.label || field.type} alani icin yer tutucu bos birakilamaz.`
   }
@@ -116,6 +121,7 @@ export default function BuilderPage() {
   const updateStepFields = useFlowStore((state) => state.updateStepFields)
   const updateStepName = useFlowStore((state) => state.updateStepName)
   const updateStepExternalFlow = useFlowStore((state) => state.updateStepExternalFlow)
+  const resetFlow = useFlowStore((state) => state.resetFlow)
 
   const currentStepId = Number(stepId)
   const currentStep = steps.find((step) => step.stepId === currentStepId)
@@ -170,6 +176,10 @@ export default function BuilderPage() {
     () => fields.find((field) => field.id === selectedId) ?? null,
     [fields, selectedId],
   )
+  const flowNameById = useMemo(() => {
+    const entries = availableFlows.map((flow) => [flow.akisId, flow.akisAdi] as const)
+    return new Map<number, string>(entries)
+  }, [availableFlows])
 
   const updateFields = (next: FormField[]) => {
     setFields(next)
@@ -206,11 +216,12 @@ export default function BuilderPage() {
     const activeMeta = active.data.current as DragMeta | undefined
     const activeFrom = activeMeta?.from
     const fieldType = activeMeta?.fieldType
+    const template = activeMeta?.template
 
     if (activeFrom === 'toolbox' && fieldType) {
       if (over.id === 'canvas-drop') {
         const newId = `field-${currentStepId}-${Date.now()}`
-        const newField = createField(fieldType, newId)
+        const newField = createField(fieldType, newId, template)
         updateFields([...fields, newField])
         setSelectedId(newId)
       }
@@ -299,13 +310,15 @@ export default function BuilderPage() {
       const response = await saveFlow(payload)
       alert('Başarılı')
       console.log(response)
+      resetFlow()
+      navigate('/', { replace: true })
     } catch (error) {
       console.error(error)
       alert('Kayıt sırasında hata oluştu')
     } finally {
       setSaving(false)
     }
-  }, [buildPayload])
+  }, [buildPayload, navigate, resetFlow])
 
   if (!steps.length) {
     return (
@@ -479,16 +492,34 @@ export default function BuilderPage() {
 
       <div className="step-bar">
         <div className="step-list">
-          {steps.map((step) => (
-            <button
-              key={step.stepId}
-              className={`step-pill ${step.stepId === currentStepId ? 'active' : ''}`}
-              type="button"
-              onClick={() => navigate(`/builder/${step.stepId}`)}
-            >
-              {step.stepName}
-            </button>
-          ))}
+          {steps.map((step, index) => {
+            const linkedFlowId =
+              step.externalFlowEnabled && step.externalFlowId ? step.externalFlowId : null
+            const linkedFlowName = linkedFlowId ? flowNameById.get(linkedFlowId) : null
+            const hasNextStep = index < steps.length - 1
+
+            return (
+              <Fragment key={step.stepId}>
+                <button
+                  className={`step-pill ${step.stepId === currentStepId ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => navigate(`/builder/${step.stepId}`)}
+                >
+                  {step.stepName}
+                </button>
+                {hasNextStep && linkedFlowId ? (
+                  <button
+                    className="embedded-flow-pill"
+                    type="button"
+                    onClick={() => navigate(`/preview/${linkedFlowId}`)}
+                    title="Ara akis onizlemesini ac"
+                  >
+                    Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
+                  </button>
+                ) : null}
+              </Fragment>
+            )
+          })}
         </div>
         <div className="step-progress">
           <div
@@ -538,3 +569,5 @@ export default function BuilderPage() {
     </div>
   )
 }
+
+

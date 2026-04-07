@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
@@ -29,6 +29,10 @@ function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): Task
   })
 
   return payload
+}
+
+function resolveLinkedFlowId(step: FlowDetailResponse['steps'][number]) {
+  return step.externalFlowId ?? step.subFlowId ?? step.nextFlowId ?? null
 }
 
 export default function Dashboard() {
@@ -130,6 +134,10 @@ export default function Dashboard() {
     () => flows.find((flow) => flow.akisId === selectedFlowId) ?? null,
     [flows, selectedFlowId],
   )
+  const flowNameById = useMemo(() => {
+    const entries = flows.map((flow) => [flow.akisId, flow.akisAdi] as const)
+    return new Map<number, string>(entries)
+  }, [flows])
 
   const formatIds = (ids?: number[]) => {
     if (!ids || ids.length === 0) return '-'
@@ -393,16 +401,34 @@ export default function Dashboard() {
 
                 {!detailLoading && !detailError && flowDetail && (
                   <div className="step-tabs">
-                    {flowDetail.steps.map((step) => (
-                      <button
-                        key={step.stepId}
-                        className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
-                        type="button"
-                        onClick={() => setActiveStepId(step.stepId)}
-                      >
-                        {step.stepName}
-                      </button>
-                    ))}
+                    {flowDetail.steps.map((step, index) => {
+                      const linkedFlowId =
+                        step.externalFlowEnabled === false ? null : resolveLinkedFlowId(step)
+                      const linkedFlowName = linkedFlowId ? flowNameById.get(linkedFlowId) : null
+                      const hasNextStep = index < flowDetail.steps.length - 1
+
+                      return (
+                        <Fragment key={step.stepId}>
+                          <button
+                            className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
+                            type="button"
+                            onClick={() => setActiveStepId(step.stepId)}
+                          >
+                            {step.stepName}
+                          </button>
+                          {hasNextStep && linkedFlowId ? (
+                            <button
+                              className="embedded-flow-pill"
+                              type="button"
+                              onClick={() => navigate(`/preview/${linkedFlowId}`)}
+                              title="Ara akis onizlemesini ac"
+                            >
+                              Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
+                            </button>
+                          ) : null}
+                        </Fragment>
+                      )
+                    })}
                   </div>
                 )}
 
@@ -475,3 +501,6 @@ export default function Dashboard() {
     </div>
   )
 }
+
+
+

@@ -182,7 +182,7 @@ export default function PropertiesPanel({
           />
         </label>
 
-        {field.type !== 'CHECKBOX' && field.type !== 'BUTTON' && (
+        {['TEXT', 'TEXTAREA', 'NUMBER'].includes(field.type) && (
           <label>
             <span>Yer Tutucu</span>
             <input
@@ -196,6 +196,38 @@ export default function PropertiesPanel({
               }
             />
           </label>
+        )}
+
+        {field.type === 'FILE' && (
+          <>
+            <label>
+              <span>Kabul Edilen Formatlar</span>
+              <input
+                className="input"
+                value={field.accept ?? ''}
+                onChange={(event) =>
+                  onUpdate({
+                    ...field,
+                    accept: event.target.value,
+                  })
+                }
+                placeholder="Ornek: image/*,.png,.jpg,.pdf"
+              />
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={Boolean(field.multiple)}
+                onChange={(event) =>
+                  onUpdate({
+                    ...field,
+                    multiple: event.target.checked,
+                  })
+                }
+              />
+              <span>Coklu dosya secimine izin ver</span>
+            </label>
+          </>
         )}
 
         <div className="access-section">
