@@ -117,6 +117,8 @@ export default function BuilderPage() {
   const { stepId } = useParams<{ stepId: string }>()
   const flowName = useFlowStore((state) => state.flowName)
   const aciklama = useFlowStore((state) => state.aciklama)
+  const starterRoleIds = useFlowStore((state) => state.starterRoleIds)
+  const starterUserIds = useFlowStore((state) => state.starterUserIds)
   const steps = useFlowStore((state) => state.steps)
   const updateStepFields = useFlowStore((state) => state.updateStepFields)
   const updateStepName = useFlowStore((state) => state.updateStepName)
@@ -256,36 +258,46 @@ export default function BuilderPage() {
   }
 
   const buildPayload = useCallback((): SaveFlowPayload => {
+    // Flow baslatma yetkileri (flow seviyesinde) sadece CreateFlow ekranindan gelir.
+    const baslatmaYetkileri: SaveFlowPayload['baslatmaYetkileri'] = [
+      ...starterRoleIds.map((roleId) => ({ tip: 'ROLE' as const, refId: roleId })),
+      ...starterUserIds.map((userId) => ({ tip: 'USER' as const, refId: userId })),
+    ]
+
+    // Form bileşeni yetkileri (alan seviyesinde) sadece field.roleIds/userIds uzerinden gelir.
+    const stepPayload: SaveFlowPayload['steps'] = steps.map((step, stepIndex) => ({
+      stepName: step.stepName,
+      stepOrder: stepIndex + 1,
+      fields: step.fields.map((field, fieldIndex) => ({
+        type: field.type,
+        label: field.label,
+        placeholder: field.placeholder ?? '',
+        required: Boolean(field.required),
+        orderNo: fieldIndex + 1,
+        roleIds: field.roleIds ?? [],
+        userIds: field.userIds ?? [],
+        options: field.options ?? [],
+      })),
+      ...(step.externalFlowEnabled
+        ? {
+            externalFlowEnabled: true,
+            externalFlowId: step.externalFlowId ?? null,
+            subFlowId: step.externalFlowId ?? null,
+            nextFlowId: step.externalFlowId ?? null,
+            waitForExternalFlowCompletion: Boolean(step.waitForExternalFlowCompletion),
+            resumeParentAfterSubFlow: Boolean(step.resumeParentAfterSubFlow),
+            cancelBehavior: step.cancelBehavior ?? 'PROPAGATE',
+          }
+        : {}),
+    }))
+
     return {
       flowName,
       aciklama,
-      steps: steps.map((step, stepIndex) => ({
-        stepName: step.stepName,
-        stepOrder: stepIndex + 1,
-        fields: step.fields.map((field, fieldIndex) => ({
-          type: field.type,
-          label: field.label,
-          placeholder: field.placeholder ?? '',
-          required: Boolean(field.required),
-          orderNo: fieldIndex + 1,
-          roleIds: field.roleIds ?? [],
-          userIds: field.userIds ?? [],
-          options: field.options ?? [],
-        })),
-        ...(step.externalFlowEnabled
-          ? {
-              externalFlowEnabled: true,
-              externalFlowId: step.externalFlowId ?? null,
-              subFlowId: step.externalFlowId ?? null,
-              nextFlowId: step.externalFlowId ?? null,
-              waitForExternalFlowCompletion: Boolean(step.waitForExternalFlowCompletion),
-              resumeParentAfterSubFlow: Boolean(step.resumeParentAfterSubFlow),
-              cancelBehavior: step.cancelBehavior ?? 'PROPAGATE',
-            }
-          : {}),
-      })),
+      baslatmaYetkileri,
+      steps: stepPayload,
     }
-  }, [flowName, aciklama, steps])
+  }, [flowName, aciklama, starterRoleIds, starterUserIds, steps])
 
   const handleSave = useCallback(async () => {
     const invalidStep = steps.find((step) => validateStepDefinition(step) !== null)

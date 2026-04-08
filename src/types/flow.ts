@@ -16,5 +16,7 @@ export interface FlowStep {
 export interface FlowState {
   flowName: string
   aciklama?: string
+  starterRoleIds?: number[]
+  starterUserIds?: number[]
   steps: FlowStep[]
 }

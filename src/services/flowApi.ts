@@ -28,6 +28,10 @@ export interface SaveFlowStep {
 export interface SaveFlowPayload {
   flowName: string
   aciklama: string
+  baslatmaYetkileri: Array<{
+    tip: 'ROLE' | 'USER'
+    refId: number
+  }>
   steps: SaveFlowStep[]
 }
 
@@ -68,11 +72,21 @@ export interface FlowDetailResponse {
   flowId: number
   flowName: string
   aciklama: string
+  baslatmaYetkileri?: Array<{
+    tip: 'ROLE' | 'USER'
+    refId: number
+  }>
   steps: FlowStepDetail[]
 }
 
 export interface StartFlowPayload {
   akisId: number
+}
+
+export interface StartFlowResponse {
+  surecId: number | null
+  mevcutAdimId: number | null
+  mesaj: string
 }
 
 export const flowApi = axios.create({
@@ -101,6 +115,6 @@ export async function fetchFlowDetail(flowId: number) {
 }
 
 export async function startFlow(payload: StartFlowPayload) {
-  const { data } = await flowApi.post('/api/flow/start', payload)
+  const { data } = await flowApi.post<StartFlowResponse>('/api/flow/start', payload)
   return data
 }

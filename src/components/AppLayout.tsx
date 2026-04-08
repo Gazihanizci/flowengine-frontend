@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { fetchMe, type MeResponseItem } from '../services/userApi'
+import { fetchUnreadNotificationCount } from '../services/notificationApi'
 import { fetchMyTasks } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
 
@@ -8,6 +9,7 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const [user, setUserState] = useState<MeResponseItem | null>(null)
   const [taskCount, setTaskCount] = useState(0)
+  const [notificationCount, setNotificationCount] = useState(0)
   const setUser = useUserStore((state) => state.setUser)
   const setLoaded = useUserStore((state) => state.setLoaded)
   const clearUser = useUserStore((state) => state.clearUser)
@@ -63,6 +65,37 @@ export default function AppLayout() {
     }
   }, [user])
 
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      setNotificationCount(0)
+      return
+    }
+
+    let cancelled = false
+
+    const loadUnreadCount = async () => {
+      try {
+        const count = await fetchUnreadNotificationCount()
+        if (!cancelled) {
+          setNotificationCount(Math.max(0, Number(count) || 0))
+        }
+      } catch {
+        if (!cancelled) {
+          setNotificationCount(0)
+        }
+      }
+    }
+
+    loadUnreadCount()
+    const intervalId = window.setInterval(loadUnreadCount, 30000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [user])
+
   const handleLogout = () => {
     clearUser()
     localStorage.removeItem('auth_token')
@@ -95,6 +128,14 @@ export default function AppLayout() {
           >
             <span>Gorev Formlari</span>
             {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
+          </NavLink>
+
+          <NavLink
+            to="/notifications"
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            <span>Bildirimler</span>
+            {notificationCount > 0 ? <span className="nav-badge">{notificationCount}</span> : null}
           </NavLink>
 
           {user?.rolId === 4 ? (

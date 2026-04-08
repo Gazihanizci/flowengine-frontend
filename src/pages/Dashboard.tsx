@@ -1,35 +1,8 @@
-﻿import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import TaskForm from '../components/TaskForm'
-import TaskList from '../components/TaskList'
 import { fetchFlowDetail, fetchFlows, startFlow } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
-import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
-import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
-import { shouldBypassTaskValidation, validateTaskForm } from '../utils/taskValidation'
-
-function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
-  if (field.value !== undefined) {
-    return field.value
-  }
-
-  return field.type === 'CHECKBOX' ? false : ''
-}
-
-function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): TaskFormData {
-  const payload: TaskFormData = {}
-
-  task.form.forEach((field) => {
-    if (!field.editable) {
-      return
-    }
-
-    payload[field.fieldId] = formData[field.fieldId] ?? resolveInitialValue(field)
-  })
-
-  return payload
-}
 
 function resolveLinkedFlowId(step: FlowDetailResponse['steps'][number]) {
   return step.externalFlowId ?? step.subFlowId ?? step.nextFlowId ?? null
@@ -53,20 +26,6 @@ export default function Dashboard() {
   const [flowStartError, setFlowStartError] = useState<string | null>(null)
   const [flowStartSuccess, setFlowStartSuccess] = useState<string | null>(null)
 
-  const [tasks, setTasks] = useState<WorkflowTask[]>([])
-  const [taskLoading, setTaskLoading] = useState(false)
-  const [taskError, setTaskError] = useState<string | null>(null)
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
-  const [taskFormData, setTaskFormData] = useState<TaskFormData>({})
-  const [taskSubmitLoading, setTaskSubmitLoading] = useState(false)
-  const [taskSubmitError, setTaskSubmitError] = useState<string | null>(null)
-  const [taskSuccessMessage, setTaskSuccessMessage] = useState<string | null>(null)
-
-  const selectedTask = useMemo(
-    () => tasks.find((task) => task.taskId === selectedTaskId) ?? null,
-    [tasks, selectedTaskId],
-  )
-
   useEffect(() => {
     let mounted = true
 
@@ -85,7 +44,7 @@ export default function Dashboard() {
             setSelectedFlowId((prev) => prev ?? data[0].akisId)
           }
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError('Akis listesi alinamadi.')
         }
@@ -115,7 +74,7 @@ export default function Dashboard() {
         const data = await fetchFlowDetail(selectedFlowId)
         setFlowDetail(data)
         setActiveStepId(data.steps[0]?.stepId ?? null)
-      } catch (err) {
+      } catch {
         setDetailError('Akis detayi alinamadi.')
       } finally {
         setDetailLoading(false)
@@ -152,103 +111,14 @@ export default function Dashboard() {
     setFlowStartSuccess(null)
 
     try {
-      await startFlow({ akisId: selectedFlowId })
-      setFlowStartSuccess(`Akis baslatildi: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`)
-    } catch (err) {
+      const response = await startFlow({ akisId: selectedFlowId })
+      setFlowStartSuccess(
+        response?.mesaj || `Akis baslatildi: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`,
+      )
+    } catch {
       setFlowStartError('Akis baslatilamadi.')
     } finally {
       setFlowStartLoading(false)
-    }
-  }
-
-  const loadTasks = async () => {
-    setTaskLoading(true)
-    setTaskError(null)
-
-    try {
-      const data = await fetchMyTasks()
-      setTasks(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setTaskError('Gorevler alinamadi.')
-    } finally {
-      setTaskLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (!isLoaded || isAdmin) return
-    loadTasks()
-  }, [isLoaded, isAdmin])
-
-  useEffect(() => {
-    if (!selectedTaskId) return
-
-    const exists = tasks.some((task) => task.taskId === selectedTaskId)
-    if (!exists) {
-      setSelectedTaskId(null)
-      setTaskFormData({})
-    }
-  }, [tasks, selectedTaskId])
-
-  useEffect(() => {
-    if (!taskSuccessMessage) return
-
-    const timer = window.setTimeout(() => {
-      setTaskSuccessMessage(null)
-    }, 2500)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [taskSuccessMessage])
-
-  const handleTaskSelect = (task: WorkflowTask) => {
-    setSelectedTaskId(task.taskId)
-    setTaskSubmitError(null)
-
-    const initialData: TaskFormData = {}
-    task.form.forEach((field) => {
-      initialData[field.fieldId] = resolveInitialValue(field)
-    })
-
-    setTaskFormData(initialData)
-  }
-
-  const handleTaskFieldChange = (fieldId: number, value: TaskFormValue) => {
-    setTaskFormData((prev) => ({
-      ...prev,
-      [fieldId]: value,
-    }))
-  }
-
-  const handleTaskAction = async (aksiyonId: number) => {
-    if (!selectedTask) return
-
-    if (!shouldBypassTaskValidation(selectedTask, aksiyonId)) {
-      const validationError = validateTaskForm(selectedTask, taskFormData)
-      if (validationError) {
-        setTaskSubmitError(validationError)
-        return
-      }
-    }
-
-    setTaskSubmitLoading(true)
-    setTaskSubmitError(null)
-
-    try {
-      await submitTaskAction(selectedTask.taskId, {
-        aksiyonId,
-        formData: buildEditableFormData(selectedTask, taskFormData),
-      })
-
-      setTaskSuccessMessage('Islem basariyla tamamlandi.')
-      setSelectedTaskId(null)
-      setTaskFormData({})
-      await loadTasks()
-    } catch (err) {
-      setTaskSubmitError('Aksiyon gonderilemedi.')
-    } finally {
-      setTaskSubmitLoading(false)
     }
   }
 
@@ -262,245 +132,241 @@ export default function Dashboard() {
     )
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="dashboard">
+        <div className="dashboard-shell">
+          <div className="dashboard-top">
+            <div>
+              <h1>Workflow Dashboard</h1>
+              <p>Gorevlerini ve bildirimlerini ayri sayfalardan yonet.</p>
+            </div>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <article className="panel">
+              <h2>Gorevler</h2>
+              <p className="hint">Atanan gorevleri gor, formu doldur ve aksiyon al.</p>
+              <div className="mt-4">
+                <button className="button primary" type="button" onClick={() => navigate('/tasks')}>
+                  Gorevler Sayfasina Git
+                </button>
+              </div>
+            </article>
+
+            <article className="panel">
+              <h2>Bildirimler</h2>
+              <p className="hint">Onay/reddet islemlerini ve bildirim akisini ayri panelden yonet.</p>
+              <div className="mt-4">
+                <button className="button primary" type="button" onClick={() => navigate('/notifications')}>
+                  Bildirimler Sayfasina Git
+                </button>
+              </div>
+            </article>
+          </section>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard">
       <div className="dashboard-shell">
         <div className="dashboard-top">
           <div>
-            <h1>{isAdmin ? 'Is Akisi Paneli' : 'Workflow Dashboard'}</h1>
-            <p>
-              {isAdmin
-                ? 'Akislari yonetin, adimlari ve form alanlarini inceleyin.'
-                : 'Uzerinizdeki gorevleri secin, formu doldurun ve aksiyon alin.'}
-            </p>
+            <h1>Is Akisi Paneli</h1>
+            <p>Akislari yonetin, adimlari ve form alanlarini inceleyin.</p>
           </div>
-          {isAdmin ? (
-            <div className="header-actions">
-              <button
-                className="button secondary"
-                type="button"
-                onClick={handleStartFlow}
-                disabled={!selectedFlowId || flowStartLoading}
-              >
-                {flowStartLoading ? 'Baslatiliyor...' : 'Flow Baslat'}
-              </button>
-              <button
-                className="button primary"
-                type="button"
-                onClick={() => navigate('/create-flow')}
-              >
-                Yeni Akis Olustur
-              </button>
-            </div>
-          ) : null}
+          <div className="header-actions">
+            <button
+              className="button secondary"
+              type="button"
+              onClick={handleStartFlow}
+              disabled={!selectedFlowId || flowStartLoading}
+            >
+              {flowStartLoading ? 'Baslatiliyor...' : 'Flow Baslat'}
+            </button>
+            <button
+              className="button primary"
+              type="button"
+              onClick={() => navigate('/create-flow')}
+            >
+              Yeni Akis Olustur
+            </button>
+          </div>
         </div>
-        {isAdmin && flowStartError ? <p className="error-text">{flowStartError}</p> : null}
-        {isAdmin && flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
+        {flowStartError ? <p className="error-text">{flowStartError}</p> : null}
+        {flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
 
-        {isAdmin ? (
-          <>
-            <div className="dashboard-stats">
-              <div className="stat-card">
-                <span>Toplam Akis</span>
-                <strong>{flows.length}</strong>
-              </div>
-              <div className="stat-card">
-                <span>Toplam Adim</span>
-                <strong>{flowDetail?.steps.length ?? 0}</strong>
-              </div>
-              <div className="stat-card">
-                <span>Toplam Alan</span>
-                <strong>{flowDetail?.steps.reduce((sum, step) => sum + step.fields.length, 0) ?? 0}</strong>
-              </div>
+        <div className="dashboard-stats">
+          <div className="stat-card">
+            <span>Toplam Akis</span>
+            <strong>{flows.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Toplam Adim</span>
+            <strong>{flowDetail?.steps.length ?? 0}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Toplam Alan</span>
+            <strong>{flowDetail?.steps.reduce((sum, step) => sum + step.fields.length, 0) ?? 0}</strong>
+          </div>
+        </div>
+
+        <div className="dashboard-grid">
+          <section className="panel flow-list-panel">
+            <div className="panel-header">
+              <h2>Akislar</h2>
+              <span>{flows.length} kayit</span>
             </div>
 
-            <div className="dashboard-grid">
-              <section className="panel flow-list-panel">
-                <div className="panel-header">
-                  <h2>Akislar</h2>
-                  <span>{flows.length} kayit</span>
+            {loading && <p className="hint">Yukleniyor...</p>}
+            {error && <p className="error-text">{error}</p>}
+
+            {!loading && !error && flows.length === 0 && (
+              <p className="hint">Henuz kayitli akis yok.</p>
+            )}
+
+            {!loading && !error && flows.length > 0 && (
+              <div className="flow-list-scroll">
+                <div className="flow-list-head">
+                  <span>ID</span>
+                  <span>Akis Adi</span>
+                  <span>Aciklama</span>
                 </div>
-
-                {loading && <p className="hint">Yukleniyor...</p>}
-                {error && <p className="error-text">{error}</p>}
-
-                {!loading && !error && flows.length === 0 && (
-                  <p className="hint">Henuz kayitli akis yok.</p>
-                )}
-
-                {!loading && !error && flows.length > 0 && (
-                  <div className="flow-list-scroll">
-                    <div className="flow-list-head">
-                      <span>ID</span>
-                      <span>Akis Adi</span>
-                      <span>Aciklama</span>
-                    </div>
-                    <div className="flow-list">
-                      {flows.map((flow) => (
-                        <button
-                          key={flow.akisId}
-                          className={`flow-row ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
-                          type="button"
-                          onClick={() => setSelectedFlowId(flow.akisId)}
-                        >
-                          <span>{flow.akisId}</span>
-                          <span>{flow.akisAdi}</span>
-                          <span>{flow.aciklama || '-'}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
-
-              <section className="panel flow-detail-panel">
-                <div className="panel-header">
-                  <h2>Akis Detayi</h2>
-                  <div className="panel-actions">
+                <div className="flow-list">
+                  {flows.map((flow) => (
                     <button
-                      className="button secondary"
+                      key={flow.akisId}
+                      className={`flow-row ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
                       type="button"
-                      onClick={() => {
-                        if (selectedFlowId) {
-                          navigate(`/preview/${selectedFlowId}`)
-                        }
-                      }}
-                      disabled={!selectedFlowId}
+                      onClick={() => setSelectedFlowId(flow.akisId)}
                     >
-                      Onizleme
+                      <span>{flow.akisId}</span>
+                      <span>{flow.akisAdi}</span>
+                      <span>{flow.aciklama || '-'}</span>
                     </button>
-                  </div>
-                  {flowDetail && (
-                    <span className={`flow-status ${flowDetail.steps.length ? 'active' : 'passive'}`}>
-                      {flowDetail.steps.length ? 'Adimlar Var' : 'Adim Yok'}
-                    </span>
-                  )}
+                  ))}
                 </div>
-
-                {detailLoading && <p className="hint">Detay yukleniyor...</p>}
-                {detailError && <p className="error-text">{detailError}</p>}
-
-                {!detailLoading && !detailError && flowDetail && (
-                  <div className="flow-summary">
-                    <div>
-                      <h3>{flowDetail.flowName}</h3>
-                      <p>{flowDetail.aciklama}</p>
-                    </div>
-                    <div className="summary-meta">
-                      <div>
-                        <span>Akis ID</span>
-                        <strong>{flowDetail.flowId}</strong>
-                      </div>
-                      <div>
-                        <span>Adim Sayisi</span>
-                        <strong>{flowDetail.steps.length}</strong>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {!detailLoading && !detailError && flowDetail && (
-                  <div className="step-tabs">
-                    {flowDetail.steps.map((step, index) => {
-                      const linkedFlowId =
-                        step.externalFlowEnabled === false ? null : resolveLinkedFlowId(step)
-                      const linkedFlowName = linkedFlowId ? flowNameById.get(linkedFlowId) : null
-                      const hasNextStep = index < flowDetail.steps.length - 1
-
-                      return (
-                        <Fragment key={step.stepId}>
-                          <button
-                            className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
-                            type="button"
-                            onClick={() => setActiveStepId(step.stepId)}
-                          >
-                            {step.stepName}
-                          </button>
-                          {hasNextStep && linkedFlowId ? (
-                            <button
-                              className="embedded-flow-pill"
-                              type="button"
-                              onClick={() => navigate(`/preview/${linkedFlowId}`)}
-                              title="Ara akis onizlemesini ac"
-                            >
-                              Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
-                            </button>
-                          ) : null}
-                        </Fragment>
-                      )
-                    })}
-                  </div>
-                )}
-
-                <div className="flow-fields">
-                  <h3>Form Alanlari</h3>
-                  {!detailLoading && !detailError && !activeStep && (
-                    <p className="hint">Bir adim secerek alanlari goruntuleyin.</p>
-                  )}
-
-                  {!detailLoading && !detailError && activeStep && activeStep.fields.length === 0 && (
-                    <p className="hint">Bu adim icin alan bulunamadi.</p>
-                  )}
-
-                  {!detailLoading && !detailError && activeStep && activeStep.fields.length > 0 && (
-                    <div className="fields-table">
-                      <div className="fields-row fields-head">
-                        <span>#</span>
-                        <span>Tur</span>
-                        <span>Etiket</span>
-                        <span>Zorunlu</span>
-                        <span>Yetkili Roller</span>
-                        <span>Yetkili Kullanicilar</span>
-                      </div>
-                      {activeStep.fields.map((field) => (
-                        <div key={field.fieldId} className="fields-row">
-                          <span>{field.orderNo}</span>
-                          <span>{field.type}</span>
-                          <span>{field.label}</span>
-                          <span>{field.required ? 'Evet' : 'Hayir'}</span>
-                          <span>{formatIds(field.roleIds)}</span>
-                          <span>{formatIds(field.userIds)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </section>
-            </div>
-          </>
-        ) : (
-          <section className="space-y-4">
-            {taskSuccessMessage ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {taskSuccessMessage}
               </div>
-            ) : null}
+            )}
+          </section>
 
-            <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
-              <TaskList
-                tasks={tasks}
-                selectedTaskId={selectedTaskId}
-                loading={taskLoading}
-                error={taskError}
-                onSelectTask={handleTaskSelect}
-                onRetry={loadTasks}
-              />
+          <section className="panel flow-detail-panel">
+            <div className="panel-header">
+              <h2>Akis Detayi</h2>
+              <div className="panel-actions">
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => {
+                    if (selectedFlowId) {
+                      navigate(`/preview/${selectedFlowId}`)
+                    }
+                  }}
+                  disabled={!selectedFlowId}
+                >
+                  Onizleme
+                </button>
+              </div>
+              {flowDetail && (
+                <span className={`flow-status ${flowDetail.steps.length ? 'active' : 'passive'}`}>
+                  {flowDetail.steps.length ? 'Adimlar Var' : 'Adim Yok'}
+                </span>
+              )}
+            </div>
 
-              <TaskForm
-                task={selectedTask}
-                formData={taskFormData}
-                submitError={taskSubmitError}
-                submitting={taskSubmitLoading}
-                onChangeField={handleTaskFieldChange}
-                onSubmitAction={handleTaskAction}
-              />
+            {detailLoading && <p className="hint">Detay yukleniyor...</p>}
+            {detailError && <p className="error-text">{detailError}</p>}
+
+            {!detailLoading && !detailError && flowDetail && (
+              <div className="flow-summary">
+                <div>
+                  <h3>{flowDetail.flowName}</h3>
+                  <p>{flowDetail.aciklama}</p>
+                </div>
+                <div className="summary-meta">
+                  <div>
+                    <span>Akis ID</span>
+                    <strong>{flowDetail.flowId}</strong>
+                  </div>
+                  <div>
+                    <span>Adim Sayisi</span>
+                    <strong>{flowDetail.steps.length}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!detailLoading && !detailError && flowDetail && (
+              <div className="step-tabs">
+                {flowDetail.steps.map((step, index) => {
+                  const linkedFlowId =
+                    step.externalFlowEnabled === false ? null : resolveLinkedFlowId(step)
+                  const linkedFlowName = linkedFlowId ? flowNameById.get(linkedFlowId) : null
+                  const hasNextStep = index < flowDetail.steps.length - 1
+
+                  return (
+                    <Fragment key={step.stepId}>
+                      <button
+                        className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
+                        type="button"
+                        onClick={() => setActiveStepId(step.stepId)}
+                      >
+                        {step.stepName}
+                      </button>
+                      {hasNextStep && linkedFlowId ? (
+                        <button
+                          className="embedded-flow-pill"
+                          type="button"
+                          onClick={() => navigate(`/preview/${linkedFlowId}`)}
+                          title="Ara akis onizlemesini ac"
+                        >
+                          Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
+                        </button>
+                      ) : null}
+                    </Fragment>
+                  )
+                })}
+              </div>
+            )}
+
+            <div className="flow-fields">
+              <h3>Form Alanlari</h3>
+              {!detailLoading && !detailError && !activeStep && (
+                <p className="hint">Bir adim secerek alanlari goruntuleyin.</p>
+              )}
+
+              {!detailLoading && !detailError && activeStep && activeStep.fields.length === 0 && (
+                <p className="hint">Bu adim icin alan bulunamadi.</p>
+              )}
+
+              {!detailLoading && !detailError && activeStep && activeStep.fields.length > 0 && (
+                <div className="fields-table">
+                  <div className="fields-row fields-head">
+                    <span>#</span>
+                    <span>Tur</span>
+                    <span>Etiket</span>
+                    <span>Zorunlu</span>
+                    <span>Yetkili Roller</span>
+                    <span>Yetkili Kullanicilar</span>
+                  </div>
+                  {activeStep.fields.map((field) => (
+                    <div key={field.fieldId} className="fields-row">
+                      <span>{field.orderNo}</span>
+                      <span>{field.type}</span>
+                      <span>{field.label}</span>
+                      <span>{field.required ? 'Evet' : 'Hayir'}</span>
+                      <span>{formatIds(field.roleIds)}</span>
+                      <span>{formatIds(field.userIds)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
-        )}
+        </div>
       </div>
     </div>
   )
 }
-
-
-

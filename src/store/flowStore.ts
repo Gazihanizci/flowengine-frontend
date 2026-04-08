@@ -4,8 +4,12 @@ import type { FormField } from '../types/form'
 
 interface FlowStore extends FlowState {
   aciklama: string
+  starterRoleIds: number[]
+  starterUserIds: number[]
   setFlowName: (name: string) => void
   setAciklama: (value: string) => void
+  setStarterRoleIds: (value: number[]) => void
+  setStarterUserIds: (value: number[]) => void
   initializeSteps: (count: number) => void
   updateStepFields: (stepId: number, fields: FormField[]) => void
   updateStepName: (stepId: number, name: string) => void
@@ -24,14 +28,20 @@ interface FlowStore extends FlowState {
 
 const initialState: FlowState = {
   flowName: '',
+  starterRoleIds: [],
+  starterUserIds: [],
   steps: [],
 }
 
 export const useFlowStore = create<FlowStore>((set) => ({
   ...initialState,
   aciklama: '',
+  starterRoleIds: [],
+  starterUserIds: [],
   setFlowName: (name) => set({ flowName: name }),
   setAciklama: (value) => set({ aciklama: value }),
+  setStarterRoleIds: (value) => set({ starterRoleIds: value }),
+  setStarterUserIds: (value) => set({ starterUserIds: value }),
   initializeSteps: (count) =>
     set(() => {
       const steps: FlowStep[] = Array.from({ length: count }, (_, index) => ({
@@ -77,5 +87,11 @@ export const useFlowStore = create<FlowStore>((set) => ({
           : step,
       ),
     })),
-  resetFlow: () => set({ ...initialState, aciklama: '' }),
+  resetFlow: () =>
+    set({
+      ...initialState,
+      aciklama: '',
+      starterRoleIds: [],
+      starterUserIds: [],
+    }),
 }))

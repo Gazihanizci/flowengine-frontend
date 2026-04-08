@@ -1,17 +1,109 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { fetchUserRoles, type UserRoleItem } from '../services/userApi'
 import { useFlowStore } from '../store/flowStore'
 
 export default function CreateFlow() {
   const navigate = useNavigate()
   const setFlowName = useFlowStore((state) => state.setFlowName)
   const setAciklama = useFlowStore((state) => state.setAciklama)
+  const setStoreStarterRoleIds = useFlowStore((state) => state.setStarterRoleIds)
+  const setStoreStarterUserIds = useFlowStore((state) => state.setStarterUserIds)
   const initializeSteps = useFlowStore((state) => state.initializeSteps)
 
   const [flowName, setFlowNameInput] = useState('')
   const [aciklama, setAciklamaInput] = useState('')
   const [stepCount, setStepCount] = useState(1)
   const [formError, setFormError] = useState<string | null>(null)
+  const [userRoles, setUserRoles] = useState<UserRoleItem[]>([])
+  const [rolesLoading, setRolesLoading] = useState(false)
+  const [rolesError, setRolesError] = useState<string | null>(null)
+  const [selectedRoleId, setSelectedRoleId] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [starterRoleIds, setLocalStarterRoleIds] = useState<number[]>([])
+  const [starterUserIds, setLocalStarterUserIds] = useState<number[]>([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    setRolesLoading(true)
+    setRolesError(null)
+
+    fetchUserRoles()
+      .then((data) => {
+        if (!isMounted) return
+        setUserRoles(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setRolesError('Kullanici rolleri alinamadi.')
+      })
+      .finally(() => {
+        if (!isMounted) return
+        setRolesLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const roleOptions = useMemo(() => {
+    const map = new Map<number, string>()
+    userRoles.forEach((item) => {
+      if (!map.has(item.rolId)) {
+        map.set(item.rolId, item.rolAdi)
+      }
+    })
+
+    return Array.from(map.entries())
+      .map(([rolId, rolAdi]) => ({ rolId, rolAdi }))
+      .sort((a, b) => a.rolAdi.localeCompare(b.rolAdi))
+  }, [userRoles])
+
+  const selectedRoleItems = useMemo(
+    () => roleOptions.filter((role) => starterRoleIds.includes(role.rolId)),
+    [roleOptions, starterRoleIds],
+  )
+
+  const filteredUsers = useMemo(
+    () => userRoles.filter((item) => selectedRoleId && String(item.rolId) === selectedRoleId),
+    [userRoles, selectedRoleId],
+  )
+
+  const selectedUserItems = useMemo(
+    () => userRoles.filter((item) => starterUserIds.includes(item.kullaniciId)),
+    [userRoles, starterUserIds],
+  )
+
+  const handleAddRole = () => {
+    if (!selectedRoleId) return
+    const roleId = Number(selectedRoleId)
+    if (!Number.isFinite(roleId) || starterRoleIds.includes(roleId)) return
+    setLocalStarterRoleIds((prev) => [...prev, roleId])
+  }
+
+  const handleRemoveRole = (roleId: number) => {
+    setLocalStarterRoleIds((prev) => prev.filter((id) => id !== roleId))
+    setLocalStarterUserIds((prev) =>
+      prev.filter((userId) => {
+        const user = userRoles.find((item) => item.kullaniciId === userId)
+        return user?.rolId !== roleId
+      }),
+    )
+  }
+
+  const handleAddUser = () => {
+    if (!selectedUserId) return
+    const userId = Number(selectedUserId)
+    if (!Number.isFinite(userId) || starterUserIds.includes(userId)) return
+    setLocalStarterUserIds((prev) => [...prev, userId])
+    setSelectedUserId('')
+  }
+
+  const handleRemoveUser = (userId: number) => {
+    setLocalStarterUserIds((prev) => prev.filter((id) => id !== userId))
+  }
 
   const handleCreate = () => {
     if (!flowName.trim() || !aciklama.trim()) {
@@ -23,9 +115,13 @@ export default function CreateFlow() {
     setFormError(null)
     setFlowName(flowName.trim())
     setAciklama(aciklama.trim())
+    setStoreStarterRoleIds(starterRoleIds)
+    setStoreStarterUserIds(starterUserIds)
     initializeSteps(count)
     navigate('/builder/1')
   }
+
+  const hasAnyStarterPermission = starterRoleIds.length > 0 || starterUserIds.length > 0
 
   return (
     <div className="create-flow">
@@ -110,6 +206,118 @@ export default function CreateFlow() {
                   </button>
                 </div>
               </label>
+
+              <div className="access-section">
+                <h3>Flow Baslatma Yetkisi</h3>
+                <div className="access-grid">
+                  <label>
+                    <span>Rol Secimi</span>
+                    <select
+                      className="input"
+                      value={selectedRoleId}
+                      onChange={(event) => {
+                        setSelectedRoleId(event.target.value)
+                        setSelectedUserId('')
+                      }}
+                      disabled={rolesLoading}
+                    >
+                      <option value="">Rol seciniz</option>
+                      {roleOptions.map((role) => (
+                        <option key={role.rolId} value={role.rolId}>
+                          {role.rolAdi} (ID: {role.rolId})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={handleAddRole}
+                    disabled={!selectedRoleId}
+                  >
+                    Rolu Ekle
+                  </button>
+                </div>
+
+                {selectedRoleItems.length > 0 && (
+                  <div className="selected-list">
+                    {selectedRoleItems.map((role) => (
+                      <div key={role.rolId} className="selected-item">
+                        <span>{role.rolAdi}</span>
+                        <button
+                          className="icon-button"
+                          type="button"
+                          onClick={() => handleRemoveRole(role.rolId)}
+                        >
+                          Kaldir
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="access-grid single">
+                  <label>
+                    <span>Kullanici Secimi</span>
+                    <select
+                      className="input"
+                      value={selectedUserId}
+                      onChange={(event) => setSelectedUserId(event.target.value)}
+                      disabled={!selectedRoleId || rolesLoading}
+                    >
+                      <option value="">
+                        {selectedRoleId ? 'Kullanici seciniz' : 'Once rol seciniz'}
+                      </option>
+                      {filteredUsers.map((user) => (
+                        <option key={`${user.kullaniciId}-${user.email}`} value={user.kullaniciId}>
+                          {user.adSoyad} - {user.email}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={handleAddUser}
+                    disabled={!selectedRoleId || !selectedUserId}
+                  >
+                    Kullanici Ekle
+                  </button>
+                </div>
+
+                {selectedUserItems.length > 0 && (
+                  <div className="selected-list">
+                    {selectedUserItems.map((user) => (
+                      <div key={`${user.kullaniciId}-${user.email}`} className="selected-item">
+                        <span>
+                          {user.adSoyad} ({user.email})
+                        </span>
+                        <button
+                          className="icon-button"
+                          type="button"
+                          onClick={() => handleRemoveUser(user.kullaniciId)}
+                        >
+                          Kaldir
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {rolesLoading && <p className="hint">Roller yukleniyor...</p>}
+                {rolesError && <p className="error-text">{rolesError}</p>}
+                {!rolesLoading && !rolesError && selectedRoleId && filteredUsers.length === 0 && (
+                  <p className="hint">Bu role ait kullanici bulunamadi.</p>
+                )}
+                {!hasAnyStarterPermission ? (
+                  <p className="error-text">
+                    Uyari: Akis baslatma yetkisi icin henuz rol veya kullanici secilmedi.
+                  </p>
+                ) : null}
+                <p className="hint">
+                  Burada secilen roller ve kullanicilar, flow baslatma yetkisi icin kaydedilir.
+                </p>
+              </div>
             </div>
 
             {formError ? (
@@ -122,7 +330,12 @@ export default function CreateFlow() {
               <button className="button secondary" type="button" onClick={() => navigate('/')}>
                 Vazgec
               </button>
-              <button className="button primary" type="button" onClick={handleCreate}>
+              <button
+                className="button primary"
+                type="button"
+                onClick={handleCreate}
+                disabled={!flowName.trim()}
+              >
                 Tasarima Gec
               </button>
             </div>

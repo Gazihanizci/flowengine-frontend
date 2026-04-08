@@ -6,6 +6,7 @@ import CreateFlow from './pages/CreateFlow'
 import BuilderPage from './pages/BuilderPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Notifications from './pages/Notifications'
 import { useUserStore } from './store/userStore'
 import FlowPreview from './pages/FlowPreview'
 import MyTasks from './pages/MyTasks'
@@ -75,6 +76,7 @@ function App() {
         >
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<MyTasks />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route
             path="/preview/:flowId"
             element={
