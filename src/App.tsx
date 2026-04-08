@@ -7,6 +7,7 @@ import BuilderPage from './pages/BuilderPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Notifications from './pages/Notifications'
+import FlowMapPage from './pages/FlowMapPage'
 import { useUserStore } from './store/userStore'
 import FlowPreview from './pages/FlowPreview'
 import MyTasks from './pages/MyTasks'
@@ -77,6 +78,14 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<MyTasks />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route
+            path="/flow-map"
+            element={
+              <RequireAdmin>
+                <FlowMapPage />
+              </RequireAdmin>
+            }
+          />
           <Route
             path="/preview/:flowId"
             element={

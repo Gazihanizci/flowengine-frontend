@@ -140,6 +140,15 @@ export default function AppLayout() {
 
           {user?.rolId === 4 ? (
             <NavLink
+              to="/flow-map"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Flow Treemap
+            </NavLink>
+          ) : null}
+
+          {user?.rolId === 4 ? (
+            <NavLink
               to="/create-flow"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >

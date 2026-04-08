@@ -89,6 +89,27 @@ export interface StartFlowResponse {
   mesaj: string
 }
 
+export interface FlowMapComponentItem {
+  etiket: string
+  tip: string
+  yetkiliIsimleri: string[]
+}
+
+export interface FlowMapStepItem {
+  evre: string
+  adimId: number
+  adimAdi: string
+  sira: number
+  bilesenler: FlowMapComponentItem[]
+  tip: string
+}
+
+export interface FlowMapResponse {
+  akisId: number
+  akisAdi: string
+  adimlar: FlowMapStepItem[]
+}
+
 export const flowApi = axios.create({
   baseURL: '',
   headers: {
@@ -116,5 +137,10 @@ export async function fetchFlowDetail(flowId: number) {
 
 export async function startFlow(payload: StartFlowPayload) {
   const { data } = await flowApi.post<StartFlowResponse>('/api/flow/start', payload)
+  return data
+}
+
+export async function fetchFlowMap(akisId: number) {
+  const { data } = await flowApi.get<FlowMapResponse>(`/api/flow-map/${akisId}`)
   return data
 }
