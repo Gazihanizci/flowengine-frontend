@@ -155,6 +155,15 @@ export default function AppLayout() {
               Akis Olustur
             </NavLink>
           ) : null}
+
+          {user?.rolId === 4 ? (
+            <NavLink
+              to="/role-management"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Rol Yonetimi
+            </NavLink>
+          ) : null}
         </nav>
 
         <button className="button secondary logout-button" onClick={handleLogout}>

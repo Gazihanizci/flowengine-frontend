@@ -1,9 +1,11 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
-import { shouldBypassTaskValidation, validateTaskForm } from '../utils/taskValidation'
+import { validateTaskForm } from '../utils/taskValidation'
 
 function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
   if (field.value !== undefined) {
@@ -38,12 +40,13 @@ function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): Task
 }
 
 export default function MyTasks() {
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [formData, setFormData] = useState<TaskFormData>({})
-  const [submitting, setSubmitting] = useState(false)
+  const [loadingAction, setLoadingAction] = useState<'save' | 'submit' | 'cancel' | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -109,10 +112,10 @@ export default function MyTasks() {
     }))
   }
 
-  const handleSubmitAction = async (aksiyonId: number) => {
+  const handleSubmitAction = async (aksiyonId: 1 | 2 | 3) => {
     if (!selectedTask) return
 
-    if (!shouldBypassTaskValidation(selectedTask, aksiyonId)) {
+    if (aksiyonId === 1) {
       const validationError = validateTaskForm(selectedTask, formData)
       if (validationError) {
         setSubmitError(validationError)
@@ -120,21 +123,38 @@ export default function MyTasks() {
       }
     }
 
-    setSubmitting(true)
+    setLoadingAction(aksiyonId === 2 ? 'save' : aksiyonId === 3 ? 'cancel' : 'submit')
     setSubmitError(null)
 
     try {
-      await submitTaskAction(selectedTask.taskId, {
-        aksiyonId,
-        formData: buildEditableFormData(selectedTask, formData),
-      })
+      const payload = buildEditableFormData(selectedTask, formData)
+      console.log('formData:', payload)
+      await submitTaskAction(selectedTask.taskId, payload, aksiyonId)
 
-      setSuccessMessage('Islem basariyla tamamlandi.')
-      await loadTasks(false)
+      if (aksiyonId === 2) {
+        setSuccessMessage('Taslak basariyla kaydedildi.')
+        await loadTasks(true)
+      } else if (aksiyonId === 3) {
+        setSuccessMessage('Form basariyla iptal edildi.')
+        navigate('/')
+      } else {
+        setSuccessMessage('Form basariyla gonderildi.')
+        navigate('/')
+      }
     } catch (requestError) {
-      setSubmitError('Aksiyon gonderilemedi.')
+      const apiMessage = axios.isAxiosError(requestError)
+        ? (requestError.response?.data?.message as string | undefined)
+        : null
+      const status = axios.isAxiosError(requestError) ? requestError.response?.status : undefined
+
+      setSubmitError(
+        apiMessage ??
+          `${aksiyonId === 2 ? 'Kaydetme islemi basarisiz oldu.' : aksiyonId === 3 ? 'Iptal islemi basarisiz oldu.' : 'Gonderim islemi basarisiz oldu.'}${
+            status ? ` (HTTP ${status})` : ''
+          }`,
+      )
     } finally {
-      setSubmitting(false)
+      setLoadingAction(null)
     }
   }
 
@@ -186,9 +206,11 @@ export default function MyTasks() {
           task={selectedTask}
           formData={formData}
           submitError={submitError}
-          submitting={submitting}
+          loadingAction={loadingAction}
           onChangeField={handleChangeField}
-          onSubmitAction={handleSubmitAction}
+          onSave={() => handleSubmitAction(2)}
+          onSubmit={() => handleSubmitAction(1)}
+          onCancel={() => handleSubmitAction(3)}
         />
       </div>
 

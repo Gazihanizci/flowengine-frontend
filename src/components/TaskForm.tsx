@@ -1,22 +1,26 @@
-﻿import TaskFieldRenderer from './TaskFieldRenderer'
+import TaskFieldRenderer from './TaskFieldRenderer'
 import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
 
 interface TaskFormProps {
   task: WorkflowTask | null
   formData: TaskFormData
   submitError: string | null
-  submitting: boolean
+  loadingAction: 'save' | 'submit' | 'cancel' | null
   onChangeField: (fieldId: number, value: TaskFormValue) => void
-  onSubmitAction: (aksiyonId: number) => void
+  onSave: () => void
+  onSubmit: () => void
+  onCancel: () => void
 }
 
 export default function TaskForm({
   task,
   formData,
   submitError,
-  submitting,
+  loadingAction,
   onChangeField,
-  onSubmitAction,
+  onSave,
+  onSubmit,
+  onCancel,
 }: TaskFormProps) {
   if (!task) {
     return (
@@ -28,30 +32,6 @@ export default function TaskForm({
       </section>
     )
   }
-
-  const hasButtonBasedAction = task.form.some((field) => {
-    if (field.type !== 'BUTTON') return false
-    if (typeof field.actionId === 'number') return true
-    if (typeof field.value === 'number') return true
-    if (typeof field.value === 'string' && !Number.isNaN(Number(field.value))) return true
-    if (field.options?.[0]?.value && !Number.isNaN(Number(field.options[0].value))) return true
-    return false
-  })
-  const nextActionId =
-    task.actions?.find((action) => {
-      const label = action.label.toLowerCase()
-      return label.includes('ilerle') || label.includes('devam') || label.includes('onay')
-    })?.actionId ?? task.actions?.[0]?.actionId ?? 1
-  const finishActionId =
-    task.actions?.find((action) => {
-      const label = action.label.toLowerCase()
-      return (
-        label.includes('iptal') ||
-        label.includes('reddet') ||
-        label.includes('vazgec') ||
-        label.includes('cancel')
-      )
-    })?.actionId ?? 2
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
@@ -97,7 +77,6 @@ export default function TaskForm({
               field={field}
               value={formData[field.fieldId]}
               onChange={onChangeField}
-              onTriggerAction={onSubmitAction}
             />
           ))}
         </div>
@@ -110,48 +89,54 @@ export default function TaskForm({
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="mb-3 text-sm font-medium text-slate-700">
-            Formu kontrol ettikten sonra aksiyon secin.
+            Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={submitting}
-              onClick={() => onSubmitAction(nextActionId)}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              disabled={loadingAction !== null}
+              onClick={onSave}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {submitting ? 'Gonderiliyor...' : 'Ilerle'}
+              {loadingAction === 'save' ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                  Kaydediliyor...
+                </>
+              ) : (
+                'Kaydet'
+              )}
             </button>
             <button
               type="button"
-              disabled={submitting}
-              onClick={() => onSubmitAction(finishActionId)}
-              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              disabled={loadingAction !== null}
+              onClick={onCancel}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
             >
-              {submitting ? 'Gonderiliyor...' : 'Bitir'}
+              {loadingAction === 'cancel' ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                  Iptal ediliyor...
+                </>
+              ) : (
+                'Formu Iptal Et'
+              )}
             </button>
-            {(task.actions ?? []).map((action) => {
-              const lowerLabel = action.label.toLowerCase()
-              const actionClassName = lowerLabel.includes('reddet')
-                ? 'bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300'
-                : lowerLabel.includes('onay')
-                  ? 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300'
-                  : 'bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-300'
-
-              return (
-                <button
-                  key={action.actionId}
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => onSubmitAction(action.actionId)}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed ${actionClassName}`}
-                >
-                  {submitting ? 'Gonderiliyor...' : action.label}
-                </button>
-              )
-            })}
-            {(task.actions ?? []).length === 0 && !hasButtonBasedAction ? (
-              <p className="text-sm text-slate-500">Bu adim icin tanimli aksiyon bulunamadi.</p>
-            ) : null}
+            <button
+              type="button"
+              disabled={loadingAction !== null}
+              onClick={onSubmit}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            >
+              {loadingAction === 'submit' ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                  Gonderiliyor...
+                </>
+              ) : (
+                'Gonder'
+              )}
+            </button>
           </div>
         </div>
       </form>

@@ -11,6 +11,7 @@ import FlowMapPage from './pages/FlowMapPage'
 import { useUserStore } from './store/userStore'
 import FlowPreview from './pages/FlowPreview'
 import MyTasks from './pages/MyTasks'
+import RoleManagementPage from './pages/RoleManagementPage'
 import './App.css'
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -99,6 +100,14 @@ function App() {
             element={
               <RequireAdmin>
                 <CreateFlow />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/role-management"
+            element={
+              <RequireAdmin>
+                <RoleManagementPage />
               </RequireAdmin>
             }
           />

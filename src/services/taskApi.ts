@@ -23,11 +23,40 @@ export async function fetchMyTasks() {
 
 export async function submitTaskAction(
   taskId: number,
-  payload: {
-    aksiyonId: number
-    formData: TaskFormData
-  },
+  payload: TaskFormData,
+  aksiyonId: number,
 ) {
-  const { data } = await taskApi.post(`/tasks/${taskId}/action`, payload)
-  return data
+  const attempts = [
+    () =>
+      taskApi.post(`/task/${taskId}/action`, {
+        aksiyonId,
+        formData: payload,
+      }),
+    () =>
+      taskApi.post(`/tasks/${taskId}/action`, {
+        aksiyonId,
+        formData: payload,
+      }),
+    () =>
+      taskApi.post(`/task/${taskId}/action`, payload, {
+        params: { aksiyonId },
+      }),
+    () =>
+      taskApi.post(`/tasks/${taskId}/action`, payload, {
+        params: { aksiyonId },
+      }),
+  ]
+
+  let lastError: unknown = null
+
+  for (const attempt of attempts) {
+    try {
+      const { data } = await attempt()
+      return data
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError
 }
