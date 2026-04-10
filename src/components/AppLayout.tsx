@@ -138,6 +138,13 @@ export default function AppLayout() {
             {notificationCount > 0 ? <span className="nav-badge">{notificationCount}</span> : null}
           </NavLink>
 
+          <NavLink
+            to="/pdf-reports"
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            PDF Raporlari
+          </NavLink>
+
           {user?.rolId === 4 ? (
             <NavLink
               to="/flow-map"

@@ -40,3 +40,4 @@ export interface WorkflowTask {
 
 export type TaskFormValue = string | boolean | number | null
 export type TaskFormData = Record<string, TaskFormValue>
+export type TaskFileMap = Record<number, File>

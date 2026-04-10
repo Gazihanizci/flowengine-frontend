@@ -7,12 +7,19 @@ interface FieldRendererProps {
   field: WorkflowField
   value: FormValue
   onChange: (fieldId: number, value: FormValue) => void
+  uploadContext?: {
+    surecId: number
+    adimId: number
+    aksiyonId: number
+    userId: number
+  }
 }
 
 export default function FieldRenderer({
   field,
   value,
   onChange,
+  uploadContext,
 }: FieldRendererProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -25,10 +32,20 @@ export default function FieldRenderer({
     setUploadError(null)
 
     try {
-      const result = await uploadFile(file)
-      onChange(field.id, String(result.fileId))
+      if (!uploadContext) {
+        throw new Error('Upload parametreleri eksik.')
+      }
+
+      const result = await uploadFile(file, uploadContext)
+      const uploadedId = result?.dosyaId ?? result?.fileId
+
+      if (!uploadedId) {
+        throw new Error('Yukleme yanitinda dosyaId bulunamadi.')
+      }
+
+      onChange(field.id, String(uploadedId))
     } catch (err) {
-      setUploadError('Dosya yükleme başarısız.')
+      setUploadError('Dosya yukleme basarisiz.')
       onChange(field.id, null)
     } finally {
       setUploading(false)
@@ -56,12 +73,7 @@ export default function FieldRenderer({
             className="input"
             type="number"
             value={numberValue}
-            onChange={(e) =>
-              onChange(
-                field.id,
-                e.target.value === '' ? null : Number(e.target.value),
-              )
-            }
+            onChange={(e) => onChange(field.id, e.target.value === '' ? null : Number(e.target.value))}
             placeholder={field.label}
           />
         )
@@ -81,7 +93,7 @@ export default function FieldRenderer({
             value={typeof value === 'string' ? value : ''}
             onChange={(e) => onChange(field.id, e.target.value)}
           >
-            <option value="">Seçiniz</option>
+            <option value="">Seciniz</option>
             {field.options?.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -103,14 +115,9 @@ export default function FieldRenderer({
       case 'FILE':
         return (
           <div className="file-input">
-            <input
-              className="input"
-              type="file"
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-            {uploading && <p className="hint">Yükleniyor...</p>}
-            {value && !uploading && <p className="hint">Yüklendi. FileId: {value}</p>}
+            <input className="input" type="file" onChange={handleFileChange} disabled={uploading} />
+            {uploading && <p className="hint">Yukleniyor...</p>}
+            {value && !uploading && <p className="hint">Yuklendi. DosyaId: {value}</p>}
             {uploadError && <p className="error-text">{uploadError}</p>}
           </div>
         )

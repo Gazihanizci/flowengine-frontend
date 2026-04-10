@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
-import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+import { fetchMe } from '../services/userApi'
+import { useUserStore } from '../store/userStore'
+import type { TaskFileMap, TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
 import { validateTaskForm } from '../utils/taskValidation'
 
 function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
@@ -39,13 +41,33 @@ function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): Task
   return payload
 }
 
+function buildEditableFiles(task: WorkflowTask, files: TaskFileMap): TaskFileMap {
+  const payload: TaskFileMap = {}
+
+  task.form.forEach((field) => {
+    if (!field.editable || field.type !== 'FILE') {
+      return
+    }
+
+    const file = files[field.fieldId]
+    if (file) {
+      payload[field.fieldId] = file
+    }
+  })
+
+  return payload
+}
+
 export default function MyTasks() {
   const navigate = useNavigate()
+  const user = useUserStore((state) => state.user)
+  const setUser = useUserStore((state) => state.setUser)
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [formData, setFormData] = useState<TaskFormData>({})
+  const [files, setFiles] = useState<TaskFileMap>({})
   const [loadingAction, setLoadingAction] = useState<'save' | 'submit' | 'cancel' | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -69,18 +91,21 @@ export default function MyTasks() {
       if (taskList.length === 0) {
         setSelectedTaskId(null)
         setFormData({})
+        setFiles({})
         return
       }
 
       if (!autoSelectFirst) {
         setSelectedTaskId(null)
         setFormData({})
+        setFiles({})
         return
       }
 
       const activeTask = taskList.find((task) => task.taskId === selectedTaskId) ?? taskList[0]
       setSelectedTaskId(activeTask.taskId)
       setFormData(createInitialFormData(activeTask))
+      setFiles({})
     } catch (requestError) {
       setError('Gorevler alinamadi.')
     } finally {
@@ -103,6 +128,7 @@ export default function MyTasks() {
     setSelectedTaskId(task.taskId)
     setSubmitError(null)
     setFormData(createInitialFormData(task))
+    setFiles({})
   }
 
   const handleChangeField = (fieldId: number, value: TaskFormValue) => {
@@ -110,6 +136,28 @@ export default function MyTasks() {
       ...prev,
       [fieldId]: value,
     }))
+  }
+
+  const handleChangeFile = (fieldId: number, file: File | null) => {
+    setFiles((prev) => {
+      const next = { ...prev }
+      if (file) {
+        next[fieldId] = file
+      } else {
+        delete next[fieldId]
+      }
+      return next
+    })
+
+    setFormData((prev) => {
+      const next = { ...prev }
+      if (file) {
+        next[fieldId] = file.name
+      } else {
+        next[fieldId] = ''
+      }
+      return next
+    })
   }
 
   const handleSubmitAction = async (aksiyonId: 1 | 2 | 3) => {
@@ -128,26 +176,57 @@ export default function MyTasks() {
 
     try {
       const payload = buildEditableFormData(selectedTask, formData)
-      console.log('formData:', payload)
-      await submitTaskAction(selectedTask.taskId, payload, aksiyonId)
+      const filePayload = buildEditableFiles(selectedTask, files)
+      const hasFile = Object.keys(filePayload).length > 0
+
+      let userId = user?.kullaniciId
+      if (hasFile && !userId) {
+        const token = localStorage.getItem('auth_token')
+        if (token) {
+          const me = await fetchMe(token)
+          const meUser = Array.isArray(me) ? (me[0] ?? null) : null
+          if (meUser) {
+            setUser(meUser)
+            userId = meUser.kullaniciId
+          }
+        }
+      }
+
+      if (hasFile && !userId) {
+        throw new Error('Dosya yuklemek icin kullanici bilgisi bulunamadi.')
+      }
+
+      await submitTaskAction(selectedTask.taskId, payload, aksiyonId, filePayload, {
+        surecId: selectedTask.surecId,
+        adimId: selectedTask.adimId,
+        userId: userId ?? 0,
+      })
 
       if (aksiyonId === 2) {
-        setSuccessMessage('Taslak basariyla kaydedildi.')
+        setSuccessMessage(
+          hasFile ? `Taslak basariyla kaydedildi. ${'\u{1F4CE}'} Dosyalar yuklendi.` : 'Taslak basariyla kaydedildi.',
+        )
         await loadTasks(true)
       } else if (aksiyonId === 3) {
         setSuccessMessage('Form basariyla iptal edildi.')
         navigate('/')
       } else {
-        setSuccessMessage('Form basariyla gonderildi.')
+        setSuccessMessage(
+          hasFile ? `Form basariyla gonderildi. ${'\u{1F4CE}'} Dosyalar yuklendi.` : 'Form basariyla gonderildi.',
+        )
         navigate('/')
       }
     } catch (requestError) {
+      const runtimeMessage = requestError instanceof Error ? requestError.message : null
       const apiMessage = axios.isAxiosError(requestError)
-        ? (requestError.response?.data?.message as string | undefined)
+        ? ((requestError.response?.data?.message ||
+            requestError.response?.data?.error ||
+            requestError.response?.data?.detail) as string | undefined)
         : null
       const status = axios.isAxiosError(requestError) ? requestError.response?.status : undefined
 
       setSubmitError(
+        runtimeMessage ??
         apiMessage ??
           `${aksiyonId === 2 ? 'Kaydetme islemi basarisiz oldu.' : aksiyonId === 3 ? 'Iptal islemi basarisiz oldu.' : 'Gonderim islemi basarisiz oldu.'}${
             status ? ` (HTTP ${status})` : ''
@@ -205,9 +284,11 @@ export default function MyTasks() {
         <TaskForm
           task={selectedTask}
           formData={formData}
+          files={files}
           submitError={submitError}
           loadingAction={loadingAction}
           onChangeField={handleChangeField}
+          onChangeFile={handleChangeFile}
           onSave={() => handleSubmitAction(2)}
           onSubmit={() => handleSubmitAction(1)}
           onCancel={() => handleSubmitAction(3)}

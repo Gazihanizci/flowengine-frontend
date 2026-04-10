@@ -4,10 +4,12 @@ import FieldRenderer from '../components/FieldRenderer'
 import ActionButtons from '../components/ActionButtons'
 import FileList from '../components/FileList'
 import { fetchWorkflow, sendWorkflowAction } from '../services/workflowApi'
+import { useUserStore } from '../store/userStore'
 import type { FormState, WorkflowResponse } from '../types/workflow'
 
 export default function FlowPage() {
   const { surecId } = useParams<{ surecId: string }>()
+  const user = useUserStore((state) => state.user)
   const [data, setData] = useState<WorkflowResponse | null>(null)
   const [formState, setFormState] = useState<FormState>({})
   const [loading, setLoading] = useState(true)
@@ -125,6 +127,16 @@ export default function FlowPage() {
                   field={field}
                   value={formState[field.id]}
                   onChange={handleChange}
+                  uploadContext={
+                    surecId && data
+                      ? {
+                          surecId: Number(surecId),
+                          adimId: data.adimId,
+                          aksiyonId: 1,
+                          userId: user?.kullaniciId ?? 5,
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </div>

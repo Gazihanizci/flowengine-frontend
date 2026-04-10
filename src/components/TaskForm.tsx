@@ -1,12 +1,14 @@
 import TaskFieldRenderer from './TaskFieldRenderer'
-import type { TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+import type { TaskFileMap, TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
 
 interface TaskFormProps {
   task: WorkflowTask | null
   formData: TaskFormData
+  files: TaskFileMap
   submitError: string | null
   loadingAction: 'save' | 'submit' | 'cancel' | null
   onChangeField: (fieldId: number, value: TaskFormValue) => void
+  onChangeFile: (fieldId: number, file: File | null) => void
   onSave: () => void
   onSubmit: () => void
   onCancel: () => void
@@ -15,9 +17,11 @@ interface TaskFormProps {
 export default function TaskForm({
   task,
   formData,
+  files,
   submitError,
   loadingAction,
   onChangeField,
+  onChangeFile,
   onSave,
   onSubmit,
   onCancel,
@@ -76,7 +80,9 @@ export default function TaskForm({
               key={field.fieldId}
               field={field}
               value={formData[field.fieldId]}
+              fileName={files[field.fieldId]?.name}
               onChange={onChangeField}
+              onFileChange={onChangeFile}
             />
           ))}
         </div>
