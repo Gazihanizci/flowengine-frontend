@@ -1,5 +1,5 @@
 ﻿import axios from 'axios'
-import type { FieldOption } from '../types/form'
+import type { FieldOption, FieldPermission } from '../types/form'
 
 export interface SaveFlowField {
   type: string
@@ -7,8 +7,7 @@ export interface SaveFlowField {
   placeholder: string
   required: boolean
   orderNo: number
-  roleIds: number[]
-  userIds: number[]
+  permissions: FieldPermission[]
   options: FieldOption[]
 }
 
@@ -53,8 +52,9 @@ export interface FlowFieldItem {
   placeholder: string | null
   required: boolean
   orderNo: number
-  roleIds: number[]
-  userIds: number[]
+  roleIds?: number[]
+  userIds?: number[]
+  permissions?: FieldPermission[]
   options: FieldOption[]
 }
 

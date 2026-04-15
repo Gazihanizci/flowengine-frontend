@@ -103,6 +103,22 @@ export default function Dashboard() {
     return ids.join(', ')
   }
 
+  const getPermissionIds = (
+    field: FlowDetailResponse['steps'][number]['fields'][number],
+    tip: 'ROLE' | 'USER',
+  ) => {
+    if (tip === 'ROLE' && field.roleIds) return field.roleIds
+    if (tip === 'USER' && field.userIds) return field.userIds
+
+    return Array.from(
+      new Set(
+        (field.permissions ?? [])
+          .filter((permission) => permission.tip === tip)
+          .map((permission) => permission.refId),
+      ),
+    )
+  }
+
   const handleStartFlow = async () => {
     if (!selectedFlowId) return
 
@@ -357,8 +373,8 @@ export default function Dashboard() {
                       <span>{field.type}</span>
                       <span>{field.label}</span>
                       <span>{field.required ? 'Evet' : 'Hayir'}</span>
-                      <span>{formatIds(field.roleIds)}</span>
-                      <span>{formatIds(field.userIds)}</span>
+                      <span>{formatIds(getPermissionIds(field, 'ROLE'))}</span>
+                      <span>{formatIds(getPermissionIds(field, 'USER'))}</span>
                     </div>
                   ))}
                 </div>

@@ -264,7 +264,7 @@ export default function BuilderPage() {
       ...starterUserIds.map((userId) => ({ tip: 'USER' as const, refId: userId })),
     ]
 
-    // Form bileşeni yetkileri (alan seviyesinde) sadece field.roleIds/userIds uzerinden gelir.
+    // Form bileşeni yetkileri (alan seviyesinde) field.permissions listesinden gelir.
     const stepPayload: SaveFlowPayload['steps'] = steps.map((step, stepIndex) => ({
       stepName: step.stepName,
       stepOrder: stepIndex + 1,
@@ -274,8 +274,7 @@ export default function BuilderPage() {
         placeholder: field.placeholder ?? '',
         required: Boolean(field.required),
         orderNo: fieldIndex + 1,
-        roleIds: field.roleIds ?? [],
-        userIds: field.userIds ?? [],
+        permissions: field.permissions ?? [],
         options: field.options ?? [],
       })),
       ...(step.externalFlowEnabled

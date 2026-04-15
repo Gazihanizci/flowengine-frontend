@@ -14,6 +14,15 @@ export interface FieldOption {
   value: string
 }
 
+export type FieldPermissionTip = 'ROLE' | 'USER'
+export type FieldPermissionYetkiTipi = 'VIEW' | 'EDIT'
+
+export interface FieldPermission {
+  tip: FieldPermissionTip
+  refId: number
+  yetkiTipi: FieldPermissionYetkiTipi
+}
+
 export interface FormField {
   id: string
   type: FieldType
@@ -21,8 +30,7 @@ export interface FormField {
   placeholder?: string
   required?: boolean
   options?: FieldOption[]
-  roleIds?: number[]
-  userIds?: number[]
+  permissions?: FieldPermission[]
   accept?: string
   multiple?: boolean
 }

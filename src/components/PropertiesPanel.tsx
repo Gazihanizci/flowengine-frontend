@@ -1,10 +1,27 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import type { FormField, FieldOption } from '../types/form'
+import type {
+  FormField,
+  FieldOption,
+  FieldPermission,
+  FieldPermissionTip,
+  FieldPermissionYetkiTipi,
+} from '../types/form'
 import { fetchUserRoles, type UserRoleItem } from '../services/userApi'
 
 interface PropertiesPanelProps {
   field: FormField | null
   onUpdate: (updated: FormField) => void
+}
+
+type SelectedRoleItem = {
+  rolId: number
+  rolAdi: string
+}
+
+type SelectedUserItem = {
+  kullaniciId: number
+  adSoyad: string
+  email: string
 }
 
 export default function PropertiesPanel({
@@ -70,15 +87,42 @@ export default function PropertiesPanel({
     [userRoles, selectedRoleId],
   )
 
-  const selectedRoleItems = useMemo(() => {
-    const ids = field?.roleIds ?? []
-    return roleOptions.filter((role) => ids.includes(role.rolId))
-  }, [field?.roleIds, roleOptions])
+  const permissions = useMemo(() => field?.permissions ?? [], [field?.permissions])
 
-  const selectedUserItems = useMemo(() => {
-    const ids = field?.userIds ?? []
-    return userRoles.filter((item) => ids.includes(item.kullaniciId))
-  }, [field?.userIds, userRoles])
+  const selectedRoleItems = useMemo<SelectedRoleItem[]>(() => {
+    const roleIds = Array.from(
+      new Set(
+        permissions
+          .filter((permission) => permission.tip === 'ROLE')
+          .map((permission) => permission.refId),
+      ),
+    )
+    return roleIds.map((rolId) => {
+      const knownRole = roleOptions.find((role) => role.rolId === rolId)
+      return {
+        rolId,
+        rolAdi: knownRole?.rolAdi ?? `ROL-${rolId}`,
+      }
+    })
+  }, [permissions, roleOptions])
+
+  const selectedUserItems = useMemo<SelectedUserItem[]>(() => {
+    const userIds = Array.from(
+      new Set(
+        permissions
+          .filter((permission) => permission.tip === 'USER')
+          .map((permission) => permission.refId),
+      ),
+    )
+    return userIds.map((kullaniciId) => {
+      const knownUser = userRoles.find((item) => item.kullaniciId === kullaniciId)
+      return {
+        kullaniciId,
+        adSoyad: knownUser?.adSoyad ?? `Kullanici-${kullaniciId}`,
+        email: knownUser?.email ?? '-',
+      }
+    })
+  }, [permissions, userRoles])
 
   const handleOptionAdd = () => {
     if (!field) return
@@ -107,15 +151,83 @@ export default function PropertiesPanel({
     })
   }
 
+  const hasPermission = (
+    tip: FieldPermissionTip,
+    refId: number,
+    yetkiTipi: FieldPermissionYetkiTipi,
+  ) => {
+    return permissions.some(
+      (permission) =>
+        permission.tip === tip &&
+        permission.refId === refId &&
+        permission.yetkiTipi === yetkiTipi,
+    )
+  }
+
+  const addPermission = (
+    list: FieldPermission[],
+    tip: FieldPermissionTip,
+    refId: number,
+    yetkiTipi: FieldPermissionYetkiTipi,
+  ) => {
+    if (
+      list.some(
+        (permission) =>
+          permission.tip === tip &&
+          permission.refId === refId &&
+          permission.yetkiTipi === yetkiTipi,
+      )
+    ) {
+      return list
+    }
+
+    return [...list, { tip, refId, yetkiTipi }]
+  }
+
+  const removePermission = (
+    list: FieldPermission[],
+    tip: FieldPermissionTip,
+    refId: number,
+    yetkiTipi: FieldPermissionYetkiTipi,
+  ) => {
+    return list.filter(
+      (permission) =>
+        !(
+          permission.tip === tip &&
+          permission.refId === refId &&
+          permission.yetkiTipi === yetkiTipi
+        ),
+    )
+  }
+
+  const handlePermissionToggle = (
+    tip: FieldPermissionTip,
+    refId: number,
+    yetkiTipi: FieldPermissionYetkiTipi,
+    checked: boolean,
+  ) => {
+    if (!field) return
+    const base = field.permissions ?? []
+    const next = checked
+      ? addPermission(base, tip, refId, yetkiTipi)
+      : removePermission(base, tip, refId, yetkiTipi)
+
+    onUpdate({
+      ...field,
+      permissions: next,
+    })
+  }
+
   const handleAddRole = () => {
     if (!field || !selectedRoleId) return
     const roleId = Number(selectedRoleId)
     if (!Number.isFinite(roleId)) return
-    const next = field.roleIds ?? []
-    if (next.includes(roleId)) return
+    if (permissions.some((permission) => permission.tip === 'ROLE' && permission.refId === roleId)) {
+      return
+    }
     onUpdate({
       ...field,
-      roleIds: [...next, roleId],
+      permissions: [...permissions, { tip: 'ROLE', refId: roleId, yetkiTipi: 'EDIT' }],
     })
   }
 
@@ -123,7 +235,9 @@ export default function PropertiesPanel({
     if (!field) return
     onUpdate({
       ...field,
-      roleIds: (field.roleIds ?? []).filter((id) => id !== roleId),
+      permissions: permissions.filter(
+        (permission) => !(permission.tip === 'ROLE' && permission.refId === roleId),
+      ),
     })
   }
 
@@ -131,11 +245,12 @@ export default function PropertiesPanel({
     if (!field || !value) return
     const userId = Number(value)
     if (!Number.isFinite(userId)) return
-    const next = field.userIds ?? []
-    if (next.includes(userId)) return
+    if (permissions.some((permission) => permission.tip === 'USER' && permission.refId === userId)) {
+      return
+    }
     onUpdate({
       ...field,
-      userIds: [...next, userId],
+      permissions: [...permissions, { tip: 'USER', refId: userId, yetkiTipi: 'EDIT' }],
     })
   }
 
@@ -143,7 +258,9 @@ export default function PropertiesPanel({
     if (!field) return
     onUpdate({
       ...field,
-      userIds: (field.userIds ?? []).filter((id) => id !== userId),
+      permissions: permissions.filter(
+        (permission) => !(permission.tip === 'USER' && permission.refId === userId),
+      ),
     })
   }
 
@@ -264,8 +381,32 @@ export default function PropertiesPanel({
           {selectedRoleItems.length > 0 && (
             <div className="selected-list">
               {selectedRoleItems.map((role) => (
-                <div key={role.rolId} className="selected-item">
-                  <span>{role.rolAdi}</span>
+                <div key={role.rolId} className="selected-item permission-item">
+                  <div className="permission-item-main">
+                    <span>{role.rolAdi} (ID: {role.rolId})</span>
+                    <div className="permission-toggles">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={hasPermission('ROLE', role.rolId, 'VIEW')}
+                          onChange={(event) =>
+                            handlePermissionToggle('ROLE', role.rolId, 'VIEW', event.target.checked)
+                          }
+                        />
+                        <span>Görme (VIEW)</span>
+                      </label>
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={hasPermission('ROLE', role.rolId, 'EDIT')}
+                          onChange={(event) =>
+                            handlePermissionToggle('ROLE', role.rolId, 'EDIT', event.target.checked)
+                          }
+                        />
+                        <span>Yazma (EDIT)</span>
+                      </label>
+                    </div>
+                  </div>
                   <button
                     className="icon-button"
                     type="button"
@@ -302,10 +443,44 @@ export default function PropertiesPanel({
           {selectedUserItems.length > 0 && (
             <div className="selected-list">
               {selectedUserItems.map((user) => (
-                <div key={`${user.kullaniciId}-${user.email}`} className="selected-item">
-                  <span>
-                    {user.adSoyad} ({user.email})
-                  </span>
+                <div key={`${user.kullaniciId}-${user.email}`} className="selected-item permission-item">
+                  <div className="permission-item-main">
+                    <span>
+                      {user.adSoyad} ({user.email}) (ID: {user.kullaniciId})
+                    </span>
+                    <div className="permission-toggles">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={hasPermission('USER', user.kullaniciId, 'VIEW')}
+                          onChange={(event) =>
+                            handlePermissionToggle(
+                              'USER',
+                              user.kullaniciId,
+                              'VIEW',
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        <span>Görme (VIEW)</span>
+                      </label>
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={hasPermission('USER', user.kullaniciId, 'EDIT')}
+                          onChange={(event) =>
+                            handlePermissionToggle(
+                              'USER',
+                              user.kullaniciId,
+                              'EDIT',
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        <span>Yazma (EDIT)</span>
+                      </label>
+                    </div>
+                  </div>
                   <button
                     className="icon-button"
                     type="button"

@@ -878,6 +878,25 @@ label {
   background: #ffffff;
 }
 
+.permission-item {
+  align-items: flex-start;
+}
+
+.permission-item-main {
+  display: grid;
+  gap: 8px;
+}
+
+.permission-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.permission-toggles .checkbox {
+  margin: 0;
+}
+
 .option-list {
   margin-top: 12px;
   display: grid;
