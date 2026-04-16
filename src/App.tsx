@@ -11,9 +11,11 @@ import FlowMapPage from './pages/FlowMapPage'
 import { useUserStore } from './store/userStore'
 import FlowPreview from './pages/FlowPreview'
 import MyTasks from './pages/MyTasks'
+import TaskDetailPage from './pages/TaskDetailPage'
 import RoleManagementPage from './pages/RoleManagementPage'
 import FileUploadDemo from './pages/FileUploadDemo'
 import PdfReportsPage from './pages/PdfReportsPage'
+import HistoryPage from './pages/HistoryPage'
 import './App.css'
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -80,7 +82,9 @@ function App() {
         >
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<MyTasks />} />
+          <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
           <Route path="/pdf-reports" element={<PdfReportsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/file-upload-demo" element={<FileUploadDemo />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route

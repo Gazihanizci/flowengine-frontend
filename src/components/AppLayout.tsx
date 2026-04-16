@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { fetchMe, type MeResponseItem } from '../services/userApi'
 import { fetchUnreadNotificationCount } from '../services/notificationApi'
 import { fetchMyTasks } from '../services/taskApi'
@@ -7,9 +7,11 @@ import { useUserStore } from '../store/userStore'
 
 export default function AppLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [user, setUserState] = useState<MeResponseItem | null>(null)
   const [taskCount, setTaskCount] = useState(0)
   const [notificationCount, setNotificationCount] = useState(0)
+  const knownTaskIdsRef = useRef<Set<number> | null>(null)
   const setUser = useUserStore((state) => state.setUser)
   const setLoaded = useUserStore((state) => state.setLoaded)
   const clearUser = useUserStore((state) => state.clearUser)
@@ -38,6 +40,7 @@ export default function AppLayout() {
   useEffect(() => {
     if (!user || user.rolId === 4) {
       setTaskCount(0)
+      knownTaskIdsRef.current = null
       return
     }
 
@@ -47,7 +50,25 @@ export default function AppLayout() {
       try {
         const tasks = await fetchMyTasks()
         if (!cancelled) {
-          setTaskCount(Array.isArray(tasks) ? tasks.length : 0)
+          const taskList = Array.isArray(tasks) ? tasks : []
+          setTaskCount(taskList.length)
+
+          const currentIds = new Set(taskList.map((task) => task.taskId))
+          const previousIds = knownTaskIdsRef.current
+
+          if (previousIds) {
+            const newTasks = taskList.filter((task) => !previousIds.has(task.taskId))
+
+            if (newTasks.length > 0) {
+              const newestTask = newTasks.sort((a, b) => b.taskId - a.taskId)[0]
+              const targetPath = `/tasks/${newestTask.taskId}`
+              if (location.pathname !== targetPath) {
+                navigate(targetPath)
+              }
+            }
+          }
+
+          knownTaskIdsRef.current = currentIds
         }
       } catch {
         if (!cancelled) {
@@ -63,7 +84,7 @@ export default function AppLayout() {
       cancelled = true
       window.clearInterval(intervalId)
     }
-  }, [user])
+  }, [location.pathname, navigate, user])
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
@@ -143,6 +164,13 @@ export default function AppLayout() {
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
             PDF Raporlari
+          </NavLink>
+
+          <NavLink
+            to="/history"
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            Islem Gecmisi
           </NavLink>
 
           {user?.rolId === 4 ? (

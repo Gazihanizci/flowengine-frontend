@@ -34,6 +34,8 @@ export interface WorkflowTask {
   surecId: number
   adimId: number
   adimAdi: string
+  akisAdi?: string | null
+  akisAciklama?: string | null
   form: TaskField[]
   actions?: TaskAction[]
 }

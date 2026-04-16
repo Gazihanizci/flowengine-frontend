@@ -57,6 +57,17 @@ export default function TaskForm({
         </div>
       </div>
 
+      <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akis Adi</p>
+          <p className="mt-1 text-sm font-medium text-slate-900">{task.akisAdi?.trim() || '-'}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akis Aciklamasi</p>
+          <p className="mt-1 text-sm text-slate-700">{task.akisAciklama?.trim() || '-'}</p>
+        </div>
+      </div>
+
       <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
         <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Duzenlenebilir Alanlar</p>

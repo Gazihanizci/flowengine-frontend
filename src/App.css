@@ -37,6 +37,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar-brand {
@@ -66,7 +70,7 @@ body {
 }
 
 .logout-button {
-  margin-top: auto;
+  margin-top: 8px;
   width: 100%;
 }
 
@@ -1738,6 +1742,9 @@ label {
   .sidebar {
     flex-direction: row;
     align-items: center;
+    position: static;
+    height: auto;
+    overflow: visible;
   }
 
   .sidebar-nav {

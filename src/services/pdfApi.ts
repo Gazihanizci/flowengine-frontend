@@ -30,6 +30,18 @@ function resolveFileName(contentDisposition: string | undefined, surecId: number
   return `rapor_${surecId}.pdf`
 }
 
+export interface SurecListItem {
+  surecId: number
+  akisAdi: string
+  akisAciklama: string
+  baslamaTarihi: string
+}
+
+export async function fetchSurecler() {
+  const { data } = await pdfApi.get<SurecListItem[]>('/surecler')
+  return data
+}
+
 export async function downloadPdfBySurecId(surecId: number) {
   const response = await pdfApi.get(`/pdf/generate/${surecId}`, {
     responseType: 'blob',
