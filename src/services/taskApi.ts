@@ -18,8 +18,23 @@ taskApi.interceptors.request.use((config) => {
 })
 
 export async function fetchMyTasks() {
-  const { data } = await taskApi.get<WorkflowTask[]>('/mytasks')
-  return data
+  try {
+    const { data } = await taskApi.get<WorkflowTask[]>('/my-tasks')
+    return data
+  } catch {
+    const { data } = await taskApi.get<WorkflowTask[]>('/mytasks')
+    return data
+  }
+}
+
+export async function fetchFlowDetailBySurecId(surecId: number) {
+  try {
+    const { data } = await taskApi.get(`/flow-detail/${surecId}`)
+    return data
+  } catch {
+    const { data } = await taskApi.get(`/workflow/${surecId}`)
+    return data
+  }
 }
 
 function extractApiError(error: unknown): string {

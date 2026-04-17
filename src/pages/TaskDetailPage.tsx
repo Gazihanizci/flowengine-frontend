@@ -1,14 +1,84 @@
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
-import TaskForm from '../components/TaskForm'
-import { fetchMyTasks, submitTaskAction } from '../services/taskApi'
+import TaskFieldRenderer from '../components/TaskFieldRenderer'
+import { fetchFlowDetailBySurecId, fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { fetchMe } from '../services/userApi'
 import { useUserStore } from '../store/userStore'
-import type { TaskFileMap, TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
+import type { TaskAction, TaskField, TaskFieldType, TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
 import { validateTaskForm } from '../utils/taskValidation'
 
-function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue {
+interface FlowDetailStep {
+  adimId: number
+  adimAdi: string
+  form: TaskField[]
+  actions: TaskAction[]
+}
+
+type RawFlowDetailArrayItem = {
+  adimId?: number
+  adimAdi?: string
+  form?: unknown[]
+  fields?: unknown[]
+  actions?: Array<{ actionId?: number; id?: number; label?: string; name?: string }>
+}
+
+type RawFlowDetail = RawFlowDetailArrayItem[] | { steps?: RawFlowDetailArrayItem[] } | null
+
+type RawField = {
+  fieldId?: number
+  id?: number
+  type?: string
+  label?: string
+  secenekler?: Array<{
+    label?: string
+    value?: string | number
+    ad?: string
+    kod?: string | number
+  }>
+  choices?: Array<{
+    label?: string
+    value?: string | number
+    name?: string
+    id?: string | number
+  }>
+  values?: Array<{
+    label?: string
+    value?: string | number
+  }>
+  options?: Array<{
+    label?: string
+    value?: string | number
+    selected?: boolean
+    isSelected?: boolean
+    checked?: boolean
+    default?: boolean
+  }>
+  editable?: boolean
+  value?: TaskFormValue
+  deger?: TaskFormValue
+  fieldValue?: TaskFormValue
+  selectedValue?: TaskFormValue
+  actionId?: number
+}
+
+const SUPPORTED_FIELD_TYPES: TaskFieldType[] = [
+  'TEXT',
+  'TEXTAREA',
+  'NUMBER',
+  'DATE',
+  'RADIO',
+  'CHECKBOX',
+  'FILE',
+  'COMBOBOX',
+  'BUTTON',
+]
+
+function toStepFieldKey(adimId: number, fieldId: number) {
+  return `${adimId}:${fieldId}`
+}
+
+function resolveInitialValue(field: TaskField): TaskFormValue {
   if (field.value !== undefined) {
     return field.value
   }
@@ -16,39 +86,168 @@ function resolveInitialValue(field: WorkflowTask['form'][number]): TaskFormValue
   return field.type === 'CHECKBOX' ? false : ''
 }
 
-function createInitialFormData(task: WorkflowTask): TaskFormData {
-  const initialData: TaskFormData = {}
+function extractOptions(rawField: RawField, fallbackOptions: TaskField['options'] = []): TaskField['options'] {
+  const rawOptions =
+    (Array.isArray(rawField.options) && rawField.options) ||
+    (Array.isArray(rawField.secenekler) && rawField.secenekler) ||
+    (Array.isArray(rawField.choices) && rawField.choices) ||
+    (Array.isArray(rawField.values) && rawField.values) ||
+    []
 
-  task.form.forEach((field) => {
-    initialData[field.fieldId] = resolveInitialValue(field)
+  const mapped = rawOptions
+    .map((option) => {
+      const optionRecord = option as Record<string, unknown>
+      const rawLabel = optionRecord.label ?? optionRecord.ad ?? optionRecord.name
+      const rawValue = optionRecord.value ?? optionRecord.kod ?? optionRecord.id
+      if (rawLabel === undefined && rawValue === undefined) {
+        return null
+      }
+
+      return {
+        label: String(rawLabel ?? rawValue ?? ''),
+        value: String(rawValue ?? rawLabel ?? ''),
+      }
+    })
+    .filter((option): option is NonNullable<typeof option> => option !== null)
+
+  if (mapped.length > 0) {
+    return mapped
+  }
+
+  return fallbackOptions ?? []
+}
+
+function normalizeField(rawField: RawField, index: number, fallbackField?: TaskField): TaskField {
+  const resolvedType = (rawField.type || 'TEXT').toUpperCase() as TaskFieldType
+  const type = SUPPORTED_FIELD_TYPES.includes(resolvedType) ? resolvedType : 'TEXT'
+  const fieldId = Number(rawField.fieldId ?? rawField.id ?? index + 1)
+  const normalizedOptions = extractOptions(rawField, fallbackField?.options)
+
+  let normalizedValue: TaskFormValue =
+    rawField.value ?? rawField.deger ?? rawField.fieldValue ?? rawField.selectedValue ?? fallbackField?.value ?? null
+
+  if ((type === 'RADIO' || type === 'COMBOBOX') && (normalizedValue === null || normalizedValue === '')) {
+    const selectedSource =
+      (Array.isArray(rawField.options) && rawField.options) ||
+      (Array.isArray(rawField.secenekler) && rawField.secenekler) ||
+      (Array.isArray(rawField.choices) && rawField.choices) ||
+      (Array.isArray(rawField.values) && rawField.values) ||
+      []
+
+    const selectedOption = selectedSource.find((option) => {
+      const optionRecord = option as Record<string, unknown>
+      return Boolean(
+        optionRecord.selected || optionRecord.isSelected || optionRecord.checked || optionRecord.default,
+      )
+    }) as Record<string, unknown> | undefined
+
+    const selectedValue = selectedOption?.value ?? selectedOption?.kod ?? selectedOption?.id
+    if (selectedValue !== undefined && selectedValue !== null) {
+      normalizedValue = String(selectedValue)
+    }
+  }
+
+  if ((type === 'RADIO' || type === 'COMBOBOX') && normalizedValue !== null && normalizedValue !== undefined) {
+    normalizedValue = String(normalizedValue)
+  }
+
+  if (type === 'NUMBER' && typeof normalizedValue === 'string' && normalizedValue.trim() !== '') {
+    const asNumber = Number(normalizedValue)
+    if (!Number.isNaN(asNumber)) {
+      normalizedValue = asNumber
+    }
+  }
+
+  return {
+    fieldId,
+    type,
+    label: rawField.label?.trim() || fallbackField?.label || `Alan ${fieldId}`,
+    editable: rawField.editable === true,
+    value: normalizedValue,
+    actionId: rawField.actionId ?? fallbackField?.actionId,
+    options: normalizedOptions,
+  }
+}
+
+function normalizeFlowDetail(rawDetail: RawFlowDetail, selectedTask: WorkflowTask): FlowDetailStep[] {
+  const rawSteps: RawFlowDetailArrayItem[] = Array.isArray(rawDetail)
+    ? rawDetail
+    : Array.isArray(rawDetail?.steps)
+      ? rawDetail.steps
+      : []
+
+  const normalized = rawSteps.map((step, stepIndex) => {
+    const rawFields = Array.isArray(step.form) ? step.form : Array.isArray(step.fields) ? step.fields : []
+    const fields = rawFields
+      .map((item, index) => {
+        const rawField = item as RawField
+        const fallbackField = selectedTask.form.find(
+          (taskField) => taskField.fieldId === Number(rawField.fieldId ?? rawField.id ?? -1),
+        )
+        return normalizeField(rawField, index, fallbackField)
+      })
+      .filter((field) => Number.isFinite(field.fieldId))
+
+    const actions = (step.actions ?? []).map((action, index) => ({
+      actionId: Number(action.actionId ?? action.id ?? index + 1),
+      label: action.label ?? action.name ?? `Aksiyon ${index + 1}`,
+    }))
+
+    return {
+      adimId: Number(step.adimId ?? stepIndex + 1),
+      adimAdi: step.adimAdi?.trim() || `Adim ${stepIndex + 1}`,
+      form: fields,
+      actions,
+    }
   })
 
+  if (normalized.length > 0) {
+    return normalized
+  }
+
+  return [
+    {
+      adimId: selectedTask.adimId,
+      adimAdi: selectedTask.adimAdi,
+      form: selectedTask.form,
+      actions: selectedTask.actions ?? [],
+    },
+  ]
+}
+
+function createInitialFormData(steps: FlowDetailStep[]): TaskFormData {
+  const initialData: TaskFormData = {}
+  steps.forEach((step) => {
+    step.form.forEach((field) => {
+      initialData[toStepFieldKey(step.adimId, field.fieldId)] = resolveInitialValue(field)
+    })
+  })
   return initialData
 }
 
-function buildEditableFormData(task: WorkflowTask, formData: TaskFormData): TaskFormData {
+function buildEditableStepPayload(step: FlowDetailStep, formData: TaskFormData) {
   const payload: TaskFormData = {}
 
-  task.form.forEach((field) => {
+  step.form.forEach((field) => {
     if (!field.editable) {
       return
     }
 
-    payload[field.fieldId] = formData[field.fieldId] ?? resolveInitialValue(field)
+    payload[field.fieldId] = formData[toStepFieldKey(step.adimId, field.fieldId)] ?? resolveInitialValue(field)
   })
 
   return payload
 }
 
-function buildEditableFiles(task: WorkflowTask, files: TaskFileMap): TaskFileMap {
-  const payload: TaskFileMap = {}
+function buildEditableStepFiles(step: FlowDetailStep, filesByStepField: Record<string, File>) {
+  const payload: Record<number, File> = {}
 
-  task.form.forEach((field) => {
+  step.form.forEach((field) => {
     if (!field.editable || field.type !== 'FILE') {
       return
     }
 
-    const file = files[field.fieldId]
+    const file = filesByStepField[toStepFieldKey(step.adimId, field.fieldId)]
     if (file) {
       payload[field.fieldId] = file
     }
@@ -63,23 +262,25 @@ export default function TaskDetailPage() {
   const user = useUserStore((state) => state.user)
   const setUser = useUserStore((state) => state.setUser)
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
+  const [selectedTask, setSelectedTask] = useState<WorkflowTask | null>(null)
+  const [flowDetail, setFlowDetail] = useState<FlowDetailStep[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingFlowDetail, setLoadingFlowDetail] = useState(false)
   const [loadingAction, setLoadingAction] = useState<'save' | 'submit' | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [formData, setFormData] = useState<TaskFormData>({})
-  const [files, setFiles] = useState<TaskFileMap>({})
+  const [filesByStepField, setFilesByStepField] = useState<Record<string, File>>({})
 
   const numericTaskId = Number(taskId)
 
-  const selectedTask = useMemo(
-    () => tasks.find((task) => task.taskId === numericTaskId) ?? null,
-    [tasks, numericTaskId],
+  const activeSteps = useMemo(() => flowDetail.filter((step) => step.form.some((field) => field.editable)), [flowDetail])
+  const editableCount = useMemo(
+    () => flowDetail.reduce((count, step) => count + step.form.filter((field) => field.editable).length, 0),
+    [flowDetail],
   )
-
-  const editableCount = selectedTask ? selectedTask.form.filter((field) => field.editable).length : 0
-  const readonlyCount = selectedTask ? selectedTask.form.length - editableCount : 0
+  const totalCount = useMemo(() => flowDetail.reduce((count, step) => count + step.form.length, 0), [flowDetail])
 
   const loadTasks = async () => {
     setLoading(true)
@@ -89,6 +290,9 @@ export default function TaskDetailPage() {
       const data = await fetchMyTasks()
       const taskList = Array.isArray(data) ? data : []
       setTasks(taskList)
+
+      const currentTask = taskList.find((task) => task.taskId === numericTaskId) ?? null
+      setSelectedTask(currentTask)
     } catch {
       setError('Gorev detayi alinamadi.')
     } finally {
@@ -97,14 +301,35 @@ export default function TaskDetailPage() {
   }
 
   useEffect(() => {
+    if (!taskId || Number.isNaN(numericTaskId)) return
     loadTasks()
-  }, [])
+  }, [taskId, numericTaskId])
 
   useEffect(() => {
-    if (!selectedTask) return
-    setFormData(createInitialFormData(selectedTask))
-    setFiles({})
-    setSubmitError(null)
+    if (!selectedTask) {
+      setFlowDetail([])
+      return
+    }
+
+    const loadFlowDetail = async () => {
+      setLoadingFlowDetail(true)
+      setSubmitError(null)
+
+      try {
+        const rawDetail = (await fetchFlowDetailBySurecId(selectedTask.surecId)) as RawFlowDetail
+        const normalizedSteps = normalizeFlowDetail(rawDetail, selectedTask)
+        setFlowDetail(normalizedSteps)
+        setFormData(createInitialFormData(normalizedSteps))
+        setFilesByStepField({})
+      } catch {
+        setFlowDetail([])
+        setSubmitError('Flow detayi alinamadi. Form gosterilemiyor.')
+      } finally {
+        setLoadingFlowDetail(false)
+      }
+    }
+
+    loadFlowDetail()
   }, [selectedTask])
 
   useEffect(() => {
@@ -114,33 +339,36 @@ export default function TaskDetailPage() {
     return () => window.clearTimeout(timer)
   }, [successMessage])
 
-  const handleChangeField = (fieldId: number, value: TaskFormValue) => {
+  const handleChangeField = (adimId: number, fieldId: number, value: TaskFormValue) => {
     setFormData((prev) => ({
       ...prev,
-      [fieldId]: value,
+      [toStepFieldKey(adimId, fieldId)]: value,
     }))
   }
 
-  const handleChangeFile = (fieldId: number, file: File | null) => {
-    setFiles((prev) => {
+  const handleChangeFile = (adimId: number, fieldId: number, file: File | null) => {
+    const key = toStepFieldKey(adimId, fieldId)
+
+    setFilesByStepField((prev) => {
       const next = { ...prev }
       if (file) {
-        next[fieldId] = file
+        next[key] = file
       } else {
-        delete next[fieldId]
+        delete next[key]
       }
       return next
     })
 
-    setFormData((prev) => {
-      const next = { ...prev }
-      next[fieldId] = file ? file.name : ''
-      return next
-    })
+    setFormData((prev) => ({
+      ...prev,
+      [key]: file ? file.name : '',
+    }))
   }
 
-  const handleSubmitAction = async (aksiyonId: 1 | 2 | 3) => {
+  const handleSubmitAction = async (step: FlowDetailStep, aksiyonId: 1 | 2 | 3) => {
     if (!selectedTask) return
+    const isActive = step.form.some((field) => field.editable)
+    if (!isActive) return
 
     const confirmMessage =
       aksiyonId === 2
@@ -153,8 +381,20 @@ export default function TaskDetailPage() {
       return
     }
 
+    const activeStepTask: WorkflowTask = {
+      ...selectedTask,
+      adimId: step.adimId,
+      adimAdi: step.adimAdi,
+      form: step.form,
+      actions: step.actions,
+    }
+
     if (aksiyonId === 1) {
-      const validationError = validateTaskForm(selectedTask, formData)
+      const stepFormData: TaskFormData = {}
+      step.form.forEach((field) => {
+        stepFormData[field.fieldId] = formData[toStepFieldKey(step.adimId, field.fieldId)] ?? resolveInitialValue(field)
+      })
+      const validationError = validateTaskForm(activeStepTask, stepFormData)
       if (validationError) {
         setSubmitError(validationError)
         return
@@ -165,8 +405,8 @@ export default function TaskDetailPage() {
     setSubmitError(null)
 
     try {
-      const payload = buildEditableFormData(selectedTask, formData)
-      const filePayload = buildEditableFiles(selectedTask, files)
+      const payload = buildEditableStepPayload(step, formData)
+      const filePayload = buildEditableStepFiles(step, filesByStepField)
       const hasFile = Object.keys(filePayload).length > 0
 
       let userId = user?.kullaniciId
@@ -188,7 +428,7 @@ export default function TaskDetailPage() {
 
       await submitTaskAction(selectedTask.taskId, payload, aksiyonId, filePayload, {
         surecId: selectedTask.surecId,
-        adimId: selectedTask.adimId,
+        adimId: step.adimId,
         userId: userId ?? 0,
       })
 
@@ -272,9 +512,16 @@ export default function TaskDetailPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Task Detail</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{selectedTask.akisAdi?.trim() || 'Akis adi belirtilmedi'}</h1>
         <p className="mt-2 text-sm text-slate-300">
-          Task #{selectedTask.taskId} | Surec #{selectedTask.surecId} | Adim: {selectedTask.adimAdi}
+          Task #{selectedTask.taskId} | Surec #{selectedTask.surecId}
         </p>
+        <p className="mt-1 text-xs text-slate-400">Aktif gorev listesi kayit sayisi: {tasks.length}</p>
       </div>
+
+      {loadingFlowDetail ? (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          Flow detay verisi yukleniyor...
+        </div>
+      ) : null}
 
       {successMessage ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
@@ -282,21 +529,114 @@ export default function TaskDetailPage() {
         </div>
       ) : null}
 
-      <TaskForm
-        task={selectedTask}
-        formData={formData}
-        files={files}
-        submitError={submitError}
-        loadingAction={loadingAction}
-        onChangeField={handleChangeField}
-        onChangeFile={handleChangeFile}
-        onSave={() => handleSubmitAction(2)}
-        onSubmit={() => handleSubmitAction(1)}
-        onCancel={() => handleSubmitAction(3)}
-      />
+      {submitError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {submitError}
+        </div>
+      ) : null}
+
+      <div className="space-y-4">
+        {flowDetail.map((step, index) => {
+          const isActive = step.form.some((field) => field.editable)
+
+          return (
+            <section
+              key={`${step.adimId}-${index}`}
+              className={`rounded-3xl border p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${
+                isActive ? 'border-cyan-300 bg-white' : 'border-slate-300 bg-slate-100'
+              }`}
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Step {index + 1}</p>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-900">{step.adimAdi}</h2>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    isActive ? 'border border-cyan-200 bg-cyan-50 text-cyan-700' : 'border border-slate-300 bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {isActive ? 'Aktif' : 'Tamamlandi'}
+                </span>
+              </div>
+
+              <div className="grid gap-4">
+                {step.form.map((field) => {
+                  const readonlyField = isActive ? field : { ...field, editable: false }
+                  return (
+                    <TaskFieldRenderer
+                      key={`${step.adimId}-${field.fieldId}`}
+                      field={readonlyField}
+                      value={formData[toStepFieldKey(step.adimId, field.fieldId)]}
+                      fileName={filesByStepField[toStepFieldKey(step.adimId, field.fieldId)]?.name}
+                      onChange={(fieldId, value) => handleChangeField(step.adimId, fieldId, value)}
+                      onFileChange={(fieldId, file) => handleChangeFile(step.adimId, fieldId, file)}
+                    />
+                  )
+                })}
+              </div>
+
+              {isActive ? (
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-3 text-sm font-medium text-slate-700">
+                    Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      disabled={loadingAction !== null}
+                      onClick={() => handleSubmitAction(step, 2)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    >
+                      {loadingAction === 'save' ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                          Kaydediliyor...
+                        </>
+                      ) : (
+                        'Kaydet'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loadingAction !== null}
+                      onClick={() => handleSubmitAction(step, 3)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+                    >
+                      {loadingAction === 'cancel' ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                          Iptal ediliyor...
+                        </>
+                      ) : (
+                        'Reddet'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loadingAction !== null}
+                      onClick={() => handleSubmitAction(step, 1)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+                    >
+                      {loadingAction === 'submit' ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                          Gonderiliyor...
+                        </>
+                      ) : (
+                        'Gonder'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          )
+        })}
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 shadow-sm">
-        <strong className="font-semibold text-slate-800">Sistem Ozeti:</strong> Toplam {selectedTask.form.length} alanin {editableCount} adedi kullaniciya atanmis, {readonlyCount} adedi salt okunur.
+        <strong className="font-semibold text-slate-800">Sistem Ozeti:</strong> Toplam {totalCount} alanin {editableCount} adedi kullaniciya atanmis, {totalCount - editableCount} adedi salt okunur. Aktif adim sayisi: {activeSteps.length}
       </div>
 
       <button

@@ -30,13 +30,9 @@ export default function Dashboard() {
     let mounted = true
 
     const load = async () => {
-      if (!isAdmin) {
-        setLoading(false)
-        return
-      }
-
       try {
         setLoading(true)
+        setError(null)
         const data = await fetchFlows()
         if (mounted) {
           setFlows(data)
@@ -60,7 +56,7 @@ export default function Dashboard() {
     return () => {
       mounted = false
     }
-  }, [isAdmin])
+  }, [])
 
   useEffect(() => {
     if (!isAdmin || selectedFlowId === null) return
@@ -159,7 +155,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <section className="grid gap-4 lg:grid-cols-2">
+          <section className="grid gap-4 lg:grid-cols-3">
             <article className="panel">
               <h2>Gorevler</h2>
               <p className="hint">Atanan gorevleri gor, formu doldur ve aksiyon al.</p>
@@ -176,6 +172,54 @@ export default function Dashboard() {
               <div className="mt-4">
                 <button className="button primary" type="button" onClick={() => navigate('/notifications')}>
                   Bildirimler Sayfasina Git
+                </button>
+              </div>
+            </article>
+
+            <article className="panel user-flow-start-panel">
+              <div className="user-flow-start-hero">
+                <p className="user-flow-start-kicker">Quick Start</p>
+                <h2>Akis Baslat</h2>
+                <p>Admin panelindeki gibi akis secip yeni surec baslatin.</p>
+              </div>
+
+              <div className="user-flow-start-body">
+                <label className="user-flow-start-label" htmlFor="flow-select-user">
+                  Akis secimi
+                </label>
+                <div className="user-flow-start-select-wrap">
+                  <select
+                    id="flow-select-user"
+                    className="input user-flow-start-select"
+                    value={selectedFlowId ?? ''}
+                    onChange={(event) => setSelectedFlowId(Number(event.target.value))}
+                    disabled={loading || flows.length === 0}
+                  >
+                    {flows.length === 0 ? <option value="">Akis bulunamadi</option> : null}
+                    {flows.map((flow) => (
+                      <option key={flow.akisId} value={flow.akisId}>
+                        #{flow.akisId} - {flow.akisAdi}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="user-flow-start-meta">
+                  <span>Toplam akis: {flows.length}</span>
+                  <span>Secili ID: {selectedFlowId ?? '-'}</span>
+                </div>
+
+                {error ? <p className="error-text">{error}</p> : null}
+                {flowStartError ? <p className="error-text">{flowStartError}</p> : null}
+                {flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
+
+                <button
+                  className="button user-flow-start-button"
+                  type="button"
+                  onClick={handleStartFlow}
+                  disabled={!selectedFlowId || flowStartLoading || loading}
+                >
+                  {flowStartLoading ? 'Baslatiliyor...' : 'Flow Baslat'}
                 </button>
               </div>
             </article>

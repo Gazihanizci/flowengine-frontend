@@ -104,58 +104,60 @@ export default function TaskForm({
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="mb-3 text-sm font-medium text-slate-700">
-            Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={loadingAction !== null}
-              onClick={onSave}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {loadingAction === 'save' ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                  Kaydediliyor...
-                </>
-              ) : (
-                'Kaydet'
-              )}
-            </button>
-            <button
-              type="button"
-              disabled={loadingAction !== null}
-              onClick={onCancel}
-              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
-            >
-              {loadingAction === 'cancel' ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                  Iptal ediliyor...
-                </>
-              ) : (
-                'Formu Iptal Et'
-              )}
-            </button>
-            <button
-              type="button"
-              disabled={loadingAction !== null}
-              onClick={onSubmit}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
-            >
-              {loadingAction === 'submit' ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                  Gonderiliyor...
-                </>
-              ) : (
-                'Gonder'
-              )}
-            </button>
+        {task.form.some((field) => field.editable) ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-3 text-sm font-medium text-slate-700">
+              Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={loadingAction !== null}
+                onClick={onSave}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {loadingAction === 'save' ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  'Kaydet'
+                )}
+              </button>
+              <button
+                type="button"
+                disabled={loadingAction !== null}
+                onClick={onCancel}
+                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+              >
+                {loadingAction === 'cancel' ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                    Iptal ediliyor...
+                  </>
+                ) : (
+                  'Formu Iptal Et'
+                )}
+              </button>
+              <button
+                type="button"
+                disabled={loadingAction !== null}
+                onClick={onSubmit}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              >
+                {loadingAction === 'submit' ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                    Gonderiliyor...
+                  </>
+                ) : (
+                  'Gonder'
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </form>
     </section>
   )

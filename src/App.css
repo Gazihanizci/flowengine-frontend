@@ -346,6 +346,90 @@ body {
   font-size: 0.85rem;
 }
 
+.user-flow-start-panel {
+  padding: 0;
+  overflow: hidden;
+  border-color: #d7e3fb;
+}
+
+.user-flow-start-hero {
+  padding: 18px 18px 16px;
+  background: linear-gradient(135deg, #0b1b36 0%, #153768 55%, #1f4f8f 100%);
+  color: #ffffff;
+  display: grid;
+  gap: 6px;
+}
+
+.user-flow-start-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.user-flow-start-hero h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.user-flow-start-hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.92rem;
+}
+
+.user-flow-start-body {
+  padding: 16px 18px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.user-flow-start-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #2a3951;
+}
+
+.user-flow-start-select-wrap {
+  border: 1px solid #d5e1f7;
+  border-radius: 12px;
+  padding: 4px;
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+}
+
+.user-flow-start-select {
+  background: #ffffff;
+  border-color: #c7d8f8;
+}
+
+.user-flow-start-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.user-flow-start-meta span {
+  border: 1px solid #d7e3fb;
+  border-radius: 999px;
+  background: #f3f7ff;
+  color: #2f4f85;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.user-flow-start-button {
+  width: 100%;
+  background: linear-gradient(135deg, #0f62fe 0%, #1857da 100%);
+  border: 1px solid rgba(24, 87, 218, 0.6);
+  box-shadow: 0 12px 20px rgba(15, 98, 254, 0.2);
+}
+
+.user-flow-start-button:hover {
+  box-shadow: 0 14px 24px rgba(15, 98, 254, 0.28);
+}
+
 .flow-summary {
   display: grid;
   gap: 10px;
