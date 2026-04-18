@@ -80,7 +80,8 @@ export interface FlowDetailResponse {
 }
 
 export interface StartFlowPayload {
-  akisId: number
+  akisId?: number
+  flowId?: number
 }
 
 export interface StartFlowResponse {
@@ -110,12 +111,52 @@ export interface FlowMapResponse {
   adimlar: FlowMapStepItem[]
 }
 
+export interface FlowPermissionItem {
+  id: number
+  akisId: number
+  tip: 'ROLE' | 'USER'
+  refId: number
+}
+
 export const flowApi = axios.create({
   baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },
 })
+
+flowApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+function extractApiError(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Bilinmeyen hata'
+  }
+
+  const status = error.response?.status
+  const data = error.response?.data as
+    | { message?: string; error?: string; detail?: string; mesaj?: string }
+    | string
+    | undefined
+
+  if (typeof data === 'string' && data.trim()) {
+    return `HTTP ${status ?? '-'}: ${data}`
+  }
+
+  if (data && typeof data === 'object') {
+    const parts = [data.message, data.error, data.detail, data.mesaj].filter(Boolean)
+    if (parts.length > 0) {
+      return `HTTP ${status ?? '-'}: ${parts.join(' | ')}`
+    }
+  }
+
+  return error.message || `HTTP ${status ?? '-'}: API hatasi`
+}
 
 export async function saveFlow(flowData: SaveFlowPayload) {
   const { data } = await flowApi.post<SaveFlowResponse>(
@@ -136,11 +177,48 @@ export async function fetchFlowDetail(flowId: number) {
 }
 
 export async function startFlow(payload: StartFlowPayload) {
-  const { data } = await flowApi.post<StartFlowResponse>('/api/flow/start', payload)
-  return data
+  const flowId = payload.akisId ?? payload.flowId
+  if (!Number.isFinite(flowId)) {
+    throw new Error('Akis baslatmak icin gecerli akisId/flowId gerekli.')
+  }
+
+  const attempts: Array<{ endpoint: string; body: { akisId?: number; flowId?: number } }> = [
+    { endpoint: '/api/flow/start', body: { akisId: flowId } },
+    { endpoint: '/api/flow/start', body: { flowId: flowId } },
+    { endpoint: '/api/flow/star', body: { akisId: flowId } },
+    { endpoint: '/api/flow/star', body: { flowId: flowId } },
+  ]
+
+  let lastError: unknown
+
+  for (const attempt of attempts) {
+    try {
+      const { data } = await flowApi.post<StartFlowResponse>(attempt.endpoint, attempt.body)
+      return data
+    } catch (error) {
+      lastError = error
+
+      if (!axios.isAxiosError(error)) {
+        throw error
+      }
+
+      const status = error.response?.status
+      const shouldTryNext = status === 400 || status === 404 || status === 405 || status === 415 || status === 422
+      if (!shouldTryNext) {
+        throw new Error(extractApiError(error))
+      }
+    }
+  }
+
+  throw new Error(extractApiError(lastError))
 }
 
 export async function fetchFlowMap(akisId: number) {
   const { data } = await flowApi.get<FlowMapResponse>(`/api/flow-map/${akisId}`)
+  return data
+}
+
+export async function fetchFlowPermissions() {
+  const { data } = await flowApi.get<FlowPermissionItem[]>('/api/flow-yetki')
   return data
 }

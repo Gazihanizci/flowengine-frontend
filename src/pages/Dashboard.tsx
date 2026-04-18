@@ -8,6 +8,13 @@ function resolveLinkedFlowId(step: FlowDetailResponse['steps'][number]) {
   return step.externalFlowId ?? step.subFlowId ?? step.nextFlowId ?? null
 }
 
+function toErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message
+  }
+  return fallback
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
@@ -89,6 +96,15 @@ export default function Dashboard() {
     () => flows.find((flow) => flow.akisId === selectedFlowId) ?? null,
     [flows, selectedFlowId],
   )
+  const totalFieldCount = useMemo(
+    () => flowDetail?.steps.reduce((sum, step) => sum + step.fields.length, 0) ?? 0,
+    [flowDetail],
+  )
+  const selectedStepOrder = useMemo(() => {
+    if (!flowDetail || activeStepId === null) return null
+    const index = flowDetail.steps.findIndex((step) => step.stepId === activeStepId)
+    return index >= 0 ? index + 1 : null
+  }, [flowDetail, activeStepId])
   const flowNameById = useMemo(() => {
     const entries = flows.map((flow) => [flow.akisId, flow.akisAdi] as const)
     return new Map<number, string>(entries)
@@ -127,8 +143,8 @@ export default function Dashboard() {
       setFlowStartSuccess(
         response?.mesaj || `Akis baslatildi: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`,
       )
-    } catch {
-      setFlowStartError('Akis baslatilamadi.')
+    } catch (error) {
+      setFlowStartError(toErrorMessage(error, 'Akis baslatilamadi.'))
     } finally {
       setFlowStartLoading(false)
     }
@@ -258,6 +274,28 @@ export default function Dashboard() {
         {flowStartError ? <p className="error-text">{flowStartError}</p> : null}
         {flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
 
+        <section className="panel dashboard-spotlight">
+          <div className="dashboard-spotlight-main">
+            <p className="dashboard-spotlight-kicker">Secili Akis</p>
+            <h2>{selectedFlow?.akisAdi ?? 'Akis seciniz'}</h2>
+            <p>{selectedFlow?.aciklama || 'Secili akis icin aciklama bulunmuyor.'}</p>
+          </div>
+          <div className="dashboard-spotlight-meta">
+            <div>
+              <span>Akis ID</span>
+              <strong>{selectedFlow?.akisId ?? '-'}</strong>
+            </div>
+            <div>
+              <span>Toplam Adim</span>
+              <strong>{flowDetail?.steps.length ?? 0}</strong>
+            </div>
+            <div>
+              <span>Toplam Alan</span>
+              <strong>{totalFieldCount}</strong>
+            </div>
+          </div>
+        </section>
+
         <div className="dashboard-stats">
           <div className="stat-card">
             <span>Toplam Akis</span>
@@ -269,7 +307,7 @@ export default function Dashboard() {
           </div>
           <div className="stat-card">
             <span>Toplam Alan</span>
-            <strong>{flowDetail?.steps.reduce((sum, step) => sum + step.fields.length, 0) ?? 0}</strong>
+            <strong>{totalFieldCount}</strong>
           </div>
         </div>
 
@@ -279,6 +317,7 @@ export default function Dashboard() {
               <h2>Akislar</h2>
               <span>{flows.length} kayit</span>
             </div>
+            <p className="panel-subtitle">Detayini incelemek istediginiz akis kaydini secin.</p>
 
             {loading && <p className="hint">Yukleniyor...</p>}
             {error && <p className="error-text">{error}</p>}
@@ -353,6 +392,14 @@ export default function Dashboard() {
                   <div>
                     <span>Adim Sayisi</span>
                     <strong>{flowDetail.steps.length}</strong>
+                  </div>
+                  <div>
+                    <span>Aktif Adim</span>
+                    <strong>{selectedStepOrder ?? '-'}</strong>
+                  </div>
+                  <div>
+                    <span>Alan Sayisi</span>
+                    <strong>{totalFieldCount}</strong>
                   </div>
                 </div>
               </div>

@@ -74,6 +74,7 @@ export async function submitTaskAction(
 ) {
   const requestPayload: TaskFormData = { ...payload }
   const hasFiles = Object.keys(files).length > 0
+  const resolvedUserId = context?.userId
 
   if (hasFiles && context) {
     const uploads = Object.keys(files).map(async (key) => {
@@ -105,13 +106,58 @@ export async function submitTaskAction(
   }
 
   const endpoint = `/tasks/${taskId}/action`
-  let multipartErrorMessage = ''
+  let jsonErrorMessage = ''
+
+  const jsonAttempts: Array<Record<string, unknown>> = []
+  const baseJsonBody: Record<string, unknown> = {
+    aksiyonId,
+    formData: requestPayload,
+  }
+
+  if (typeof resolvedUserId === 'number' && Number.isFinite(resolvedUserId) && resolvedUserId > 0) {
+    jsonAttempts.push({
+      ...baseJsonBody,
+      userId: resolvedUserId,
+    })
+    jsonAttempts.push({
+      ...baseJsonBody,
+      kullaniciId: resolvedUserId,
+    })
+  }
+
+  jsonAttempts.push(baseJsonBody)
+
+  for (const body of jsonAttempts) {
+    try {
+      const { data } = await taskApi.post(endpoint, body)
+      return data
+    } catch (error) {
+      jsonErrorMessage = extractApiError(error)
+
+      if (!axios.isAxiosError(error)) {
+        throw error
+      }
+
+      const status = error.response?.status
+      const shouldTryNextJson =
+        status === 400 || status === 404 || status === 405 || status === 415 || status === 422
+
+      if (!shouldTryNextJson) {
+        throw new Error(`Aksiyon gonderimi basarisiz (json): ${jsonErrorMessage}`)
+      }
+    }
+  }
 
   try {
-    // New backend contract: multipart with aksiyonId + formData(JSON string)
+    // Compatibility fallback for servers expecting multipart.
     const multipartBody = new FormData()
     multipartBody.append('aksiyonId', String(aksiyonId))
     multipartBody.append('formData', JSON.stringify(requestPayload))
+
+    if (typeof resolvedUserId === 'number' && Number.isFinite(resolvedUserId) && resolvedUserId > 0) {
+      multipartBody.append('userId', String(resolvedUserId))
+      multipartBody.append('kullaniciId', String(resolvedUserId))
+    }
 
     const { data } = await taskApi.post(endpoint, multipartBody, {
       headers: {
@@ -119,35 +165,10 @@ export async function submitTaskAction(
       },
     })
     return data
-  } catch (error) {
-    multipartErrorMessage = extractApiError(error)
-
-    // Backward compatibility fallback for servers still expecting JSON
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status
-      const unsupportedContentType =
-        multipartErrorMessage.toLowerCase().includes('content-type') &&
-        multipartErrorMessage.toLowerCase().includes('not supported')
-
-      const shouldFallbackToJson =
-        status === 400 || status === 404 || status === 415 || unsupportedContentType
-
-      if (!shouldFallbackToJson) {
-        throw new Error(`Aksiyon gonderimi basarisiz (multipart): ${multipartErrorMessage}`)
-      }
-    }
-
-    try {
-      const { data } = await taskApi.post(endpoint, {
-        aksiyonId,
-        formData: requestPayload,
-      })
-      return data
-    } catch (jsonError) {
-      const jsonErrorMessage = extractApiError(jsonError)
-      throw new Error(
-        `Aksiyon gonderimi basarisiz. Multipart hata: ${multipartErrorMessage}. JSON fallback hata: ${jsonErrorMessage}`,
-      )
-    }
+  } catch (multipartError) {
+    const multipartErrorMessage = extractApiError(multipartError)
+    throw new Error(
+      `Aksiyon gonderimi basarisiz. JSON hata: ${jsonErrorMessage}. Multipart fallback hata: ${multipartErrorMessage}`,
+    )
   }
 }

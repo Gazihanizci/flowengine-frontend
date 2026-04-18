@@ -232,7 +232,6 @@ function buildEditableStepPayload(step: FlowDetailStep, formData: TaskFormData) 
     if (!field.editable) {
       return
     }
-
     payload[field.fieldId] = formData[toStepFieldKey(step.adimId, field.fieldId)] ?? resolveInitialValue(field)
   })
 
@@ -256,31 +255,43 @@ function buildEditableStepFiles(step: FlowDetailStep, filesByStepField: Record<s
   return payload
 }
 
+function canEditStep(step: FlowDetailStep) {
+  return step.form.some((field) => field.editable)
+}
+
+function canViewStep(step: FlowDetailStep) {
+  return step.form.length > 0 || step.actions.length > 0
+}
+
 export default function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const setUser = useUserStore((state) => state.setUser)
-  const [tasks, setTasks] = useState<WorkflowTask[]>([])
+
   const [selectedTask, setSelectedTask] = useState<WorkflowTask | null>(null)
   const [flowDetail, setFlowDetail] = useState<FlowDetailStep[]>([])
+  const [selectedStepId, setSelectedStepId] = useState<number | null>(null)
+
   const [loading, setLoading] = useState(false)
   const [loadingFlowDetail, setLoadingFlowDetail] = useState(false)
   const [loadingAction, setLoadingAction] = useState<'save' | 'submit' | 'cancel' | null>(null)
+
   const [error, setError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
   const [formData, setFormData] = useState<TaskFormData>({})
   const [filesByStepField, setFilesByStepField] = useState<Record<string, File>>({})
 
   const numericTaskId = Number(taskId)
 
-  const activeSteps = useMemo(() => flowDetail.filter((step) => step.form.some((field) => field.editable)), [flowDetail])
-  const editableCount = useMemo(
-    () => flowDetail.reduce((count, step) => count + step.form.filter((field) => field.editable).length, 0),
-    [flowDetail],
+  const selectedStep = useMemo(
+    () => flowDetail.find((step) => step.adimId === selectedStepId) ?? null,
+    [flowDetail, selectedStepId],
   )
-  const totalCount = useMemo(() => flowDetail.reduce((count, step) => count + step.form.length, 0), [flowDetail])
+  const selectedStepCanEdit = selectedStep ? canEditStep(selectedStep) : false
+  const selectedStepCanView = selectedStep ? canViewStep(selectedStep) : false
 
   const loadTasks = async () => {
     setLoading(true)
@@ -289,8 +300,6 @@ export default function TaskDetailPage() {
     try {
       const data = await fetchMyTasks()
       const taskList = Array.isArray(data) ? data : []
-      setTasks(taskList)
-
       const currentTask = taskList.find((task) => task.taskId === numericTaskId) ?? null
       setSelectedTask(currentTask)
     } catch {
@@ -308,6 +317,7 @@ export default function TaskDetailPage() {
   useEffect(() => {
     if (!selectedTask) {
       setFlowDetail([])
+      setSelectedStepId(null)
       return
     }
 
@@ -333,8 +343,25 @@ export default function TaskDetailPage() {
   }, [selectedTask])
 
   useEffect(() => {
-    if (!successMessage) return
+    if (flowDetail.length === 0) {
+      setSelectedStepId(null)
+      return
+    }
 
+    const selectedStillValid =
+      selectedStepId !== null &&
+      flowDetail.some((step) => step.adimId === selectedStepId && canViewStep(step))
+
+    if (selectedStillValid) {
+      return
+    }
+
+    const firstViewable = flowDetail.find((step) => canViewStep(step))
+    setSelectedStepId(firstViewable?.adimId ?? flowDetail[0].adimId)
+  }, [flowDetail, selectedStepId])
+
+  useEffect(() => {
+    if (!successMessage) return
     const timer = window.setTimeout(() => setSuccessMessage(null), 2500)
     return () => window.clearTimeout(timer)
   }, [successMessage])
@@ -366,34 +393,33 @@ export default function TaskDetailPage() {
   }
 
   const handleSubmitAction = async (step: FlowDetailStep, aksiyonId: 1 | 2 | 3) => {
-    if (!selectedTask) return
-    const isActive = step.form.some((field) => field.editable)
-    if (!isActive) return
+    if (!selectedTask || !canEditStep(step)) return
 
     const confirmMessage =
       aksiyonId === 2
         ? 'Formu kaydetmek istediginize emin misiniz?'
         : aksiyonId === 3
-          ? 'Formu iptal etmek istediginize emin misiniz?'
+          ? 'Formu reddetmek istediginize emin misiniz?'
           : 'Formu gondermek istediginize emin misiniz?'
 
     if (!window.confirm(confirmMessage)) {
       return
     }
 
-    const activeStepTask: WorkflowTask = {
-      ...selectedTask,
-      adimId: step.adimId,
-      adimAdi: step.adimAdi,
-      form: step.form,
-      actions: step.actions,
-    }
-
     if (aksiyonId === 1) {
+      const activeStepTask: WorkflowTask = {
+        ...selectedTask,
+        adimId: step.adimId,
+        adimAdi: step.adimAdi,
+        form: step.form,
+        actions: step.actions,
+      }
+
       const stepFormData: TaskFormData = {}
       step.form.forEach((field) => {
         stepFormData[field.fieldId] = formData[toStepFieldKey(step.adimId, field.fieldId)] ?? resolveInitialValue(field)
       })
+
       const validationError = validateTaskForm(activeStepTask, stepFormData)
       if (validationError) {
         setSubmitError(validationError)
@@ -410,7 +436,7 @@ export default function TaskDetailPage() {
       const hasFile = Object.keys(filePayload).length > 0
 
       let userId = user?.kullaniciId
-      if (hasFile && !userId) {
+      if (!userId) {
         const token = localStorage.getItem('auth_token')
         if (token) {
           const me = await fetchMe(token)
@@ -422,28 +448,24 @@ export default function TaskDetailPage() {
         }
       }
 
-      if (hasFile && !userId) {
-        throw new Error('Dosya yuklemek icin kullanici bilgisi bulunamadi.')
+      if (!userId) {
+        throw new Error('Aksiyon icin kullanici bilgisi bulunamadi. Lutfen tekrar giris yapin.')
       }
 
       await submitTaskAction(selectedTask.taskId, payload, aksiyonId, filePayload, {
         surecId: selectedTask.surecId,
         adimId: step.adimId,
-        userId: userId ?? 0,
+        userId: Number(userId),
       })
 
       if (aksiyonId === 2) {
-        setSuccessMessage(
-          hasFile ? `Taslak basariyla kaydedildi. ${'\u{1F4CE}'} Dosyalar yuklendi.` : 'Taslak basariyla kaydedildi.',
-        )
+        setSuccessMessage(hasFile ? 'Taslak kaydedildi. Dosyalar yuklendi.' : 'Taslak kaydedildi.')
         await loadTasks()
       } else if (aksiyonId === 3) {
-        setSuccessMessage('Form basariyla iptal edildi.')
+        setSuccessMessage('Form reddedildi.')
         navigate('/tasks')
       } else {
-        setSuccessMessage(
-          hasFile ? `Form basariyla gonderildi. ${'\u{1F4CE}'} Dosyalar yuklendi.` : 'Form basariyla gonderildi.',
-        )
+        setSuccessMessage(hasFile ? 'Form gonderildi. Dosyalar yuklendi.' : 'Form gonderildi.')
         navigate('/tasks')
       }
     } catch (requestError) {
@@ -458,7 +480,7 @@ export default function TaskDetailPage() {
       setSubmitError(
         runtimeMessage ??
           apiMessage ??
-          `${aksiyonId === 2 ? 'Kaydetme islemi basarisiz oldu.' : aksiyonId === 3 ? 'Iptal islemi basarisiz oldu.' : 'Gonderim islemi basarisiz oldu.'}${
+          `${aksiyonId === 2 ? 'Kaydetme' : aksiyonId === 3 ? 'Reddetme' : 'Gonderim'} islemi basarisiz oldu.${
             status ? ` (HTTP ${status})` : ''
           }`,
       )
@@ -468,37 +490,27 @@ export default function TaskDetailPage() {
   }
 
   if (!taskId || Number.isNaN(numericTaskId)) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Gecersiz gorev adresi.
-      </div>
-    )
+    return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Gecersiz gorev adresi.</div>
   }
 
   if (loading) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">Gorev detaylari yukleniyor...</div>
-    )
+    return <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Gorev detaylari yukleniyor...</div>
   }
 
   if (error) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        {error}
-      </div>
-    )
+    return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
   }
 
   if (!selectedTask) {
     return (
       <div className="space-y-3">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-          Bu gorev artik listede bulunamadi veya tamamlanmis olabilir.
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+          Bu gorev listede bulunamadi veya tamamlanmis olabilir.
         </div>
         <button
           type="button"
           onClick={() => navigate('/tasks')}
-          className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
           Gorev listesine don
         </button>
@@ -507,142 +519,147 @@ export default function TaskDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-[0_20px_45px_rgba(2,6,23,0.35)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Task Detail</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{selectedTask.akisAdi?.trim() || 'Akis adi belirtilmedi'}</h1>
-        <p className="mt-2 text-sm text-slate-300">
-          Task #{selectedTask.taskId} | Surec #{selectedTask.surecId}
+    <div className="space-y-4">
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Gorev Formu</p>
+        <h1 className="mt-2 text-xl font-semibold text-slate-900">{selectedTask.akisAdi?.trim() || 'Akis formu'}</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Gorev #{selectedTask.taskId} | Surec #{selectedTask.surecId}
         </p>
-        <p className="mt-1 text-xs text-slate-400">Aktif gorev listesi kayit sayisi: {tasks.length}</p>
-      </div>
+      </section>
 
       {loadingFlowDetail ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          Flow detay verisi yukleniyor...
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          Form verisi yukleniyor...
         </div>
       ) : null}
 
       {successMessage ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {successMessage}
         </div>
       ) : null}
 
       {submitError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {submitError}
         </div>
       ) : null}
 
-      <div className="space-y-4">
-        {flowDetail.map((step, index) => {
-          const isActive = step.form.some((field) => field.editable)
+      <div className="grid gap-4 lg:grid-cols-[280px,1fr]">
+        <aside className="rounded-xl border border-slate-200 bg-white p-3">
+          <h2 className="px-2 pb-2 text-sm font-semibold text-slate-800">Flow Adimlari</h2>
+          <div className="space-y-2">
+            {flowDetail.map((step, index) => {
+              const isSelected = step.adimId === selectedStepId
+              const stepCanView = canViewStep(step)
+              const stepCanEdit = canEditStep(step)
 
-          return (
-            <section
-              key={`${step.adimId}-${index}`}
-              className={`rounded-3xl border p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${
-                isActive ? 'border-cyan-300 bg-white' : 'border-slate-300 bg-slate-100'
-              }`}
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Step {index + 1}</p>
-                  <h2 className="mt-1 text-xl font-semibold text-slate-900">{step.adimAdi}</h2>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    isActive ? 'border border-cyan-200 bg-cyan-50 text-cyan-700' : 'border border-slate-300 bg-slate-200 text-slate-700'
+              return (
+                <button
+                  key={`${step.adimId}-${index}`}
+                  type="button"
+                  disabled={!stepCanView}
+                  onClick={() => {
+                    if (stepCanView) {
+                      setSelectedStepId(step.adimId)
+                    }
+                  }}
+                  className={`w-full rounded-lg border px-3 py-3 text-left text-sm transition ${
+                    !stepCanView
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                      : isSelected
+                        ? 'border-cyan-500 bg-cyan-50 text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50/60'
                   }`}
                 >
-                  {isActive ? 'Aktif' : 'Tamamlandi'}
-                </span>
-              </div>
-
-              <div className="grid gap-4">
-                {step.form.map((field) => {
-                  const readonlyField = isActive ? field : { ...field, editable: false }
-                  return (
-                    <TaskFieldRenderer
-                      key={`${step.adimId}-${field.fieldId}`}
-                      field={readonlyField}
-                      value={formData[toStepFieldKey(step.adimId, field.fieldId)]}
-                      fileName={filesByStepField[toStepFieldKey(step.adimId, field.fieldId)]?.name}
-                      onChange={(fieldId, value) => handleChangeField(step.adimId, fieldId, value)}
-                      onFileChange={(fieldId, file) => handleChangeFile(step.adimId, fieldId, file)}
-                    />
-                  )
-                })}
-              </div>
-
-              {isActive ? (
-                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="mb-3 text-sm font-medium text-slate-700">
-                    Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
+                  <p className="font-medium">
+                    {index + 1}. {step.adimAdi}
                   </p>
-                  <div className="flex flex-wrap gap-3">
+                  <p className="mt-1 text-xs">
+                    {!stepCanView ? 'Yetki yok' : stepCanEdit ? 'Duzenleme yetkisi var' : 'Salt goruntuleme'}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          {!selectedStep ? (
+            <p className="text-sm text-slate-600">Goruntulenecek adim bulunamadi.</p>
+          ) : !selectedStepCanView ? (
+            <p className="text-sm text-slate-600">Bu adim icin goruntuleme yetkiniz yok.</p>
+          ) : (
+            <>
+              <div className="mb-4 border-b border-slate-200 pb-4">
+                <h2 className="text-lg font-semibold text-slate-900">{selectedStep.adimAdi}</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {selectedStepCanEdit
+                    ? 'Bu adimda veri girebilir ve aksiyon alabilirsiniz.'
+                    : 'Bu adim salt goruntuleme yetkisine aciktir.'}
+                </p>
+              </div>
+
+              {selectedStep.form.length === 0 ? (
+                <p className="text-sm text-slate-600">Bu adim icin gosterilecek alan yok.</p>
+              ) : (
+                <div className="grid gap-4">
+                  {selectedStep.form.map((field) => {
+                    const readonlyField = selectedStepCanEdit ? field : { ...field, editable: false }
+                    return (
+                      <TaskFieldRenderer
+                        key={`${selectedStep.adimId}-${field.fieldId}`}
+                        field={readonlyField}
+                        value={formData[toStepFieldKey(selectedStep.adimId, field.fieldId)]}
+                        fileName={filesByStepField[toStepFieldKey(selectedStep.adimId, field.fieldId)]?.name}
+                        onChange={(fieldId, value) => handleChangeField(selectedStep.adimId, fieldId, value)}
+                        onFileChange={(fieldId, file) => handleChangeFile(selectedStep.adimId, fieldId, file)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+
+              {selectedStepCanEdit ? (
+                <div className="mt-6 border-t border-slate-200 pt-4">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(step, 2)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                      onClick={() => handleSubmitAction(selectedStep, 2)}
+                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {loadingAction === 'save' ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                          Kaydediliyor...
-                        </>
-                      ) : (
-                        'Kaydet'
-                      )}
+                      {loadingAction === 'save' ? 'Kaydediliyor...' : 'Taslak Kaydet'}
                     </button>
                     <button
                       type="button"
                       disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(step, 3)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+                      onClick={() => handleSubmitAction(selectedStep, 3)}
+                      className="rounded-lg border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {loadingAction === 'cancel' ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                          Iptal ediliyor...
-                        </>
-                      ) : (
-                        'Reddet'
-                      )}
+                      {loadingAction === 'cancel' ? 'Reddediliyor...' : 'Reddet'}
                     </button>
                     <button
                       type="button"
                       disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(step, 1)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+                      onClick={() => handleSubmitAction(selectedStep, 1)}
+                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {loadingAction === 'submit' ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                          Gonderiliyor...
-                        </>
-                      ) : (
-                        'Gonder'
-                      )}
+                      {loadingAction === 'submit' ? 'Gonderiliyor...' : 'Gonder'}
                     </button>
                   </div>
                 </div>
               ) : null}
-            </section>
-          )
-        })}
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 shadow-sm">
-        <strong className="font-semibold text-slate-800">Sistem Ozeti:</strong> Toplam {totalCount} alanin {editableCount} adedi kullaniciya atanmis, {totalCount - editableCount} adedi salt okunur. Aktif adim sayisi: {activeSteps.length}
+            </>
+          )}
+        </section>
       </div>
 
       <button
         type="button"
         onClick={() => navigate('/tasks')}
-        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
       >
         Gorev listesine don
       </button>

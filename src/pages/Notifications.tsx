@@ -7,9 +7,20 @@ export default function Notifications() {
         <div className="dashboard-top">
           <div>
             <h1>Bildirimler</h1>
-            <p>Okunmayan bildirimleri yonet, gerekli onay ve red islemlerini buradan yap.</p>
+            <p>Onay ve reddetme islemlerini tek ekrandan, oncelik sirasiyla yonetin.</p>
           </div>
         </div>
+
+        <section className="panel notifications-hero">
+          <div>
+            <p className="notifications-hero-kicker">Bildirim Merkezi</p>
+            <h2>Is akislarindaki kritik taleplerinizi kacirmayin.</h2>
+            <p>
+              Solda okunmayan kayitlar, sagda son bildirim gecmisi yer alir. Flow taleplerini kart uzerinden
+              onaylayabilir veya reddedebilirsiniz.
+            </p>
+          </div>
+        </section>
 
         <NotificationPanel title="Bildirim Paneli" />
       </div>

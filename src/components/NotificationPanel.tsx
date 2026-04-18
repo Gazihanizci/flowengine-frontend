@@ -34,6 +34,10 @@ export default function NotificationPanel({
     () => notifications.filter((notification) => !notification.okundu),
     [notifications],
   )
+  const recentNotifications = useMemo(
+    () => notifications.slice().sort((a, b) => new Date(b.olusturmaTarihi).getTime() - new Date(a.olusturmaTarihi).getTime()).slice(0, 20),
+    [notifications],
+  )
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -81,7 +85,9 @@ export default function NotificationPanel({
   }, [])
 
   const handleMarkAsRead = async (notification: NotificationItem) => {
-    if (notification.okundu || readingIds.includes(notification.bildirimId)) return
+    const requestActionState = actionStateByNotificationId[notification.bildirimId] ?? 'idle'
+    const requestActionDone = requestActionState === 'approved' || requestActionState === 'rejected'
+    if (notification.okundu || requestActionDone || readingIds.includes(notification.bildirimId)) return
 
     setReadingIds((prev) => [...prev, notification.bildirimId])
     try {
@@ -97,11 +103,14 @@ export default function NotificationPanel({
     const isReading = readingIds.includes(notification.bildirimId)
     const requestActionState = actionStateByNotificationId[notification.bildirimId] ?? 'idle'
     const requestActionDone = requestActionState === 'approved' || requestActionState === 'rejected'
+    const isPassive = notification.okundu || requestActionDone
 
     return (
       <article
         key={notification.bildirimId}
-        className={`rounded-xl border p-3 transition ${notification.okundu ? 'border-slate-200 bg-slate-50' : 'border-cyan-200 bg-cyan-50/60'}`}
+        className={`rounded-xl border p-3 transition ${
+          notification.okundu ? 'border-slate-200 bg-slate-50' : 'border-cyan-200 bg-cyan-50/60'
+        } ${isPassive ? 'opacity-60' : ''}`}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -138,10 +147,16 @@ export default function NotificationPanel({
                 event.stopPropagation()
                 handleRequestAction(notification, 'approve')
               }}
-              disabled={!notification.referansIstekId || requestActionState === 'approving' || requestActionState === 'rejecting' || requestActionDone}
+              disabled={
+                isPassive ||
+                !notification.referansIstekId ||
+                requestActionState === 'approving' ||
+                requestActionState === 'rejecting' ||
+                requestActionDone
+              }
               className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {requestActionState === 'approving' ? 'Onaylaniyor...' : requestActionState === 'approved' ? 'Onaylandi' : 'Approve'}
+              {requestActionState === 'approving' ? 'Onaylaniyor...' : requestActionState === 'approved' ? 'Onaylandi' : 'Onayla'}
             </button>
             <button
               type="button"
@@ -149,10 +164,16 @@ export default function NotificationPanel({
                 event.stopPropagation()
                 handleRequestAction(notification, 'reject')
               }}
-              disabled={!notification.referansIstekId || requestActionState === 'approving' || requestActionState === 'rejecting' || requestActionDone}
+              disabled={
+                isPassive ||
+                !notification.referansIstekId ||
+                requestActionState === 'approving' ||
+                requestActionState === 'rejecting' ||
+                requestActionDone
+              }
               className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {requestActionState === 'rejecting' ? 'Reddediliyor...' : requestActionState === 'rejected' ? 'Reddedildi' : 'Reject'}
+              {requestActionState === 'rejecting' ? 'Reddediliyor...' : requestActionState === 'rejected' ? 'Reddedildi' : 'Reddet'}
             </button>
             {isReading ? <span className="text-xs text-slate-500">Okundu isaretleniyor...</span> : null}
           </div>
@@ -165,7 +186,9 @@ export default function NotificationPanel({
 
   const handleRequestAction = async (notification: NotificationItem, action: 'approve' | 'reject') => {
     const requestId = notification.referansIstekId
-    if (!requestId) return
+    const requestActionState = actionStateByNotificationId[notification.bildirimId] ?? 'idle'
+    const requestActionDone = requestActionState === 'approved' || requestActionState === 'rejected'
+    if (!requestId || notification.okundu || requestActionDone) return
 
     setActionStateByNotificationId((prev) => ({
       ...prev,
@@ -199,7 +222,9 @@ export default function NotificationPanel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-          <p className="text-xs text-slate-500">Okunmamis: {unreadCount}</p>
+          <p className="text-xs text-slate-500">
+            Toplam: {notifications.length} | Okunmamis: {unreadCount}
+          </p>
         </div>
         <button
           type="button"
@@ -225,17 +250,26 @@ export default function NotificationPanel({
       ) : null}
 
       {!loading && notifications.length > 0 ? (
-        <div>
-          <h4 className="mb-2 text-sm font-semibold text-slate-900">Okunmayan Bildirimler</h4>
-          {unreadNotifications.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-              Okunmayan bildirim yok.
-            </p>
-          ) : (
-            <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-              {unreadNotifications.map(renderNotificationCard)}
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Okunmayan Bildirimler</h4>
+            {unreadNotifications.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                Okunmayan bildirim yok.
+              </p>
+            ) : (
+              <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">
+                {unreadNotifications.map((notification) => renderNotificationCard(notification))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Son Bildirimler</h4>
+            <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">
+                {recentNotifications.map((notification) => renderNotificationCard(notification))}
             </div>
-          )}
+          </div>
         </div>
       ) : null}
     </section>
