@@ -162,7 +162,7 @@ function normalizeField(rawField: RawField, index: number, fallbackField?: TaskF
     fieldId,
     type,
     label: rawField.label?.trim() || fallbackField?.label || `Alan ${fieldId}`,
-    editable: rawField.editable === true,
+    editable: rawField.editable === true || fallbackField?.editable === true,
     value: normalizedValue,
     actionId: rawField.actionId ?? fallbackField?.actionId,
     options: normalizedOptions,
