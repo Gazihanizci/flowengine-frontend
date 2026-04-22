@@ -21,6 +21,7 @@ export interface TaskField {
   options?: TaskFieldOption[]
   editable: boolean
   value?: TaskFormValue
+  fileId?: number | null
   actionId?: number
 }
 

@@ -92,7 +92,7 @@ const fieldRendererMap: FieldRendererMap = {
             name={`field-${field.fieldId}`}
             value={option.value}
             disabled={disabled}
-            checked={value === option.value}
+            checked={String(value ?? '') === option.value}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(field.fieldId, event.target.value)}
           />
           <span>{option.label}</span>
@@ -100,23 +100,84 @@ const fieldRendererMap: FieldRendererMap = {
       ))}
     </div>
   ),
-  CHECKBOX: ({ field, value, disabled, onChange }) => (
-    <label
-      className={`mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-        disabled ? 'border-gray-300 bg-gray-100 text-slate-500' : 'border-slate-300 bg-white text-slate-700'
-      }`}
-    >
-      <input
-        type="checkbox"
-        disabled={disabled}
-        checked={Boolean(value)}
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(field.fieldId, event.target.checked)}
-      />
-      <span>Secildi</span>
-    </label>
-  ),
+  CHECKBOX: ({ field, value, disabled, onChange }) => {
+    const hasOptions = (field.options ?? []).length > 0
+    const selectedValues = new Set(
+      String(value ?? '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    )
+
+    if (!hasOptions) {
+      return (
+        <label
+          className={`mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+            disabled ? 'border-gray-300 bg-gray-100 text-slate-500' : 'border-slate-300 bg-white text-slate-700'
+          }`}
+        >
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={Boolean(value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(field.fieldId, event.target.checked)}
+          />
+          <span>Secildi</span>
+        </label>
+      )
+    }
+
+    return (
+      <div className="mt-2 space-y-2">
+        {(field.options ?? []).map((option) => (
+          <label
+            key={option.value}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              disabled ? 'border-gray-300 bg-gray-100 text-slate-500' : 'border-slate-300 bg-white text-slate-700'
+            }`}
+          >
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={selectedValues.has(option.value)}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const next = new Set(selectedValues)
+                if (event.target.checked) {
+                  next.add(option.value)
+                } else {
+                  next.delete(option.value)
+                }
+                onChange(field.fieldId, Array.from(next).join(','))
+              }}
+            />
+            <span>{option.label}</span>
+          </label>
+        ))}
+      </div>
+    )
+  },
   FILE: ({ field, disabled, onFileChange, fileName }) => (
-    <FileInput disabled={disabled} fileName={fileName} onFileChange={(file) => onFileChange?.(field.fieldId, file)} />
+    <div className="mt-2 space-y-2">
+      {field.fileId ? (
+        <a
+          href={`/api/files/download/${field.fileId}`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block text-sm font-medium text-cyan-700 underline hover:text-cyan-900"
+        >
+          {String(field.value ?? fileName ?? `Dosya #${field.fileId}`)}
+        </a>
+      ) : (
+        <p className="text-sm text-slate-500">Dosya yok</p>
+      )}
+      {!disabled ? (
+        <FileInput
+          disabled={disabled}
+          fileName={fileName}
+          onFileChange={(file) => onFileChange?.(field.fieldId, file)}
+        />
+      ) : null}
+    </div>
   ),
   BUTTON: ({ field, value, disabled, onChange }) => (
     <div className="mt-2 space-y-2">

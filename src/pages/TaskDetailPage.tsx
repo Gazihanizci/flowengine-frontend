@@ -14,6 +14,7 @@ type RawField = {
   type?: string
   label?: string
   editable?: boolean
+  fileId?: number | null
   value?: TaskFormValue
   deger?: TaskFormValue
   fieldValue?: TaskFormValue
@@ -39,6 +40,23 @@ type RawFlowStep = {
 
 type RawFlowDetail = RawFlowStep[] | { steps?: RawFlowStep[] } | null
 
+function sanitizeEditableFieldValues(fields: TaskField[]) {
+  return fields.map((field) => (field.editable ? { ...field, value: null } : field))
+}
+
+function normalizeStepName(value?: string) {
+  return String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+}
+
+function isSameStep(
+  left: { adimId: number; adimAdi?: string },
+  right: { adimId: number; adimAdi?: string },
+) {
+  return left.adimId === right.adimId || normalizeStepName(left.adimAdi) === normalizeStepName(right.adimAdi)
+}
+
 const SUPPORTED_FIELD_TYPES: TaskFieldType[] = [
   'TEXT',
   'TEXTAREA',
@@ -55,6 +73,7 @@ function normalizeField(rawField: RawField, index: number): TaskField {
   const fieldId = Number(rawField.fieldId ?? rawField.id ?? index + 1)
   const resolvedType = String(rawField.type ?? 'TEXT').toUpperCase() as TaskFieldType
   const type = SUPPORTED_FIELD_TYPES.includes(resolvedType) ? resolvedType : 'TEXT'
+  const editable = rawField.editable === true
   const rawValue = rawField.value ?? rawField.deger ?? rawField.fieldValue ?? rawField.selectedValue ?? null
 
   const rawOptions =
@@ -83,8 +102,9 @@ function normalizeField(rawField: RawField, index: number): TaskField {
     fieldId: Number.isFinite(fieldId) ? fieldId : index + 1,
     type,
     label: String(rawField.label ?? `Alan ${fieldId}`),
-    editable: rawField.editable === true,
-    value: rawValue,
+    editable,
+    fileId: rawField.fileId ?? null,
+    value: editable ? null : rawValue,
     options,
   }
 }
@@ -162,7 +182,7 @@ export default function TaskDetailPage() {
     () => steps.find((step) => step.adimId === selectedStepId) ?? null,
     [steps, selectedStepId],
   )
-  const isCurrentStepSelected = selectedTask ? selectedStep?.adimId === selectedTask.adimId : false
+  const isCurrentStepSelected = selectedTask && selectedStep ? isSameStep(selectedStep, selectedTask) : false
 
   const loadTask = async () => {
     setLoading(true)
@@ -173,7 +193,7 @@ export default function TaskDetailPage() {
       const taskList = Array.isArray(data) ? data : []
       const currentTask = taskList.find((task) => task.taskId === numericTaskId) ?? null
       setSelectedTask(currentTask)
-      setForm(currentTask?.form ?? [])
+      setForm(sanitizeEditableFieldValues(currentTask?.form ?? []))
       setFilesByFieldId({})
 
       if (!currentTask) {
@@ -189,12 +209,12 @@ export default function TaskDetailPage() {
         const currentStepFromTask: FlowStepView = {
           adimId: currentTask.adimId,
           adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
-          form: currentTask.form ?? [],
+          form: sanitizeEditableFieldValues(currentTask.form ?? []),
         }
 
-        const hasCurrentStep = normalizedSteps.some((step) => step.adimId === currentTask.adimId)
+        const hasCurrentStep = normalizedSteps.some((step) => isSameStep(step, currentTask))
         const mergedSteps = hasCurrentStep
-          ? normalizedSteps.map((step) => (step.adimId === currentTask.adimId ? currentStepFromTask : step))
+          ? normalizedSteps.map((step) => (isSameStep(step, currentTask) ? currentStepFromTask : step))
           : [currentStepFromTask, ...normalizedSteps]
 
         setSteps(mergedSteps)
@@ -204,7 +224,7 @@ export default function TaskDetailPage() {
           {
             adimId: currentTask.adimId,
             adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
-            form: currentTask.form ?? [],
+            form: sanitizeEditableFieldValues(currentTask.form ?? []),
           },
         ])
         setSelectedStepId(currentTask.adimId)
@@ -431,7 +451,7 @@ export default function TaskDetailPage() {
             {steps.map((step, index) => {
               const isSelected = step.adimId === selectedStepId
               const canView = step.form.length > 0
-              const isCurrent = step.adimId === selectedTask.adimId
+              const isCurrent = isSameStep(step, selectedTask)
 
               return (
                 <button

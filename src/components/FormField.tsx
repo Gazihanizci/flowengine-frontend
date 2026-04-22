@@ -39,7 +39,7 @@ export default function FormField({ field, children }: FormFieldProps) {
             </span>
           ) : (
             <span className="rounded-full border border-slate-400 bg-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700">
-              Yetki yok / Salt okunur
+              Salt okunur
             </span>
           )}
           <span className="text-[11px] text-slate-500">Alan ID: {field.fieldId}</span>
@@ -47,7 +47,7 @@ export default function FormField({ field, children }: FormFieldProps) {
       </div>
       {!field.editable ? (
         <div className="mt-3 rounded-lg border border-slate-400 bg-slate-300 px-3 py-2 text-xs font-medium text-slate-700">
-          Bu alan onceki adimlarda doldurulmustur. Yalnizca goruntuleyebilirsiniz.
+          Bu alan onceki adimlarda doldurulmustur.
         </div>
       ) : null}
       {children}

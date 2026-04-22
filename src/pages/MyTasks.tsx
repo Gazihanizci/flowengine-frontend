@@ -47,7 +47,7 @@ export default function MyTasks() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Operational Workspace</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">Workflow Task Inbox</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Gorevler akis adina gore gruplanir. Bir goreve tiklandiginda form, ayri detay sayfasinda acilir.
+            Bu listede sadece akis adi ve durum gorunur. Bir kayda tikladiginizda mevcut step detayi acilir.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
