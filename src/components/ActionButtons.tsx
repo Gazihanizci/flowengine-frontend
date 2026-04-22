@@ -12,7 +12,7 @@ export default function ActionButtons({
   onAction,
 }: ActionButtonsProps) {
   return (
-    <div className="actions">
+    <div className="actions flow-actions-panel">
       {actions
         .filter((action) => action.allowed)
         .map((action) => (

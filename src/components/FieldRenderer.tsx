@@ -127,8 +127,8 @@ export default function FieldRenderer({
   }
 
   return (
-    <div className="field">
-      <div className="field-label">
+    <div className="field flow-field-card">
+      <div className="field-label flow-field-label">
         <span>{field.label}</span>
         {field.required && <span className="required">*</span>}
       </div>

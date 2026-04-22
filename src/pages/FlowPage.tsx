@@ -36,8 +36,8 @@ export default function FlowPage() {
       const response = await fetchWorkflow(surecId)
       setData(response)
       initializeForm(response)
-    } catch (err) {
-      setError('Veri alınamadı. Lütfen tekrar deneyin.')
+    } catch {
+      setError('Veri alinamadi. Lutfen tekrar deneyin.')
       setData(null)
     } finally {
       setLoading(false)
@@ -68,7 +68,7 @@ export default function FlowPage() {
     if (!surecId) return
 
     if (requiredMissing.length > 0) {
-      setError('Zorunlu alanları doldurunuz.')
+      setError('Zorunlu alanlari doldurunuz.')
       return
     }
 
@@ -82,10 +82,10 @@ export default function FlowPage() {
         aksiyonId: actionId,
         formData: formState,
       })
-      setSuccess('Aksiyon başarıyla gönderildi.')
+      setSuccess('Aksiyon basariyla gonderildi.')
       await loadWorkflow()
-    } catch (err) {
-      setError('Aksiyon gönderilemedi. Lütfen tekrar deneyin.')
+    } catch {
+      setError('Aksiyon gonderilemedi. Lutfen tekrar deneyin.')
     } finally {
       setSubmitting(false)
     }
@@ -93,26 +93,30 @@ export default function FlowPage() {
 
   if (!surecId) {
     return (
-      <div className="page">
-        <div className="card">
-          <h2>Süreç bulunamadı</h2>
+      <div className="page flow-workspace-page">
+        <div className="card flow-workspace-card">
+          <h2>Surec bulunamadi</h2>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="page flow-page">
-      <div className="card">
-        <div className="card-header">
+    <div className="page flow-page flow-workspace-page">
+      <div className="card flow-workspace-card">
+        <header className="flow-workspace-head">
           <div>
-            <p className="eyebrow">Süreç No</p>
-            <h1>{data?.adimAdi ?? 'Yükleniyor...'}</h1>
+            <p className="eyebrow">Surec Workspace</p>
+            <h1>{data?.adimAdi ?? 'Yukleniyor...'}</h1>
+            <p className="hint">Surec #{surecId}</p>
           </div>
-          <div className="step-pill">Adım {data?.adimId ?? '-'}</div>
-        </div>
+          <div className="flow-workspace-kpi">
+            <span>Adim {data?.adimId ?? '-'}</span>
+            <span>{requiredMissing.length} Eksik Zorunlu Alan</span>
+          </div>
+        </header>
 
-        {loading && <p className="hint">Veri yükleniyor...</p>}
+        {loading && <p className="hint">Veri yukleniyor...</p>}
         {error && <p className="error-text">{error}</p>}
         {success && <p className="success-text">{success}</p>}
 
@@ -120,7 +124,7 @@ export default function FlowPage() {
           <>
             <FileList files={data.files} />
 
-            <div className="form">
+            <section className="form flow-form-grid">
               {data.form.map((field) => (
                 <FieldRenderer
                   key={field.id}
@@ -139,13 +143,9 @@ export default function FlowPage() {
                   }
                 />
               ))}
-            </div>
+            </section>
 
-            <ActionButtons
-              actions={data.actions}
-              loading={submitting}
-              onAction={handleAction}
-            />
+            <ActionButtons actions={data.actions} loading={submitting} onAction={handleAction} />
           </>
         )}
       </div>

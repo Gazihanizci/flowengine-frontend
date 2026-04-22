@@ -39,32 +39,30 @@ export default function MyTasks() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-[0_20px_45px_rgba(2,6,23,0.35)]">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-1/3 h-32 w-32 rounded-full bg-sky-500/20 blur-2xl" />
-        <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Operational Workspace</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Workflow Task Inbox</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-300">
+    <div className="task-page">
+      <section className="task-hero">
+        <div className="task-hero-inner">
+          <p className="task-kicker">Operational Workspace</p>
+          <h1>Workflow Task Inbox</h1>
+          <p>
             Bu listede sadece akis adi ve durum gorunur. Bir kayda tikladiginizda mevcut step detayi acilir.
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Gorev</p>
-              <p className="mt-1 text-2xl font-semibold">{tasks.length}</p>
+          <div className="task-hero-metrics">
+            <div>
+              <p>Toplam Gorev</p>
+              <strong>{tasks.length}</strong>
             </div>
-            <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Akis</p>
-              <p className="mt-1 text-2xl font-semibold">{uniqueFlowCount}</p>
+            <div>
+              <p>Toplam Akis</p>
+              <strong>{uniqueFlowCount}</strong>
             </div>
-            <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-slate-300">Aksiyon</p>
-              <p className="mt-1 text-sm font-medium">Form icin gorev kartina tiklayin</p>
+            <div>
+              <p>Aksiyon</p>
+              <strong className="task-action-label">Kart secimi ile devam edin</strong>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <TaskList tasks={tasks} loading={loading} error={error} onSelectTask={handleOpenTask} onRetry={loadTasks} />
     </div>

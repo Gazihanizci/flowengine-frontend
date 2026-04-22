@@ -20,25 +20,25 @@ export default function FormField({ field, children }: FormFieldProps) {
   }
 
   const containerClassName = field.editable
-    ? 'border-cyan-300 bg-cyan-50/60'
-    : 'border-slate-400 bg-slate-200'
+    ? 'task-field-shell editable'
+    : 'task-field-shell readonly'
 
   return (
-    <div className={`rounded-2xl border p-4 ${containerClassName}`}>
+    <div className={containerClassName}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-800">{field.label}</p>
-          <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <p className="text-sm font-semibold text-slate-900">{field.label}</p>
+          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             {typeLabel[field.type]} Field
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
           {field.editable ? (
-            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-700">
+            <span className="task-badge editable">
               Bu alan sana ait
             </span>
           ) : (
-            <span className="rounded-full border border-slate-400 bg-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700">
+            <span className="task-badge readonly">
               Salt okunur
             </span>
           )}
@@ -46,7 +46,7 @@ export default function FormField({ field, children }: FormFieldProps) {
         </div>
       </div>
       {!field.editable ? (
-        <div className="mt-3 rounded-lg border border-slate-400 bg-slate-300 px-3 py-2 text-xs font-medium text-slate-700">
+        <div className="task-readonly-note">
           Bu alan onceki adimlarda doldurulmustur.
         </div>
       ) : null}

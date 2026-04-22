@@ -188,7 +188,7 @@ const fieldRendererMap: FieldRendererMap = {
         className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
           disabled
             ? 'cursor-not-allowed border border-slate-400 bg-slate-300 text-slate-600'
-            : 'bg-cyan-600 text-white hover:bg-cyan-700'
+            : 'bg-slate-800 text-white hover:bg-slate-900'
         }`}
       >
         {field.label || 'Buton'}
@@ -234,10 +234,10 @@ export default function TaskFieldRenderer({
   onTriggerAction,
 }: TaskFieldRendererProps) {
   const disabled = !field.editable
-  const inputClassName = `mt-2 w-full rounded-xl border px-3 py-2 text-sm text-slate-700 outline-none transition ${
+  const inputClassName = `mt-2 w-full rounded-xl border px-3 py-2 text-sm outline-none transition ${
     field.editable
-      ? 'border-cyan-300 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100'
-      : 'border-slate-400 bg-slate-300 text-slate-700 cursor-not-allowed'
+      ? 'border-slate-300 bg-white text-slate-800 focus:border-slate-500 focus:ring-2 focus:ring-slate-200'
+      : 'border-slate-300 bg-slate-100 text-slate-600 cursor-not-allowed'
   }`
 
   const renderField = fieldRendererMap[field.type]
@@ -255,7 +255,7 @@ export default function TaskFieldRenderer({
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               disabled
                 ? 'cursor-not-allowed border border-slate-400 bg-slate-300 text-slate-600'
-                : 'bg-cyan-600 text-white hover:bg-cyan-700'
+                : 'bg-slate-800 text-white hover:bg-slate-900'
             }`}
           >
             {field.label || 'Aksiyon'}

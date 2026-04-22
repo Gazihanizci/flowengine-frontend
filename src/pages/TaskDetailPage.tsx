@@ -387,7 +387,7 @@ export default function TaskDetailPage() {
   const handleConfirmReject = async () => {
     const trimmed = rejectAciklama.trim()
     if (!trimmed) {
-      setRejectValidationError('Açıklama zorunludur')
+      setRejectValidationError('Aciklama zorunludur')
       return
     }
     await handleSubmitAction(3, { skipConfirm: true, aciklama: trimmed })
@@ -423,31 +423,26 @@ export default function TaskDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Gorev Formu</p>
-        <h1 className="mt-2 text-xl font-semibold text-slate-900">{selectedTask.akisAdi?.trim() || 'Akis formu'}</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Gorev #{selectedTask.taskId} | Surec #{selectedTask.surecId}
-        </p>
+    <div className="task-detail-page">
+      <section className="task-detail-hero">
+        <div>
+          <p className="task-kicker">Task Workspace</p>
+          <h1>{selectedTask.akisAdi?.trim() || 'Akis formu'}</h1>
+          <p>Gorev #{selectedTask.taskId} | Surec #{selectedTask.surecId}</p>
+        </div>
+        <div className="task-detail-hero-meta">
+          <span>Aktif Adim: {selectedTask.adimAdi || `Adim ${selectedTask.adimId}`}</span>
+          <span>Duzenlenebilir Alan: {editableCount}</span>
+        </div>
       </section>
 
-      {successMessage ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {successMessage}
-        </div>
-      ) : null}
+      {successMessage ? <div className="task-feedback success">{successMessage}</div> : null}
+      {submitError ? <div className="task-feedback error">{submitError}</div> : null}
 
-      {submitError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {submitError}
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-[280px,1fr]">
-        <aside className="rounded-xl border border-slate-200 bg-white p-3">
-          <h2 className="px-2 pb-2 text-sm font-semibold text-slate-800">Akis Adimlari</h2>
-          <div className="space-y-2">
+      <div className="task-detail-layout">
+        <aside className="task-steps-panel">
+          <h2>Akis Adimlari</h2>
+          <div className="task-steps-list">
             {steps.map((step, index) => {
               const isSelected = step.adimId === selectedStepId
               const canView = step.form.length > 0
@@ -463,44 +458,36 @@ export default function TaskDetailPage() {
                       setSelectedStepId(step.adimId)
                     }
                   }}
-                  className={`w-full rounded-lg border px-3 py-3 text-left text-sm transition ${
-                    !canView
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : isSelected
-                        ? 'border-cyan-500 bg-cyan-50 text-slate-900'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50/60'
-                  }`}
+                  className={`task-step-btn ${isSelected ? 'selected' : ''} ${!canView ? 'disabled' : ''}`}
                 >
-                  <p className="font-medium">
+                  <p>
                     {index + 1}. {step.adimAdi}
                   </p>
-                  <p className="mt-1 text-xs">
-                    {!canView ? 'Yetki yok' : isCurrent ? 'Mevcut adim' : 'Sadece goruntuleme'}
-                  </p>
+                  <span>{!canView ? 'Yetki yok' : isCurrent ? 'Mevcut adim' : 'Salt goruntuleme'}</span>
                 </button>
               )
             })}
           </div>
         </aside>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <section className="task-form-panel">
           {!selectedStep ? (
-            <p className="text-sm text-slate-600">Goruntulenecek adim bulunamadi.</p>
+            <p className="hint">Goruntulenecek adim bulunamadi.</p>
           ) : (
             <>
-              <div className="mb-4 border-b border-slate-200 pb-4">
-                <h2 className="text-lg font-semibold text-slate-900">{selectedStep.adimAdi}</h2>
-                <p className="mt-1 text-sm text-slate-600">
+              <header className="task-form-panel-head">
+                <h2>{selectedStep.adimAdi}</h2>
+                <p>
                   {isCurrentStepSelected
-                    ? 'Bu ekran mevcut adiminizdir; alanlari duzenleyebilirsiniz.'
-                    : 'Bu adimi goruntuleme yetkiniz var. Alanlar salt okunur gosterilir.'}
+                    ? 'Bu adim size ait. Alanlari duzenleyip aksiyon alabilirsiniz.'
+                    : 'Bu adim sadece goruntulenebilir. Alanlar salt okunur durumdadir.'}
                 </p>
-              </div>
+              </header>
 
               {(isCurrentStepSelected ? form : selectedStep.form).length === 0 ? (
-                <p className="text-sm text-slate-600">Bu adim icin gosterilecek alan yok.</p>
+                <p className="hint">Bu adim icin gosterilecek alan yok.</p>
               ) : (
-                <div className="grid gap-4">
+                <div className="task-form-grid">
                   {(isCurrentStepSelected ? form : selectedStep.form).map((field) => (
                     <TaskFieldRenderer
                       key={`${selectedStep.adimId}-${field.fieldId}`}
@@ -515,33 +502,31 @@ export default function TaskDetailPage() {
               )}
 
               {isCurrentStepSelected && editableCount > 0 ? (
-                <div className="mt-6 border-t border-slate-200 pt-4">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(2)}
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {loadingAction === 'save' ? 'Kaydediliyor...' : 'Taslak Kaydet'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loadingAction !== null}
-                      onClick={openRejectModal}
-                      className="rounded-lg border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {loadingAction === 'cancel' ? 'Reddediliyor...' : 'Reddet'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(1)}
-                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {loadingAction === 'submit' ? 'Gonderiliyor...' : 'Gonder'}
-                    </button>
-                  </div>
+                <div className="task-action-bar">
+                  <button
+                    type="button"
+                    disabled={loadingAction !== null}
+                    onClick={() => handleSubmitAction(2)}
+                    className="button secondary"
+                  >
+                    {loadingAction === 'save' ? 'Kaydediliyor...' : 'Taslak Kaydet'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loadingAction !== null}
+                    onClick={openRejectModal}
+                    className="button reject"
+                  >
+                    {loadingAction === 'cancel' ? 'Reddediliyor...' : 'Reddet'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loadingAction !== null}
+                    onClick={() => handleSubmitAction(1)}
+                    className="button primary"
+                  >
+                    {loadingAction === 'submit' ? 'Gonderiliyor...' : 'Gonder'}
+                  </button>
                 </div>
               ) : null}
             </>
@@ -549,53 +534,45 @@ export default function TaskDetailPage() {
         </section>
       </div>
 
-      <button
-        type="button"
-        onClick={() => navigate('/tasks')}
-        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-      >
+      <button type="button" onClick={() => navigate('/tasks')} className="button secondary">
         Gorev listesine don
       </button>
 
       {rejectModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-slate-900">İptal Açıklaması</h2>
-            <div className="mt-4">
-              <textarea
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
-                rows={5}
-                value={rejectAciklama}
-                onChange={(event) => {
-                  setRejectAciklama(event.target.value)
-                  if (rejectValidationError) {
-                    setRejectValidationError(null)
-                  }
-                }}
-                placeholder="İptal sebebini yazınız..."
-              />
-            </div>
+        <div className="task-modal-backdrop">
+          <div className="task-modal">
+            <h2>Iptal Aciklamasi</h2>
+            <textarea
+              className="input"
+              rows={5}
+              value={rejectAciklama}
+              onChange={(event) => {
+                setRejectAciklama(event.target.value)
+                if (rejectValidationError) {
+                  setRejectValidationError(null)
+                }
+              }}
+              placeholder="Iptal sebebini yaziniz..."
+            />
 
-            {rejectValidationError ? (
-              <p className="mt-2 text-sm text-rose-700">{rejectValidationError}</p>
-            ) : null}
+            {rejectValidationError ? <p className="error-text">{rejectValidationError}</p> : null}
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="task-modal-actions">
               <button
                 type="button"
                 onClick={closeRejectModal}
                 disabled={loadingAction === 'cancel'}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="button secondary"
               >
-                Vazgeç
+                Vazgec
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={loadingAction === 'cancel'}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="button reject"
               >
-                {loadingAction === 'cancel' ? 'İptal Ediliyor...' : 'İptal Et'}
+                {loadingAction === 'cancel' ? 'Iptal Ediliyor...' : 'Iptal Et'}
               </button>
             </div>
           </div>

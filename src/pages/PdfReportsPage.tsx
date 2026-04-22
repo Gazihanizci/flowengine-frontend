@@ -49,6 +49,7 @@ export default function PdfReportsPage() {
   const [flowNameFilter, setFlowNameFilter] = useState('')
   const [startDateFilter, setStartDateFilter] = useState('')
   const [endDateFilter, setEndDateFilter] = useState('')
+  const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'name_asc' | 'name_desc'>('date_desc')
   const [loadingSurecler, setLoadingSurecler] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -96,8 +97,30 @@ export default function PdfReportsPage() {
     })
   }, [surecler, flowNameFilter, startDateFilter, endDateFilter])
 
-  const handleDownload = async () => {
-    if (!selectedSurecId) {
+  const sortedSurecler = useMemo(() => {
+    const list = [...filteredSurecler]
+
+    list.sort((left, right) => {
+      if (sortBy === 'name_asc') {
+        return left.akisAdi.localeCompare(right.akisAdi, 'tr-TR')
+      }
+
+      if (sortBy === 'name_desc') {
+        return right.akisAdi.localeCompare(left.akisAdi, 'tr-TR')
+      }
+
+      const leftDate = parseBaslamaTarihi(left.baslamaTarihi)?.getTime() ?? 0
+      const rightDate = parseBaslamaTarihi(right.baslamaTarihi)?.getTime() ?? 0
+
+      return sortBy === 'date_asc' ? leftDate - rightDate : rightDate - leftDate
+    })
+
+    return list
+  }, [filteredSurecler, sortBy])
+
+  const handleDownload = async (surecId?: number) => {
+    const targetSurecId = surecId ?? selectedSurecId
+    if (!targetSurecId) {
       setError('Lutfen once listeden bir surec secin.')
       return
     }
@@ -107,8 +130,8 @@ export default function PdfReportsPage() {
     setSuccess(null)
 
     try {
-      await downloadPdfBySurecId(selectedSurecId)
-      setSuccess(`PDF olusturuldu ve indirildi. Surec: ${selectedSurecId}`)
+      await downloadPdfBySurecId(targetSurecId)
+      setSuccess(`PDF olusturuldu ve indirildi. Surec: ${targetSurecId}`)
     } catch (requestError) {
       const message = axios.isAxiosError(requestError)
         ? requestError.response?.data?.message || requestError.message
@@ -133,7 +156,7 @@ export default function PdfReportsPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Akis adi</span>
             <input
@@ -165,6 +188,22 @@ export default function PdfReportsPage() {
             />
           </label>
 
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Siralama</span>
+            <select
+              value={sortBy}
+              onChange={(event) =>
+                setSortBy(event.target.value as 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc')
+              }
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+            >
+              <option value="date_desc">Tarih (Yeni - Eski)</option>
+              <option value="date_asc">Tarih (Eski - Yeni)</option>
+              <option value="name_asc">Alfabetik (A - Z)</option>
+              <option value="name_desc">Alfabetik (Z - A)</option>
+            </select>
+          </label>
+
           <div className="flex items-end">
             <button
               type="button"
@@ -180,32 +219,33 @@ export default function PdfReportsPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">Surecler ({filteredSurecler.length})</p>
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={downloading || !selectedSurecId}
-            className="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
-          >
-            {downloading ? 'PDF olusturuluyor...' : 'Secili Surecin PDFini Indir'}
-          </button>
+          <p className="text-sm font-semibold text-slate-700">Surecler ({sortedSurecler.length})</p>
+          <p className="text-xs text-slate-500">Kayda tiklayin, indirme butonu satirin icinde acilsin.</p>
         </div>
 
         {loadingSurecler ? (
           <p className="text-sm text-slate-500">Surecler yukleniyor...</p>
-        ) : filteredSurecler.length === 0 ? (
+        ) : sortedSurecler.length === 0 ? (
           <p className="text-sm text-slate-500">Filtreye uygun surec bulunamadi.</p>
         ) : (
           <div className="space-y-3">
-            {filteredSurecler.map((surec) => {
+            {sortedSurecler.map((surec) => {
               const isSelected = selectedSurecId === surec.surecId
               return (
-                <button
+                <div
                   key={surec.surecId}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     setSelectedSurecId(surec.surecId)
                     setError(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setSelectedSurecId(surec.surecId)
+                      setError(null)
+                    }
                   }}
                   className={`w-full rounded-xl border p-4 text-left transition ${
                     isSelected
@@ -222,7 +262,22 @@ export default function PdfReportsPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-slate-600">{surec.akisAciklama || '-'}</p>
-                </button>
+                  {isSelected ? (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleDownload(surec.surecId)
+                        }}
+                        disabled={downloading}
+                        className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+                      >
+                        {downloading ? 'PDF olusturuluyor...' : 'PDF Indir'}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               )
             })}
           </div>
