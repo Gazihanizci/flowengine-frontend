@@ -106,7 +106,9 @@ export default function HistoryPage() {
         return false
       }
 
-      if (contentQuery && !item.formIcerik.toLocaleLowerCase('tr-TR').includes(contentQuery)) {
+      const formIcerikText = String(item.formIcerik ?? '').toLocaleLowerCase('tr-TR')
+      const aciklamaText = String(item.aciklama ?? '').toLocaleLowerCase('tr-TR')
+      if (contentQuery && !formIcerikText.includes(contentQuery) && !aciklamaText.includes(contentQuery)) {
         return false
       }
 
@@ -287,6 +289,11 @@ export default function HistoryPage() {
                 </div>
 
                 <p className="mt-3 line-clamp-2 text-sm text-slate-700">{item.formIcerik?.trim() || '-'}</p>
+                {item.aciklama?.trim() ? (
+                  <p className="mt-2 line-clamp-2 text-sm text-rose-700">
+                    <span className="font-semibold">Iptal Aciklamasi:</span> {item.aciklama.trim()}
+                  </p>
+                ) : null}
                 <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-cyan-700 group-hover:text-cyan-800">
                   Detay kutucugunu acmak icin tikla
                 </p>
@@ -353,6 +360,15 @@ export default function HistoryPage() {
                 <p className="text-sm text-slate-500">Bu kayit icin form icerigi bulunamadi.</p>
               )}
             </div>
+
+            {(selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('RED') ||
+              selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('IPTAL')) &&
+            selectedItem.aciklama?.trim() ? (
+              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-rose-700">Iptal Aciklamasi</p>
+                <p className="text-sm text-rose-900">{selectedItem.aciklama.trim()}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

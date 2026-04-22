@@ -151,6 +151,9 @@ export default function TaskDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectAciklama, setRejectAciklama] = useState('')
+  const [rejectValidationError, setRejectValidationError] = useState<string | null>(null)
 
   const numericTaskId = Number(taskId)
   const editableCount = useMemo(() => form.filter((field) => field.editable).length, [form])
@@ -251,7 +254,13 @@ export default function TaskDetailPage() {
     handleChange(fieldId, file ? file.name : '')
   }
 
-  const handleSubmitAction = async (aksiyonId: 1 | 2 | 3) => {
+  const handleSubmitAction = async (
+    aksiyonId: 1 | 2 | 3,
+    options?: {
+      skipConfirm?: boolean
+      aciklama?: string
+    },
+  ) => {
     if (!selectedTask) return
 
     const confirmMessage =
@@ -261,7 +270,7 @@ export default function TaskDetailPage() {
           ? 'Formu reddetmek istediginize emin misiniz?'
           : 'Formu gondermek istediginize emin misiniz?'
 
-    if (!window.confirm(confirmMessage)) {
+    if (!options?.skipConfirm && !window.confirm(confirmMessage)) {
       return
     }
 
@@ -306,12 +315,17 @@ export default function TaskDetailPage() {
         surecId: selectedTask.surecId,
         adimId: selectedTask.adimId,
         userId: Number(userId),
+      }, {
+        aciklama: options?.aciklama,
       })
 
       if (aksiyonId === 2) {
         setSuccessMessage(hasFile ? 'Taslak kaydedildi. Dosyalar yuklendi.' : 'Taslak kaydedildi.')
         await loadTask()
       } else if (aksiyonId === 3) {
+        setRejectAciklama('')
+        setRejectValidationError(null)
+        setRejectModalOpen(false)
         setSuccessMessage('Form reddedildi.')
         navigate('/tasks')
       } else {
@@ -337,6 +351,26 @@ export default function TaskDetailPage() {
     } finally {
       setLoadingAction(null)
     }
+  }
+
+  const openRejectModal = () => {
+    setRejectValidationError(null)
+    setRejectModalOpen(true)
+  }
+
+  const closeRejectModal = () => {
+    if (loadingAction === 'cancel') return
+    setRejectModalOpen(false)
+    setRejectValidationError(null)
+  }
+
+  const handleConfirmReject = async () => {
+    const trimmed = rejectAciklama.trim()
+    if (!trimmed) {
+      setRejectValidationError('Açıklama zorunludur')
+      return
+    }
+    await handleSubmitAction(3, { skipConfirm: true, aciklama: trimmed })
   }
 
   if (!taskId || Number.isNaN(numericTaskId)) {
@@ -474,7 +508,7 @@ export default function TaskDetailPage() {
                     <button
                       type="button"
                       disabled={loadingAction !== null}
-                      onClick={() => handleSubmitAction(3)}
+                      onClick={openRejectModal}
                       className="rounded-lg border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {loadingAction === 'cancel' ? 'Reddediliyor...' : 'Reddet'}
@@ -502,6 +536,51 @@ export default function TaskDetailPage() {
       >
         Gorev listesine don
       </button>
+
+      {rejectModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-slate-900">İptal Açıklaması</h2>
+            <div className="mt-4">
+              <textarea
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                rows={5}
+                value={rejectAciklama}
+                onChange={(event) => {
+                  setRejectAciklama(event.target.value)
+                  if (rejectValidationError) {
+                    setRejectValidationError(null)
+                  }
+                }}
+                placeholder="İptal sebebini yazınız..."
+              />
+            </div>
+
+            {rejectValidationError ? (
+              <p className="mt-2 text-sm text-rose-700">{rejectValidationError}</p>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeRejectModal}
+                disabled={loadingAction === 'cancel'}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                disabled={loadingAction === 'cancel'}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loadingAction === 'cancel' ? 'İptal Ediliyor...' : 'İptal Et'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

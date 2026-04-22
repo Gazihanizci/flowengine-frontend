@@ -6,6 +6,7 @@ export interface HistoryItem {
   adimAdi: string
   aksiyon: string
   formIcerik: string
+  aciklama?: string | null
   tarih: string
 }
 

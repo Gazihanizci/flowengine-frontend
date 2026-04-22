@@ -71,10 +71,14 @@ export async function submitTaskAction(
     adimId: number
     userId: number
   },
+  extra?: {
+    aciklama?: string
+  },
 ) {
   const requestPayload: TaskFormData = { ...payload }
   const hasFiles = Object.keys(files).length > 0
   const resolvedUserId = context?.userId
+  const resolvedAciklama = extra?.aciklama?.trim()
 
   if (hasFiles && context) {
     const uploads = Object.keys(files).map(async (key) => {
@@ -112,6 +116,7 @@ export async function submitTaskAction(
   const baseJsonBody: Record<string, unknown> = {
     aksiyonId,
     formData: requestPayload,
+    ...(resolvedAciklama ? { aciklama: resolvedAciklama } : {}),
   }
 
   jsonAttempts.push(baseJsonBody)
@@ -153,6 +158,9 @@ export async function submitTaskAction(
     const multipartBody = new FormData()
     multipartBody.append('aksiyonId', String(aksiyonId))
     multipartBody.append('formData', JSON.stringify(requestPayload))
+    if (resolvedAciklama) {
+      multipartBody.append('aciklama', resolvedAciklama)
+    }
 
     if (typeof resolvedUserId === 'number' && Number.isFinite(resolvedUserId) && resolvedUserId > 0) {
       multipartBody.append('userId', String(resolvedUserId))
