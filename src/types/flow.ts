@@ -5,6 +5,7 @@ export type ExternalFlowCancelBehavior = 'PROPAGATE' | 'WAIT'
 export interface FlowStep {
   stepId: number
   stepName: string
+  requiredApprovalCount: number
   fields: FormField[]
   externalFlowEnabled?: boolean
   externalFlowId?: number | null

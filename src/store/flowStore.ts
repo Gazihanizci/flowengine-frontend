@@ -13,6 +13,7 @@ interface FlowStore extends FlowState {
   initializeSteps: (count: number) => void
   updateStepFields: (stepId: number, fields: FormField[]) => void
   updateStepName: (stepId: number, name: string) => void
+  updateStepRequiredApprovalCount: (stepId: number, count: number) => void
   updateStepExternalFlow: (
     stepId: number,
     patch: {
@@ -47,6 +48,7 @@ export const useFlowStore = create<FlowStore>((set) => ({
       const steps: FlowStep[] = Array.from({ length: count }, (_, index) => ({
         stepId: index + 1,
         stepName: `Adım ${index + 1}`,
+        requiredApprovalCount: 1,
         fields: [],
         externalFlowEnabled: false,
         externalFlowId: null,
@@ -66,6 +68,14 @@ export const useFlowStore = create<FlowStore>((set) => ({
     set((state) => ({
       steps: state.steps.map((step) =>
         step.stepId === stepId ? { ...step, stepName: name } : step,
+      ),
+    })),
+  updateStepRequiredApprovalCount: (stepId, count) =>
+    set((state) => ({
+      steps: state.steps.map((step) =>
+        step.stepId === stepId
+          ? { ...step, requiredApprovalCount: Math.max(1, Math.floor(count || 1)) }
+          : step,
       ),
     })),
   updateStepExternalFlow: (stepId, patch) =>

@@ -11,6 +11,8 @@ import { fetchUserRoles, type UserRoleItem } from '../services/userApi'
 interface PropertiesPanelProps {
   field: FormField | null
   onUpdate: (updated: FormField) => void
+  currentStepRequiredApprovalCount: number
+  onUpdateStepRequiredApprovalCount: (count: number) => void
 }
 
 type SelectedRoleItem = {
@@ -27,6 +29,8 @@ type SelectedUserItem = {
 export default function PropertiesPanel({
   field,
   onUpdate,
+  currentStepRequiredApprovalCount,
+  onUpdateStepRequiredApprovalCount,
 }: PropertiesPanelProps) {
   const [optionLabel, setOptionLabel] = useState('')
   const [optionValue, setOptionValue] = useState('')
@@ -512,6 +516,22 @@ export default function PropertiesPanel({
             }
           />
           <span>Zorunlu</span>
+        </label>
+
+        <label>
+          <span>Gerekli Onay Sayısı</span>
+          <input
+            className="input"
+            type="number"
+            min={1}
+            value={currentStepRequiredApprovalCount}
+            onChange={(event) => {
+              const parsed = Number(event.target.value)
+              onUpdateStepRequiredApprovalCount(
+                Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1,
+              )
+            }}
+          />
         </label>
       </div>
 

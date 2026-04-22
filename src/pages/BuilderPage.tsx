@@ -67,6 +67,11 @@ function isBlank(value?: string) {
   return !value || value.trim().length === 0
 }
 
+function normalizeRequiredApprovalCount(value?: number) {
+  if (!Number.isFinite(value)) return 1
+  return Math.max(1, Math.floor(value as number))
+}
+
 function validateFieldDefinition(field: FormField): string | null {
   if (isBlank(field.label)) {
     return 'Alan etiketleri bos birakilamaz.'
@@ -109,6 +114,10 @@ function validateStepDefinition(step: FlowStep): string | null {
     return `${step.stepName || `Adim ${step.stepId}`} icin dis akis secimi zorunludur.`
   }
 
+  if (!Number.isFinite(step.requiredApprovalCount) || step.requiredApprovalCount < 1) {
+    return `${step.stepName || `Adim ${step.stepId}`} icin gerekli onay sayisi en az 1 olmalidir.`
+  }
+
   return null
 }
 
@@ -122,6 +131,9 @@ export default function BuilderPage() {
   const steps = useFlowStore((state) => state.steps)
   const updateStepFields = useFlowStore((state) => state.updateStepFields)
   const updateStepName = useFlowStore((state) => state.updateStepName)
+  const updateStepRequiredApprovalCount = useFlowStore(
+    (state) => state.updateStepRequiredApprovalCount,
+  )
   const updateStepExternalFlow = useFlowStore((state) => state.updateStepExternalFlow)
   const resetFlow = useFlowStore((state) => state.resetFlow)
 
@@ -268,6 +280,7 @@ export default function BuilderPage() {
     const stepPayload: SaveFlowPayload['steps'] = steps.map((step, stepIndex) => ({
       stepName: step.stepName,
       stepOrder: stepIndex + 1,
+      requiredApprovalCount: normalizeRequiredApprovalCount(step.requiredApprovalCount),
       fields: step.fields.map((field, fieldIndex) => ({
         type: field.type,
         label: field.label,
@@ -559,7 +572,16 @@ export default function BuilderPage() {
               onDelete={handleDelete}
             />
           </SortableContext>
-          <PropertiesPanel field={selectedField} onUpdate={handleUpdate} />
+          <PropertiesPanel
+            field={selectedField}
+            onUpdate={handleUpdate}
+            currentStepRequiredApprovalCount={normalizeRequiredApprovalCount(
+              currentStep.requiredApprovalCount,
+            )}
+            onUpdateStepRequiredApprovalCount={(count) =>
+              updateStepRequiredApprovalCount(currentStep.stepId, count)
+            }
+          />
         </div>
         <DragOverlay>
           {activeDragId ? (

@@ -114,6 +114,8 @@ export async function submitTaskAction(
     formData: requestPayload,
   }
 
+  jsonAttempts.push(baseJsonBody)
+
   if (typeof resolvedUserId === 'number' && Number.isFinite(resolvedUserId) && resolvedUserId > 0) {
     jsonAttempts.push({
       ...baseJsonBody,
@@ -124,8 +126,6 @@ export async function submitTaskAction(
       kullaniciId: resolvedUserId,
     })
   }
-
-  jsonAttempts.push(baseJsonBody)
 
   for (const body of jsonAttempts) {
     try {

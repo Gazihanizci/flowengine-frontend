@@ -14,6 +14,7 @@ export interface SaveFlowField {
 export interface SaveFlowStep {
   stepName: string
   stepOrder: number
+  requiredApprovalCount: number
   fields: SaveFlowField[]
   externalFlowEnabled?: boolean
   externalFlowId?: number | null
@@ -61,6 +62,7 @@ export interface FlowFieldItem {
 export interface FlowStepDetail {
   stepId: number
   stepName: string
+  requiredApprovalCount?: number
   fields: FlowFieldItem[]
   externalFlowEnabled?: boolean
   externalFlowId?: number | null
