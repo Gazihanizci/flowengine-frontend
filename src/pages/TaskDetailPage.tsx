@@ -30,9 +30,16 @@ type RawField = {
 }
 
 type FlowStepView = {
+  stepKey: string
   adimId: number
   adimAdi: string
   form: TaskField[]
+  source: 'main' | 'related'
+  relatedTask?: {
+    taskId: number
+    surecId: number
+    akisAdi?: string | null
+  }
 }
 
 type RawFlowStep = {
@@ -124,7 +131,7 @@ function normalizeField(rawField: RawField, index: number): TaskField {
   }
 }
 
-function normalizeFlowSteps(rawDetail: RawFlowDetail): FlowStepView[] {
+function normalizeFlowSteps(rawDetail: RawFlowDetail, surecId: number): FlowStepView[] {
   const rawSteps: RawFlowStep[] = Array.isArray(rawDetail)
     ? rawDetail
     : Array.isArray(rawDetail?.steps)
@@ -138,11 +145,34 @@ function normalizeFlowSteps(rawDetail: RawFlowDetail): FlowStepView[] {
       .filter((field) => Number.isFinite(field.fieldId))
 
     return {
+      stepKey: `main-${surecId}-${Number(step.adimId ?? stepIndex + 1)}`,
       adimId: Number(step.adimId ?? stepIndex + 1),
       adimAdi: String(step.adimAdi ?? `Adim ${stepIndex + 1}`),
       form,
+      source: 'main',
     }
   })
+}
+
+function pickRelatedTasks(currentTask: WorkflowTask, taskList: WorkflowTask[]) {
+  return taskList
+    .filter((task) => task.taskId !== currentTask.taskId)
+    .filter((task) => {
+      const surecDistance = Math.abs(task.surecId - currentTask.surecId)
+      const stepDistance = Math.abs(task.adimId - currentTask.adimId)
+      const sameFlowName =
+        task.akisAdi?.trim() &&
+        currentTask.akisAdi?.trim() &&
+        task.akisAdi.trim().toLocaleLowerCase('tr-TR') === currentTask.akisAdi.trim().toLocaleLowerCase('tr-TR')
+
+      return sameFlowName || surecDistance <= 2 || stepDistance <= 1
+    })
+    .sort((a, b) => {
+      const scoreA = Math.abs(a.surecId - currentTask.surecId) * 2 + Math.abs(a.adimId - currentTask.adimId)
+      const scoreB = Math.abs(b.surecId - currentTask.surecId) * 2 + Math.abs(b.adimId - currentTask.adimId)
+      return scoreA - scoreB
+    })
+    .slice(0, 4)
 }
 
 function buildFormDataPayload(form: TaskField[]): TaskFormData {
@@ -177,7 +207,7 @@ export default function TaskDetailPage() {
 
   const [selectedTask, setSelectedTask] = useState<WorkflowTask | null>(null)
   const [steps, setSteps] = useState<FlowStepView[]>([])
-  const [selectedStepId, setSelectedStepId] = useState<number | null>(null)
+  const [selectedStepKey, setSelectedStepKey] = useState<string | null>(null)
   const [form, setForm] = useState<TaskField[]>([])
   const [filesByFieldId, setFilesByFieldId] = useState<Record<number, File>>({})
 
@@ -194,10 +224,13 @@ export default function TaskDetailPage() {
   const editableCount = useMemo(() => form.filter((field) => field.editable).length, [form])
 
   const selectedStep = useMemo(
-    () => steps.find((step) => step.adimId === selectedStepId) ?? null,
-    [steps, selectedStepId],
+    () => steps.find((step) => step.stepKey === selectedStepKey) ?? null,
+    [steps, selectedStepKey],
   )
-  const isCurrentStepSelected = selectedTask && selectedStep ? isSameStep(selectedStep, selectedTask) : false
+  const isCurrentStepSelected =
+    selectedTask && selectedStep && selectedStep.source === 'main' ? isSameStep(selectedStep, selectedTask) : false
+  const mainSteps = useMemo(() => steps.filter((step) => step.source === 'main'), [steps])
+  const relatedSteps = useMemo(() => steps.filter((step) => step.source === 'related'), [steps])
 
   const loadTask = async () => {
     setLoading(true)
@@ -213,36 +246,53 @@ export default function TaskDetailPage() {
 
       if (!currentTask) {
         setSteps([])
-        setSelectedStepId(null)
+        setSelectedStepKey(null)
         return
       }
 
       try {
         const rawDetail = (await fetchFlowDetailBySurecId(currentTask.surecId)) as RawFlowDetail
-        const normalizedSteps = normalizeFlowSteps(rawDetail)
+        const normalizedSteps = normalizeFlowSteps(rawDetail, currentTask.surecId)
 
         const currentStepFromTask: FlowStepView = {
+          stepKey: `main-${currentTask.surecId}-${currentTask.adimId}`,
           adimId: currentTask.adimId,
           adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
           form: sanitizeEditableFieldValues(currentTask.form ?? []),
+          source: 'main',
         }
 
         const hasCurrentStep = normalizedSteps.some((step) => isSameStep(step, currentTask))
-        const mergedSteps = hasCurrentStep
+        const mainSteps = hasCurrentStep
           ? normalizedSteps.map((step) => (isSameStep(step, currentTask) ? currentStepFromTask : step))
           : [currentStepFromTask, ...normalizedSteps]
 
-        setSteps(mergedSteps)
-        setSelectedStepId(currentTask.adimId)
+        const relatedSteps: FlowStepView[] = pickRelatedTasks(currentTask, taskList).map((task) => ({
+          stepKey: `related-${task.taskId}-${task.adimId}`,
+          adimId: task.adimId,
+          adimAdi: task.adimAdi || `Adim ${task.adimId}`,
+          form: sanitizeEditableFieldValues(task.form ?? []),
+          source: 'related',
+          relatedTask: {
+            taskId: task.taskId,
+            surecId: task.surecId,
+            akisAdi: task.akisAdi,
+          },
+        }))
+
+        setSteps([...mainSteps, ...relatedSteps])
+        setSelectedStepKey(currentStepFromTask.stepKey)
       } catch {
         setSteps([
           {
+            stepKey: `main-${currentTask.surecId}-${currentTask.adimId}`,
             adimId: currentTask.adimId,
             adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
             form: sanitizeEditableFieldValues(currentTask.form ?? []),
+            source: 'main',
           },
         ])
-        setSelectedStepId(currentTask.adimId)
+        setSelectedStepKey(`main-${currentTask.surecId}-${currentTask.adimId}`)
       }
     } catch {
       setError('Gorev detayi alinamadi.')
@@ -460,19 +510,19 @@ export default function TaskDetailPage() {
         <aside className="task-steps-panel">
           <h2>Akis Adimlari</h2>
           <div className="task-steps-list">
-            {steps.map((step, index) => {
-              const isSelected = step.adimId === selectedStepId
+            {mainSteps.map((step, index) => {
+              const isSelected = step.stepKey === selectedStepKey
               const canView = step.form.length > 0
               const isCurrent = isSameStep(step, selectedTask)
 
               return (
                 <button
-                  key={`${step.adimId}-${index}`}
+                  key={`${step.stepKey}-${index}`}
                   type="button"
                   disabled={!canView}
                   onClick={() => {
                     if (canView) {
-                      setSelectedStepId(step.adimId)
+                      setSelectedStepKey(step.stepKey)
                     }
                   }}
                   className={`task-step-btn ${isSelected ? 'selected' : ''} ${!canView ? 'disabled' : ''}`}
@@ -485,6 +535,35 @@ export default function TaskDetailPage() {
               )
             })}
           </div>
+          {relatedSteps.length > 0 ? (
+            <>
+              <h2 className="task-steps-subtitle">Iliskili Akis Adimlari</h2>
+              <div className="task-steps-list">
+                {relatedSteps.map((step, index) => {
+                  const isSelected = step.stepKey === selectedStepKey
+                  const canView = step.form.length > 0
+                  return (
+                    <button
+                      key={`${step.stepKey}-${index}`}
+                      type="button"
+                      disabled={!canView}
+                      onClick={() => {
+                        if (canView) {
+                          setSelectedStepKey(step.stepKey)
+                        }
+                      }}
+                      className={`task-step-btn related ${isSelected ? 'selected' : ''} ${!canView ? 'disabled' : ''}`}
+                    >
+                      <p>{step.relatedTask?.akisAdi?.trim() || 'Iliskili Akis'} | {step.adimAdi}</p>
+                      <span>
+                        Surec #{step.relatedTask?.surecId ?? '-'} | Iliskili adim
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : null}
         </aside>
 
         <section className="task-form-panel">
@@ -495,7 +574,9 @@ export default function TaskDetailPage() {
               <header className="task-form-panel-head">
                 <h2>{selectedStep.adimAdi}</h2>
                 <p>
-                  {isCurrentStepSelected
+                  {selectedStep?.source === 'related'
+                    ? 'Bu adim iliskili bir akistan geliyor. Salt okunur olarak goruntulenir.'
+                    : isCurrentStepSelected
                     ? 'Bu adim size ait. Alanlari duzenleyip aksiyon alabilirsiniz.'
                     : 'Bu adim sadece goruntulenebilir. Alanlar salt okunur durumdadir.'}
                 </p>
@@ -507,7 +588,7 @@ export default function TaskDetailPage() {
                 <div className="task-form-grid">
                   {(isCurrentStepSelected ? form : selectedStep.form).map((field) => (
                     <TaskFieldRenderer
-                      key={`${selectedStep.adimId}-${field.fieldId}`}
+                      key={`${selectedStep.stepKey}-${field.fieldId}`}
                       field={isCurrentStepSelected ? field : { ...field, editable: false }}
                       value={field.value ?? ''}
                       fileName={isCurrentStepSelected ? filesByFieldId[field.fieldId]?.name : undefined}
@@ -524,7 +605,7 @@ export default function TaskDetailPage() {
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={() => handleSubmitAction(2)}
-                    className="button secondary"
+                    className="button secondary task-action-save"
                   >
                     {loadingAction === 'save' ? 'Kaydediliyor...' : 'Taslak Kaydet'}
                   </button>
@@ -532,7 +613,7 @@ export default function TaskDetailPage() {
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={openRejectModal}
-                    className="button reject"
+                    className="button reject task-action-reject"
                   >
                     {loadingAction === 'cancel' ? 'Reddediliyor...' : 'Reddet'}
                   </button>
@@ -540,7 +621,7 @@ export default function TaskDetailPage() {
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={() => handleSubmitAction(1)}
-                    className="button primary"
+                    className="button primary task-action-submit"
                   >
                     {loadingAction === 'submit' ? 'Gonderiliyor...' : 'Gonder'}
                   </button>
@@ -551,7 +632,7 @@ export default function TaskDetailPage() {
         </section>
       </div>
 
-      <button type="button" onClick={() => navigate('/tasks')} className="button secondary">
+      <button type="button" onClick={() => navigate('/tasks')} className="button secondary task-back-button">
         Gorev listesine don
       </button>
 

@@ -111,7 +111,6 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
           >
             <div className="task-list-card-top">
               <p>{toFlowName(task)}</p>
-              <span>Task #{task.taskId}</span>
             </div>
             <div className="task-list-card-meta">
               <span>Surec #{task.surecId}</span>

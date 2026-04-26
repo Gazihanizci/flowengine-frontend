@@ -87,6 +87,8 @@ export default function FlowMapPage() {
   const [flows, setFlows] = useState<FlowListItem[]>([])
   const [selectedFlowId, setSelectedFlowId] = useState<number | null>(null)
   const [flowMap, setFlowMap] = useState<FlowMapResponse | null>(null)
+  const [flowSearch, setFlowSearch] = useState('')
+  const [flowQuickFilter, setFlowQuickFilter] = useState<'ALL' | 'WITH_DESC' | 'NO_DESC'>('ALL')
   const [loadingFlows, setLoadingFlows] = useState(false)
   const [loadingMap, setLoadingMap] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -172,6 +174,27 @@ export default function FlowMapPage() {
   }, [selectedFlowId])
 
   const graph = useMemo(() => buildGraph(flowMap), [flowMap])
+  const filteredFlows = useMemo(() => {
+    const query = flowSearch.trim().toLocaleLowerCase('tr-TR')
+
+    return flows.filter((flow) => {
+      const flowName = flow.akisAdi.toLocaleLowerCase('tr-TR')
+      const description = String(flow.aciklama ?? '').toLocaleLowerCase('tr-TR')
+      const baseMatch = !query || flowName.includes(query) || description.includes(query) || String(flow.akisId).includes(query)
+
+      if (!baseMatch) return false
+
+      if (flowQuickFilter === 'WITH_DESC') {
+        return String(flow.aciklama ?? '').trim().length > 0
+      }
+
+      if (flowQuickFilter === 'NO_DESC') {
+        return String(flow.aciklama ?? '').trim().length === 0
+      }
+
+      return true
+    })
+  }, [flows, flowQuickFilter, flowSearch])
 
   const totalStepCount = flowMap?.adimlar.length ?? 0
   const totalComponentCount = useMemo(
@@ -265,16 +288,71 @@ export default function FlowMapPage() {
           <aside className="panel flow-map-sidebar">
             <div className="panel-header">
               <h2>Akislar</h2>
-              <span>{flows.length} kayit</span>
+              <span>
+                {filteredFlows.length} / {flows.length} kayit
+              </span>
+            </div>
+
+            <div className="flow-map-filter">
+              <label className="flow-map-search">
+                <span>Akis Ara</span>
+                <input
+                  className="input"
+                  type="search"
+                  value={flowSearch}
+                  placeholder="ID, akis adi, aciklama..."
+                  onChange={(event) => setFlowSearch(event.target.value)}
+                />
+              </label>
+
+              <div className="flow-map-filter-chips">
+                <button
+                  type="button"
+                  className={`flow-map-filter-chip ${flowQuickFilter === 'ALL' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('ALL')}
+                >
+                  Tumu
+                </button>
+                <button
+                  type="button"
+                  className={`flow-map-filter-chip ${flowQuickFilter === 'WITH_DESC' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('WITH_DESC')}
+                >
+                  Aciklamali
+                </button>
+                <button
+                  type="button"
+                  className={`flow-map-filter-chip ${flowQuickFilter === 'NO_DESC' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('NO_DESC')}
+                >
+                  Aciklamasiz
+                </button>
+              </div>
+
+              {(flowSearch || flowQuickFilter !== 'ALL') && (
+                <button
+                  type="button"
+                  className="button secondary flow-map-clear"
+                  onClick={() => {
+                    setFlowSearch('')
+                    setFlowQuickFilter('ALL')
+                  }}
+                >
+                  Filtreyi Temizle
+                </button>
+              )}
             </div>
 
             {loadingFlows ? <p className="hint">Akislar yukleniyor...</p> : null}
             {error ? <p className="error-text">{error}</p> : null}
 
             {!loadingFlows && flows.length === 0 ? <p className="hint">Kayitli akis bulunamadi.</p> : null}
+            {!loadingFlows && flows.length > 0 && filteredFlows.length === 0 ? (
+              <p className="hint">Filtreye uygun akis bulunamadi.</p>
+            ) : null}
 
             <div className="flow-map-list">
-              {flows.map((flow) => (
+              {filteredFlows.map((flow) => (
                 <button
                   key={flow.akisId}
                   type="button"

@@ -4,6 +4,12 @@ import TaskList from '../components/TaskList'
 import { fetchMyTasks } from '../services/taskApi'
 import type { WorkflowTask } from '../types/task'
 
+function isActionableTask(task: WorkflowTask) {
+  const hasEditableField = Array.isArray(task.form) && task.form.some((field) => field.editable)
+  const hasAction = Array.isArray(task.actions) && task.actions.length > 0
+  return hasEditableField || hasAction
+}
+
 export default function MyTasks() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
@@ -16,7 +22,7 @@ export default function MyTasks() {
 
     try {
       const data = await fetchMyTasks()
-      const taskList = Array.isArray(data) ? data : []
+      const taskList = Array.isArray(data) ? data.filter(isActionableTask) : []
       setTasks(taskList)
     } catch {
       setError('Gorevler alinamadi.')
