@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import type { WorkflowTask } from '../types/task'
 
 interface TaskListProps {
@@ -13,7 +14,24 @@ function toFlowName(task: WorkflowTask) {
 }
 
 export default function TaskList({ tasks, loading, error, onSelectTask, onRetry }: TaskListProps) {
-  const sortedTasks = [...tasks].sort((a, b) => b.taskId - a.taskId)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortType, setSortType] = useState<'LATEST' | 'OLDEST'>('LATEST')
+
+  const filteredTasks = useMemo(() => {
+    const normalized = searchTerm.trim().toLocaleLowerCase('tr-TR')
+    const base = tasks.filter((task) => {
+      if (!normalized) return true
+      const flowName = toFlowName(task).toLocaleLowerCase('tr-TR')
+      return (
+        flowName.includes(normalized) ||
+        String(task.taskId).includes(normalized) ||
+        String(task.surecId).includes(normalized) ||
+        String(task.adimId).includes(normalized)
+      )
+    })
+
+    return [...base].sort((a, b) => (sortType === 'LATEST' ? b.taskId - a.taskId : a.taskId - b.taskId))
+  }, [searchTerm, sortType, tasks])
 
   return (
     <section className="task-inbox">
@@ -23,8 +41,37 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
           <h2>Gorev Formlari</h2>
         </div>
         <div className="task-inbox-count">
-          <strong>{tasks.length}</strong>
+          <strong>{filteredTasks.length}</strong>
           <span>Aktif Kayit</span>
+        </div>
+      </div>
+
+      <div className="task-toolbar">
+        <label className="task-search">
+          <span>Gorev Ara</span>
+          <input
+            className="input"
+            type="search"
+            value={searchTerm}
+            placeholder="Task ID, surec ID, akis adi..."
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </label>
+        <div className="task-sort-group">
+          <button
+            type="button"
+            className={`task-sort-chip ${sortType === 'LATEST' ? 'active' : ''}`}
+            onClick={() => setSortType('LATEST')}
+          >
+            En Yeni
+          </button>
+          <button
+            type="button"
+            className={`task-sort-chip ${sortType === 'OLDEST' ? 'active' : ''}`}
+            onClick={() => setSortType('OLDEST')}
+          >
+            En Eski
+          </button>
         </div>
       </div>
 
@@ -48,14 +95,14 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
         </div>
       ) : null}
 
-      {!loading && !error && tasks.length === 0 ? (
+      {!loading && !error && filteredTasks.length === 0 ? (
         <div className="task-list-empty">
-          Gorev bulunamadi
+          {tasks.length === 0 ? 'Gorev bulunamadi' : 'Arama kriterine uygun gorev bulunamadi'}
         </div>
       ) : null}
 
       <div className="task-list-grid">
-        {sortedTasks.map((task) => (
+        {filteredTasks.map((task) => (
           <button
             key={task.taskId}
             type="button"

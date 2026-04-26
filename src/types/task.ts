@@ -19,6 +19,9 @@ export interface TaskField {
   type: TaskFieldType
   label: string
   options?: TaskFieldOption[]
+  accept?: string | null
+  multiple?: boolean
+  isPhoto?: boolean
   editable: boolean
   value?: TaskFormValue
   fileId?: number | null

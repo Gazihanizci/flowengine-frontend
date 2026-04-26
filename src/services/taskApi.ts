@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { TaskFileMap, TaskFormData, WorkflowTask } from '../types/task'
-import { uploadFile } from './fileApi'
+import { getUploadedResourceId, uploadFile, uploadPhoto } from './fileApi'
 
 const taskApi = axios.create({
   baseURL: '/api',
@@ -70,6 +70,7 @@ export async function submitTaskAction(
     surecId: number
     adimId: number
     userId: number
+    photoFieldIds?: number[]
   },
   extra?: {
     aciklama?: string
@@ -81,6 +82,7 @@ export async function submitTaskAction(
   const resolvedAciklama = extra?.aciklama?.trim()
 
   if (hasFiles && context) {
+    const photoFieldIdSet = new Set(context.photoFieldIds ?? [])
     const uploads = Object.keys(files).map(async (key) => {
       const fieldId = Number(key)
       const file = files[fieldId]
@@ -88,7 +90,8 @@ export async function submitTaskAction(
 
       let uploaded
       try {
-        uploaded = await uploadFile(file, {
+        const uploader = photoFieldIdSet.has(fieldId) ? uploadPhoto : uploadFile
+        uploaded = await uploader(file, {
           surecId: context.surecId,
           adimId: context.adimId,
           aksiyonId,
@@ -98,9 +101,9 @@ export async function submitTaskAction(
         throw new Error(`Dosya yukleme hatasi (fieldId=${fieldId}): ${extractApiError(error)}`)
       }
 
-      const uploadedId = uploaded.dosyaId ?? uploaded.fileId
+      const uploadedId = getUploadedResourceId(uploaded)
       if (!uploadedId) {
-        throw new Error('Dosya yukleme yanitinda dosyaId bulunamadi.')
+        throw new Error('Dosya yukleme yanitinda dosyaId/fotografId bulunamadi.')
       }
 
       requestPayload[fieldId] = String(uploadedId)

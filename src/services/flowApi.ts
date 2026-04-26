@@ -9,6 +9,8 @@ export interface SaveFlowField {
   orderNo: number
   permissions: FieldPermission[]
   options: FieldOption[]
+  accept?: string
+  multiple?: boolean
 }
 
 export interface SaveFlowStep {
@@ -53,6 +55,8 @@ export interface FlowFieldItem {
   placeholder: string | null
   required: boolean
   orderNo: number
+  accept?: string | null
+  multiple?: boolean
   roleIds?: number[]
   userIds?: number[]
   permissions?: FieldPermission[]

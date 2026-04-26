@@ -49,15 +49,15 @@ export default function FileUpload({ onUploadSuccess }) {
 
     try {
       const result = await uploadFile(selectedFile, 104, 83, 1, 12)
-      const dosyaId = result?.dosyaId
+      const dosyaId = result?.dosyaId ?? result?.fileId ?? result?.fotografId
 
       if (!dosyaId) {
-        throw new Error('API yanitinda dosyaId bulunamadi.')
+        throw new Error('API yanitinda dosyaId/fotografId bulunamadi.')
       }
 
       setUploadedId(dosyaId)
-      setSuccessMessage(`Yukleme basarili: ${result?.dosyaAdi ?? selectedFile.name}`)
-      setDownloadUrl(result?.downloadUrl ?? `/api/files/download/${dosyaId}`)
+      setSuccessMessage(`Yukleme basarili: ${result?.dosyaAdi ?? result?.fotografAdi ?? selectedFile.name}`)
+      setDownloadUrl(result?.imageUrl ?? result?.downloadUrl ?? `/api/fotograflar/view/${dosyaId}`)
 
       if (typeof onUploadSuccess === 'function') {
         onUploadSuccess(dosyaId)

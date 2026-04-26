@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { uploadFile } from '../services/fileApi'
+import { getUploadedResourceId, isPhotoField, uploadFile, uploadPhoto } from '../services/fileApi'
 import type { WorkflowField, FormValue } from '../types/workflow'
 
 interface FieldRendererProps {
@@ -36,11 +36,12 @@ export default function FieldRenderer({
         throw new Error('Upload parametreleri eksik.')
       }
 
-      const result = await uploadFile(file, uploadContext)
-      const uploadedId = result?.dosyaId ?? result?.fileId
+      const shouldUploadPhoto = isPhotoField(field) || file.type.toLocaleLowerCase('tr-TR').startsWith('image/')
+      const result = shouldUploadPhoto ? await uploadPhoto(file, uploadContext) : await uploadFile(file, uploadContext)
+      const uploadedId = getUploadedResourceId(result)
 
       if (!uploadedId) {
-        throw new Error('Yukleme yanitinda dosyaId bulunamadi.')
+        throw new Error('Yukleme yanitinda dosyaId/fotografId bulunamadi.')
       }
 
       onChange(field.id, String(uploadedId))
@@ -115,7 +116,14 @@ export default function FieldRenderer({
       case 'FILE':
         return (
           <div className="file-input">
-            <input className="input" type="file" onChange={handleFileChange} disabled={uploading} />
+            <input
+              className="input"
+              type="file"
+              accept={field.accept ?? undefined}
+              multiple={Boolean(field.multiple)}
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
             {uploading && <p className="hint">Yukleniyor...</p>}
             {value && !uploading && <p className="hint">Yuklendi. DosyaId: {value}</p>}
             {uploadError && <p className="error-text">{uploadError}</p>}

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TaskFieldRenderer from '../components/TaskFieldRenderer'
 import { fetchFlowDetailBySurecId, fetchMyTasks, submitTaskAction } from '../services/taskApi'
 import { fetchMe } from '../services/userApi'
+import { isPhotoField } from '../services/fileApi'
 import { useUserStore } from '../store/userStore'
 import type { TaskField, TaskFieldType, TaskFileMap, TaskFormData, TaskFormValue, WorkflowTask } from '../types/task'
 import { validateTaskForm } from '../utils/taskValidation'
@@ -15,6 +16,7 @@ type RawField = {
   label?: string
   editable?: boolean
   fileId?: number | null
+  fotografId?: number | null
   value?: TaskFormValue
   deger?: TaskFormValue
   fieldValue?: TaskFormValue
@@ -23,6 +25,8 @@ type RawField = {
   secenekler?: Array<{ label?: string; value?: string | number; ad?: string; kod?: string | number }>
   choices?: Array<{ label?: string; value?: string | number; name?: string; id?: string | number }>
   values?: Array<{ label?: string; value?: string | number }>
+  accept?: string | null
+  multiple?: boolean
 }
 
 type FlowStepView = {
@@ -102,8 +106,19 @@ function normalizeField(rawField: RawField, index: number): TaskField {
     fieldId: Number.isFinite(fieldId) ? fieldId : index + 1,
     type,
     label: String(rawField.label ?? `Alan ${fieldId}`),
+    accept: rawField.accept ?? null,
+    multiple: Boolean(rawField.multiple),
+    isPhoto:
+      rawField.fotografId !== null && rawField.fotografId !== undefined
+        ? true
+        : isPhotoField({
+            label: rawField.label,
+            accept: rawField.accept,
+            type: rawField.type,
+            value: rawValue,
+          }),
     editable,
-    fileId: rawField.fileId ?? null,
+    fileId: rawField.fileId ?? rawField.fotografId ?? null,
     value: editable ? null : rawValue,
     options,
   }
@@ -313,6 +328,7 @@ export default function TaskDetailPage() {
       const payload = buildFormDataPayload(form)
       const filePayload = buildFilePayload(form, filesByFieldId)
       const hasFile = Object.keys(filePayload).length > 0
+      const photoFieldIds = form.filter((field) => field.type === 'FILE' && isPhotoField(field)).map((field) => field.fieldId)
 
       let userId = user?.kullaniciId
       if (!userId) {
@@ -335,6 +351,7 @@ export default function TaskDetailPage() {
         surecId: selectedTask.surecId,
         adimId: selectedTask.adimId,
         userId: Number(userId),
+        photoFieldIds,
       }, {
         aciklama: options?.aciklama,
       })

@@ -18,6 +18,8 @@ export interface WorkflowField {
   value?: string | number | boolean
   required?: boolean
   options?: FieldOption[]
+  accept?: string | null
+  multiple?: boolean
 }
 
 export interface WorkflowAction {

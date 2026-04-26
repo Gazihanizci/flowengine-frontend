@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [flowStartLoading, setFlowStartLoading] = useState(false)
   const [flowStartError, setFlowStartError] = useState<string | null>(null)
   const [flowStartSuccess, setFlowStartSuccess] = useState<string | null>(null)
+  const [flowSearchTerm, setFlowSearchTerm] = useState('')
+  const [flowQuickFilter, setFlowQuickFilter] = useState<'ALL' | 'SHORT' | 'LONG'>('ALL')
 
   useEffect(() => {
     let mounted = true
@@ -110,6 +112,30 @@ export default function Dashboard() {
     return new Map<number, string>(entries)
   }, [flows])
 
+  const filteredFlows = useMemo(() => {
+    const normalizedSearch = flowSearchTerm.trim().toLocaleLowerCase('tr-TR')
+
+    return flows.filter((flow) => {
+      const baseMatch =
+        !normalizedSearch ||
+        flow.akisAdi.toLocaleLowerCase('tr-TR').includes(normalizedSearch) ||
+        String(flow.akisId).includes(normalizedSearch) ||
+        (flow.aciklama ?? '').toLocaleLowerCase('tr-TR').includes(normalizedSearch)
+
+      if (!baseMatch) return false
+
+      if (flowQuickFilter === 'SHORT') {
+        return flow.akisAdi.trim().length <= 12
+      }
+
+      if (flowQuickFilter === 'LONG') {
+        return flow.akisAdi.trim().length > 12
+      }
+
+      return true
+    })
+  }, [flows, flowQuickFilter, flowSearchTerm])
+
   const formatIds = (ids?: number[]) => {
     if (!ids || ids.length === 0) return '-'
     return ids.join(', ')
@@ -164,28 +190,34 @@ export default function Dashboard() {
     return (
       <div className="dashboard">
         <div className="dashboard-shell">
-          <div className="dashboard-top">
-            <div>
+          <section className="panel dashboard-user-hero">
+            <div className="dashboard-user-hero-main">
+              <p className="dashboard-user-kicker">Operational Workspace</p>
               <h1>Workflow Dashboard</h1>
-              <p>Gorevlerini ve bildirimlerini ayri sayfalardan yonet.</p>
+              <p>Gorevlerini, bildirimlerini ve akis baslatma adimlarini tek ekrandan yonet.</p>
             </div>
-          </div>
+            <div className="dashboard-user-hero-meta">
+              <span>Toplam akis: {flows.length}</span>
+              <span>Secili ID: {selectedFlowId ?? '-'}</span>
+              <span>Kullanici: {user?.adSoyad ?? 'Bilinmiyor'}</span>
+            </div>
+          </section>
 
-          <section className="grid gap-4 lg:grid-cols-3">
-            <article className="panel">
+          <section className="dashboard-user-grid">
+            <article className="panel dashboard-user-card dashboard-user-card-task">
               <h2>Gorevler</h2>
               <p className="hint">Atanan gorevleri gor, formu doldur ve aksiyon al.</p>
-              <div className="mt-4">
+              <div className="dashboard-user-card-actions">
                 <button className="button primary" type="button" onClick={() => navigate('/tasks')}>
                   Gorevler Sayfasina Git
                 </button>
               </div>
             </article>
 
-            <article className="panel">
+            <article className="panel dashboard-user-card dashboard-user-card-notification">
               <h2>Bildirimler</h2>
               <p className="hint">Onay/reddet islemlerini ve bildirim akisini ayri panelden yonet.</p>
-              <div className="mt-4">
+              <div className="dashboard-user-card-actions">
                 <button className="button primary" type="button" onClick={() => navigate('/notifications')}>
                   Bildirimler Sayfasina Git
                 </button>
@@ -315,18 +347,56 @@ export default function Dashboard() {
           <section className="panel flow-list-panel">
             <div className="panel-header">
               <h2>Akislar</h2>
-              <span>{flows.length} kayit</span>
+              <span>{filteredFlows.length} / {flows.length} kayit</span>
             </div>
             <p className="panel-subtitle">Detayini incelemek istediginiz akis kaydini secin.</p>
+
+            <div className="flow-list-toolbar">
+              <label className="flow-search">
+                <span>Akis Ara</span>
+                <input
+                  className="input"
+                  type="search"
+                  value={flowSearchTerm}
+                  placeholder="ID, akis adi veya aciklama..."
+                  onChange={(event) => setFlowSearchTerm(event.target.value)}
+                />
+              </label>
+              <div className="flow-filter-chips">
+                <button
+                  type="button"
+                  className={`flow-filter-chip ${flowQuickFilter === 'ALL' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('ALL')}
+                >
+                  Tumu
+                </button>
+                <button
+                  type="button"
+                  className={`flow-filter-chip ${flowQuickFilter === 'SHORT' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('SHORT')}
+                >
+                  Kisa Isim
+                </button>
+                <button
+                  type="button"
+                  className={`flow-filter-chip ${flowQuickFilter === 'LONG' ? 'active' : ''}`}
+                  onClick={() => setFlowQuickFilter('LONG')}
+                >
+                  Uzun Isim
+                </button>
+              </div>
+            </div>
 
             {loading && <p className="hint">Yukleniyor...</p>}
             {error && <p className="error-text">{error}</p>}
 
-            {!loading && !error && flows.length === 0 && (
-              <p className="hint">Henuz kayitli akis yok.</p>
+            {!loading && !error && filteredFlows.length === 0 && (
+              <p className="hint">
+                {flows.length === 0 ? 'Henuz kayitli akis yok.' : 'Arama kriterine uygun akis bulunamadi.'}
+              </p>
             )}
 
-            {!loading && !error && flows.length > 0 && (
+            {!loading && !error && filteredFlows.length > 0 && (
               <div className="flow-list-scroll">
                 <div className="flow-list-head">
                   <span>ID</span>
@@ -334,7 +404,7 @@ export default function Dashboard() {
                   <span>Aciklama</span>
                 </div>
                 <div className="flow-list">
-                  {flows.map((flow) => (
+                  {filteredFlows.map((flow) => (
                     <button
                       key={flow.akisId}
                       className={`flow-row ${selectedFlowId === flow.akisId ? 'selected' : ''}`}

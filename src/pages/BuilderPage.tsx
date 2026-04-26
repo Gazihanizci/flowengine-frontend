@@ -289,6 +289,12 @@ export default function BuilderPage() {
         orderNo: fieldIndex + 1,
         permissions: field.permissions ?? [],
         options: field.options ?? [],
+        ...(field.type === 'FILE'
+          ? {
+              accept: field.accept ?? '',
+              multiple: Boolean(field.multiple),
+            }
+          : {}),
       })),
       ...(step.externalFlowEnabled
         ? {

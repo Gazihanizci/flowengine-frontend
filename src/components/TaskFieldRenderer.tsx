@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactElement } from 'react'
 import FileInput from './FileInput'
 import FormField from './FormField'
+import { downloadFileUrl, isPhotoField, viewPhotoUrl } from '../services/fileApi'
 import type { TaskField, TaskFormValue } from '../types/task'
 
 interface TaskFieldRendererProps {
@@ -159,14 +160,42 @@ const fieldRendererMap: FieldRendererMap = {
   FILE: ({ field, disabled, onFileChange, fileName }) => (
     <div className="mt-2 space-y-2">
       {field.fileId ? (
-        <a
-          href={`/api/files/download/${field.fileId}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-block text-sm font-medium text-cyan-700 underline hover:text-cyan-900"
-        >
-          {String(field.value ?? fileName ?? `Dosya #${field.fileId}`)}
-        </a>
+        isPhotoField(field) ? (
+          <div className="space-y-2">
+            <img
+              src={viewPhotoUrl(field.fileId)}
+              alt={String(field.value ?? fileName ?? `Fotograf #${field.fileId}`)}
+              className="max-h-56 w-auto rounded-lg border border-slate-200 bg-slate-50 object-contain"
+              loading="lazy"
+            />
+            <div className="flex items-center gap-3">
+              <a
+                href={viewPhotoUrl(field.fileId)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block text-sm font-medium text-cyan-700 underline hover:text-cyan-900"
+              >
+                Fotografi goruntule
+              </a>
+              <a
+                href={viewPhotoUrl(field.fileId)}
+                download
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Indir
+              </a>
+            </div>
+          </div>
+        ) : (
+          <a
+            href={downloadFileUrl(field.fileId)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block text-sm font-medium text-cyan-700 underline hover:text-cyan-900"
+          >
+            {String(field.value ?? fileName ?? `Dosya #${field.fileId}`)}
+          </a>
+        )
       ) : (
         <p className="text-sm text-slate-500">Dosya yok</p>
       )}
@@ -174,6 +203,7 @@ const fieldRendererMap: FieldRendererMap = {
         <FileInput
           disabled={disabled}
           fileName={fileName}
+          accept={field.accept}
           onFileChange={(file) => onFileChange?.(field.fieldId, file)}
         />
       ) : null}

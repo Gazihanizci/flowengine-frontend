@@ -292,6 +292,28 @@ Response:
 }
 ```
 
+### 7.2 Fotograf Upload
+- `POST /api/fotograflar/upload`
+- Content-Type: `multipart/form-data`
+- Form field: `file`
+- Query params:
+  - `surecId`
+  - `adimId`
+  - `aksiyonId`
+  - `userId`
+
+Response:
+```json
+{
+  "fotografId": 91,
+  "fotografAdi": "saha-gorseli.jpg",
+  "imageUrl": "/api/fotograflar/view/91"
+}
+```
+
+### 7.3 Fotograf Goruntuleme
+- `GET /api/fotograflar/view/{id}`
+
 ## 8. Bildirim API
 
 - `GET /api/bildirimler/me`

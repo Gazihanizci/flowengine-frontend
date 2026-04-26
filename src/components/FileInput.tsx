@@ -3,10 +3,11 @@ import type { ChangeEvent } from 'react'
 interface FileInputProps {
   disabled: boolean
   fileName?: string
+  accept?: string | null
   onFileChange: (file: File | null) => void
 }
 
-export default function FileInput({ disabled, fileName, onFileChange }: FileInputProps) {
+export default function FileInput({ disabled, fileName, accept, onFileChange }: FileInputProps) {
   const hasFile = Boolean(fileName)
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -17,6 +18,7 @@ export default function FileInput({ disabled, fileName, onFileChange }: FileInpu
     <div className="mt-2 space-y-2">
       <input
         type="file"
+        accept={accept ?? undefined}
         className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-200 file:px-3 file:py-2 file:font-medium hover:file:bg-slate-300 disabled:cursor-not-allowed"
         disabled={disabled}
         onChange={handleChange}
