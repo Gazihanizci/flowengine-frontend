@@ -3618,6 +3618,83 @@ label {
   box-shadow: 0 12px 22px rgba(6, 17, 38, 0.45);
 }
 
+:root[data-theme='dark'] .flow-detail-panel .fields-row {
+  border-color: #365275;
+  background: linear-gradient(180deg, #192c47 0%, #15263f 100%);
+  color: #d9e7ff;
+}
+
+:root[data-theme='dark'] .flow-detail-panel .fields-row.fields-head {
+  border-color: #45658f;
+  background: linear-gradient(180deg, #243b5f 0%, #1f3455 100%);
+  color: #e9f1ff;
+}
+
+:root[data-theme='dark'] .flow-detail-panel .flow-fields h3 {
+  color: #eef4ff;
+}
+
+:root[data-theme='dark'] .flow-detail-panel .step-tab {
+  border-color: #39577d;
+  background: #1a2d49;
+  color: #c1d4f0;
+}
+
+:root[data-theme='dark'] .task-inbox {
+  border-color: #355274;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(77, 141, 255, 0.12), transparent 45%),
+    linear-gradient(165deg, #15253f 0%, #112038 100%);
+  box-shadow: 0 16px 30px rgba(3, 10, 26, 0.44);
+}
+
+:root[data-theme='dark'] .task-inbox-head {
+  border-bottom-color: #334d70;
+}
+
+:root[data-theme='dark'] .task-inbox-head h2 {
+  color: #edf4ff;
+}
+
+:root[data-theme='dark'] .task-inbox-count {
+  border-color: #426189;
+  background: #1c3150;
+}
+
+:root[data-theme='dark'] .task-inbox-count strong {
+  color: #edf4ff;
+}
+
+:root[data-theme='dark'] .task-inbox-count span {
+  color: #b4c8e5;
+}
+
+:root[data-theme='dark'] .task-toolbar {
+  border-color: #355274;
+  background: linear-gradient(180deg, #1a2d49 0%, #162741 100%);
+}
+
+:root[data-theme='dark'] .task-search span {
+  color: #9eb8de;
+}
+
+:root[data-theme='dark'] .task-sort-chip {
+  border-color: #466893;
+  background: #1b2f4c;
+  color: #c6d8f2;
+}
+
+:root[data-theme='dark'] .task-sort-chip:hover {
+  border-color: #5f87bd;
+  background: #22385a;
+}
+
+:root[data-theme='dark'] .task-list-empty {
+  border-color: #3b5b82;
+  background: linear-gradient(180deg, #182b47 0%, #162741 100%);
+  color: #bfd2ee;
+}
+
 :root[data-theme='dark'] .auth-page {
   background:
     radial-gradient(circle at 6% 12%, rgba(66, 128, 225, 0.16), transparent 30%),

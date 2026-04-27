@@ -311,21 +311,21 @@ export default function FlowMapPage() {
                   className={`flow-map-filter-chip ${flowQuickFilter === 'ALL' ? 'active' : ''}`}
                   onClick={() => setFlowQuickFilter('ALL')}
                 >
-                  Tumu
+                  Tümü
                 </button>
                 <button
                   type="button"
                   className={`flow-map-filter-chip ${flowQuickFilter === 'WITH_DESC' ? 'active' : ''}`}
                   onClick={() => setFlowQuickFilter('WITH_DESC')}
                 >
-                  Aciklamali
+                  Açıklamalı
                 </button>
                 <button
                   type="button"
                   className={`flow-map-filter-chip ${flowQuickFilter === 'NO_DESC' ? 'active' : ''}`}
                   onClick={() => setFlowQuickFilter('NO_DESC')}
                 >
-                  Aciklamasiz
+                  Açıklamasız
                 </button>
               </div>
 
