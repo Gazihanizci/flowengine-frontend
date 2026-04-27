@@ -146,6 +146,8 @@ export default function AppLayout() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }
 
+  const isTaskDetailPage = /^\/tasks\/[^/]+$/.test(location.pathname)
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -166,13 +168,15 @@ export default function AppLayout() {
             Gösterge Paneli
           </NavLink>
 
-          <NavLink
-            to="/tasks"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-          >
-            <span>Görev Formları</span>
-            {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
-          </NavLink>
+          {!isTaskDetailPage ? (
+            <NavLink
+              to="/tasks"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <span>Görev Formları</span>
+              {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
+            </NavLink>
+          ) : null}
 
           <NavLink
             to="/notifications"
