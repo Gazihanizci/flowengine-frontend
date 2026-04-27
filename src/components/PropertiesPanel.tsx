@@ -332,7 +332,7 @@ export default function PropertiesPanel({
                     accept: event.target.value,
                   })
                 }
-                placeholder="Ornek: image/*,.png,.jpg,.pdf"
+                placeholder="Örnek: image/*,.png,.jpg,.pdf"
               />
             </label>
             <label className="checkbox">
@@ -346,7 +346,7 @@ export default function PropertiesPanel({
                   })
                 }
               />
-              <span>Coklu dosya secimine izin ver</span>
+              <span>Çoklu dosya seçimine izin ver</span>
             </label>
           </>
         )}

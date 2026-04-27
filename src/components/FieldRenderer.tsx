@@ -41,12 +41,12 @@ export default function FieldRenderer({
       const uploadedId = getUploadedResourceId(result)
 
       if (!uploadedId) {
-        throw new Error('Yukleme yanitinda dosyaId/fotografId bulunamadi.')
+        throw new Error('Yükleme yanıtında dosya Id/fotoğraf Id bulunamadi.')
       }
 
       onChange(field.id, String(uploadedId))
     } catch (err) {
-      setUploadError('Dosya yukleme basarisiz.')
+      setUploadError('Dosya yükleme başarısız.')
       onChange(field.id, null)
     } finally {
       setUploading(false)
@@ -124,8 +124,8 @@ export default function FieldRenderer({
               onChange={handleFileChange}
               disabled={uploading}
             />
-            {uploading && <p className="hint">Yukleniyor...</p>}
-            {value && !uploading && <p className="hint">Yuklendi. DosyaId: {value}</p>}
+            {uploading && <p className="hint">ükleniyor...</p>}
+            {value && !uploading && <p className="hint">Yüklendi. DosyaId: {value}</p>}
             {uploadError && <p className="error-text">{uploadError}</p>}
           </div>
         )

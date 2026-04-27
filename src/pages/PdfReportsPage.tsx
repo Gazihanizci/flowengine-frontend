@@ -74,7 +74,7 @@ export default function PdfReportsPage() {
         ? requestError.response?.data?.message || requestError.message
         : requestError instanceof Error
           ? requestError.message
-          : 'Surecler listesi alinamadi.'
+          : 'Süreçler listesi alınamadı.'
       setError(String(message))
     } finally {
       setLoadingSurecler(false)
@@ -121,7 +121,7 @@ export default function PdfReportsPage() {
   const handleDownload = async (surecId?: number) => {
     const targetSurecId = surecId ?? selectedSurecId
     if (!targetSurecId) {
-      setError('Lutfen once listeden bir surec secin.')
+      setError('Lütfen önce listeden bir süreç seçin.')
       return
     }
 
@@ -131,13 +131,13 @@ export default function PdfReportsPage() {
 
     try {
       await downloadPdfBySurecId(targetSurecId)
-      setSuccess(`PDF olusturuldu ve indirildi. Surec: ${targetSurecId}`)
+      setSuccess(`PDF oluşturma tamamlandı ve indirildi. Süreç: ${targetSurecId}`)
     } catch (requestError) {
       const message = axios.isAxiosError(requestError)
         ? requestError.response?.data?.message || requestError.message
         : requestError instanceof Error
           ? requestError.message
-          : 'PDF olusturma/indirme basarisiz.'
+          : 'PDF oluşturma/indirme başarısız.'
       setError(String(message))
     } finally {
       setDownloading(false)
@@ -148,10 +148,10 @@ export default function PdfReportsPage() {
     <div className="space-y-5">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">PDF Rapor</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900">Surec Listesinden PDF Indir</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-900">Süreç Listesinden PDF İndir</h1>
         <p className="mt-2 text-sm text-slate-600">
-          `/api/surecler` listesinden bir surec secilir, secilen kaydin `surecId` degeri ile
-          <code> /api/pdf/generate/{'{surecId}'}</code> endpointine istek atilip PDF indirilir.
+          `/api/surecler` listesinden bir süreç seçilir, seçilen kaydın `surecId` değeri ile
+          <code> /api/pdf/generate/{'{surecId}'}</code> endpointine istek atılıp PDF indirilir.
         </p>
       </div>
 
@@ -169,7 +169,7 @@ export default function PdfReportsPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Baslangic tarihi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Başlangıç tarihi</span>
             <input
               type="date"
               value={startDateFilter}
@@ -179,7 +179,7 @@ export default function PdfReportsPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Bitis tarihi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Bitiş tarihi</span>
             <input
               type="date"
               value={endDateFilter}
@@ -189,7 +189,7 @@ export default function PdfReportsPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Siralama</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Sıralama</span>
             <select
               value={sortBy}
               onChange={(event) =>
@@ -219,14 +219,14 @@ export default function PdfReportsPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">Surecler ({sortedSurecler.length})</p>
-          <p className="text-xs text-slate-500">Kayda tiklayin, indirme butonu satirin icinde acilsin.</p>
+          <p className="text-sm font-semibold text-slate-700">Süreçler ({sortedSurecler.length})</p>
+          <p className="text-xs text-slate-500">Kayda tıklayın, indirme butonu satrın icinde açılsın.</p>
         </div>
 
         {loadingSurecler ? (
-          <p className="text-sm text-slate-500">Surecler yukleniyor...</p>
+          <p className="text-sm text-slate-500">Süreçler yükleniyor...</p>
         ) : sortedSurecler.length === 0 ? (
-          <p className="text-sm text-slate-500">Filtreye uygun surec bulunamadi.</p>
+          <p className="text-sm text-slate-500">Filtreye uygun süreç bulunamadı.</p>
         ) : (
           <div className="space-y-3">
             {sortedSurecler.map((surec) => {
@@ -273,7 +273,7 @@ export default function PdfReportsPage() {
                         disabled={downloading}
                         className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
                       >
-                        {downloading ? 'PDF olusturuluyor...' : 'PDF Indir'}
+                        {downloading ? 'PDF oluşturuluyor...' : 'PDF İndir'}
                       </button>
                     </div>
                   ) : null}
@@ -285,7 +285,7 @@ export default function PdfReportsPage() {
 
         {selectedSurecId ? (
           <p className="mt-4 text-sm text-slate-600">
-            Secili surec id: <strong>{selectedSurecId}</strong>
+            Seçili süreç id: <strong>{selectedSurecId}</strong>
           </p>
         ) : null}
 

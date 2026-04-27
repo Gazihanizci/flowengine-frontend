@@ -123,7 +123,7 @@ const fieldRendererMap: FieldRendererMap = {
             checked={Boolean(value)}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(field.fieldId, event.target.checked)}
           />
-          <span>Secildi</span>
+          <span>Seçildi</span>
         </label>
       )
     }
@@ -175,14 +175,14 @@ const fieldRendererMap: FieldRendererMap = {
                 rel="noreferrer"
                 className="inline-block text-sm font-medium text-cyan-700 underline hover:text-cyan-900"
               >
-                Fotografi goruntule
+                Fotoğrafı görüntüle
               </a>
               <a
                 href={viewPhotoUrl(field.fileId)}
                 download
                 className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                Indir
+                İndir
               </a>
             </div>
           </div>

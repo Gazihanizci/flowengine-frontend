@@ -37,7 +37,7 @@ export default function FlowPage() {
       setData(response)
       initializeForm(response)
     } catch {
-      setError('Veri alinamadi. Lutfen tekrar deneyin.')
+      setError('Veri alınamadı. Lütfen tekrar deneyin.')
       setData(null)
     } finally {
       setLoading(false)
@@ -68,7 +68,7 @@ export default function FlowPage() {
     if (!surecId) return
 
     if (requiredMissing.length > 0) {
-      setError('Zorunlu alanlari doldurunuz.')
+      setError('Zorunlu alanları doldurunuz.')
       return
     }
 
@@ -82,10 +82,10 @@ export default function FlowPage() {
         aksiyonId: actionId,
         formData: formState,
       })
-      setSuccess('Aksiyon basariyla gonderildi.')
+      setSuccess('Aksiyon başarıyla gönderildi.')
       await loadWorkflow()
     } catch {
-      setError('Aksiyon gonderilemedi. Lutfen tekrar deneyin.')
+      setError('Aksiyon gönderilemedi. Lütfen tekrar deneyin.')
     } finally {
       setSubmitting(false)
     }
@@ -106,12 +106,12 @@ export default function FlowPage() {
       <div className="card flow-workspace-card">
         <header className="flow-workspace-head">
           <div>
-            <p className="eyebrow">Surec Workspace</p>
-            <h1>{data?.adimAdi ?? 'Yukleniyor...'}</h1>
-            <p className="hint">Surec #{surecId}</p>
+            <p className="eyebrow">Süreç Çalışma Alanı</p>
+            <h1>{data?.adimAdi ?? 'yükleniyor...'}</h1>
+            <p className="hint">Süreç #{surecId}</p>
           </div>
           <div className="flow-workspace-kpi">
-            <span>Adim {data?.adimId ?? '-'}</span>
+            <span>Adım {data?.adimId ?? '-'}</span>
             <span>{requiredMissing.length} Eksik Zorunlu Alan</span>
           </div>
         </header>

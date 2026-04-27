@@ -30,7 +30,7 @@ export function shouldBypassTaskValidation(task: WorkflowTask, aksiyonId: number
   return (
     label.includes('iptal') ||
     label.includes('reddet') ||
-    label.includes('vazgec') ||
+    label.includes('vazgeç') ||
     label.includes('cancel')
   )
 }

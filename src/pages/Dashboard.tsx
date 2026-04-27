@@ -51,7 +51,7 @@ export default function Dashboard() {
         }
       } catch {
         if (mounted) {
-          setError('Akis listesi alinamadi.')
+          setError('Akış listesi alınamadı.')
         }
       } finally {
         if (mounted) {
@@ -80,7 +80,7 @@ export default function Dashboard() {
         setFlowDetail(data)
         setActiveStepId(data.steps[0]?.stepId ?? null)
       } catch {
-        setDetailError('Akis detayi alinamadi.')
+        setDetailError('Akış detayi alınamadı.')
       } finally {
         setDetailLoading(false)
       }
@@ -167,10 +167,10 @@ export default function Dashboard() {
     try {
       const response = await startFlow({ akisId: selectedFlowId })
       setFlowStartSuccess(
-        response?.mesaj || `Akis baslatildi: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`,
+        response?.mesaj || `Akış başlatıldı: ${selectedFlow?.akisAdi ?? `#${selectedFlowId}`}`,
       )
     } catch (error) {
-      setFlowStartError(toErrorMessage(error, 'Akis baslatilamadi.'))
+      setFlowStartError(toErrorMessage(error, 'Akış başlatılamadı.'))
     } finally {
       setFlowStartLoading(false)
     }
@@ -180,7 +180,7 @@ export default function Dashboard() {
     return (
       <div className="dashboard">
         <div className="dashboard-shell">
-          <p className="hint">Kullanici bilgileri yukleniyor...</p>
+          <p className="hint">Kullanıcı bilgileri yükleniyor...</p>
         </div>
       </div>
     )
@@ -194,32 +194,32 @@ export default function Dashboard() {
             <div className="dashboard-user-hero-main">
               <p className="dashboard-user-kicker">Operational Workspace</p>
               <h1>Workflow Dashboard</h1>
-              <p>Gorevlerini, bildirimlerini ve akis baslatma adimlarini tek ekrandan yonet.</p>
+              <p>Görevlerini, bildirimlerini ve akış başlatma adımlarını tek ekrandan yönet.</p>
             </div>
             <div className="dashboard-user-hero-meta">
-              <span>Toplam akis: {flows.length}</span>
-              <span>Secili ID: {selectedFlowId ?? '-'}</span>
-              <span>Kullanici: {user?.adSoyad ?? 'Bilinmiyor'}</span>
+              <span>Toplam akış: {flows.length}</span>
+              <span>Seçili ID: {selectedFlowId ?? '-'}</span>
+              <span>Kullanıcı: {user?.adSoyad ?? 'Bilinmiyor'}</span>
             </div>
           </section>
 
           <section className="dashboard-user-grid">
             <article className="panel dashboard-user-card dashboard-user-card-task">
-              <h2>Gorevler</h2>
-              <p className="hint">Atanan gorevleri gor, formu doldur ve aksiyon al.</p>
+              <h2>Görevler</h2>
+              <p className="hint">Atanan görevleri gör, formu doldur ve aksiyon al.</p>
               <div className="dashboard-user-card-actions">
                 <button className="button primary" type="button" onClick={() => navigate('/tasks')}>
-                  Gorevler Sayfasina Git
+                  Görevler Sayfasına Git
                 </button>
               </div>
             </article>
 
             <article className="panel dashboard-user-card dashboard-user-card-notification">
               <h2>Bildirimler</h2>
-              <p className="hint">Onay/reddet islemlerini ve bildirim akisini ayri panelden yonet.</p>
+              <p className="hint">Onay/reddet işlemleri ve bildirim akışını ayri panelden yönet.</p>
               <div className="dashboard-user-card-actions">
                 <button className="button primary" type="button" onClick={() => navigate('/notifications')}>
-                  Bildirimler Sayfasina Git
+                  Bildirimler Sayfasına Git
                 </button>
               </div>
             </article>
@@ -227,13 +227,13 @@ export default function Dashboard() {
             <article className="panel user-flow-start-panel">
               <div className="user-flow-start-hero">
                 <p className="user-flow-start-kicker">Quick Start</p>
-                <h2>Akis Baslat</h2>
-                <p>Admin panelindeki gibi akis secip yeni surec baslatin.</p>
+                <h2>Akış Başlat</h2>
+                <p>Admin panelindeki gibi akış seçip yeni süreç başlatın.</p>
               </div>
 
               <div className="user-flow-start-body">
                 <label className="user-flow-start-label" htmlFor="flow-select-user">
-                  Akis secimi
+                  Akış seçimi
                 </label>
                 <div className="user-flow-start-select-wrap">
                   <select
@@ -243,7 +243,7 @@ export default function Dashboard() {
                     onChange={(event) => setSelectedFlowId(Number(event.target.value))}
                     disabled={loading || flows.length === 0}
                   >
-                    {flows.length === 0 ? <option value="">Akis bulunamadi</option> : null}
+                    {flows.length === 0 ? <option value="">Akış bulunamadı</option> : null}
                     {flows.map((flow) => (
                       <option key={flow.akisId} value={flow.akisId}>
                         #{flow.akisId} - {flow.akisAdi}
@@ -253,8 +253,8 @@ export default function Dashboard() {
                 </div>
 
                 <div className="user-flow-start-meta">
-                  <span>Toplam akis: {flows.length}</span>
-                  <span>Secili ID: {selectedFlowId ?? '-'}</span>
+                  <span>Toplam akış: {flows.length}</span>
+                  <span>Seçili ID: {selectedFlowId ?? '-'}</span>
                 </div>
 
                 {error ? <p className="error-text">{error}</p> : null}
@@ -282,8 +282,8 @@ export default function Dashboard() {
       <div className="dashboard-shell">
         <div className="dashboard-top">
           <div>
-            <h1>Is Akisi Paneli</h1>
-            <p>Akislari yonetin, adimlari ve form alanlarini inceleyin.</p>
+            <h1>İş Akışı Paneli</h1>
+            <p>Akışları yönetin, adımları ve form alanlarını inceleyin.</p>
           </div>
           <div className="header-actions">
             <button
@@ -292,14 +292,14 @@ export default function Dashboard() {
               onClick={handleStartFlow}
               disabled={!selectedFlowId || flowStartLoading}
             >
-              {flowStartLoading ? 'Baslatiliyor...' : 'Flow Baslat'}
+              {flowStartLoading ? 'Başlatılıyor...' : 'Flow Başlat'}
             </button>
             <button
               className="button primary"
               type="button"
               onClick={() => navigate('/create-flow')}
             >
-              Yeni Akis Olustur
+              Yeni Akış Oluştur
             </button>
           </div>
         </div>
@@ -308,17 +308,17 @@ export default function Dashboard() {
 
         <section className="panel dashboard-spotlight">
           <div className="dashboard-spotlight-main">
-            <p className="dashboard-spotlight-kicker">Secili Akis</p>
-            <h2>{selectedFlow?.akisAdi ?? 'Akis seciniz'}</h2>
-            <p>{selectedFlow?.aciklama || 'Secili akis icin aciklama bulunmuyor.'}</p>
+            <p className="dashboard-spotlight-kicker">Seçili Akış</p>
+            <h2>{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h2>
+            <p>{selectedFlow?.aciklama || 'Seçili akış için açıklama bulunmuyor.'}</p>
           </div>
           <div className="dashboard-spotlight-meta">
             <div>
-              <span>Akis ID</span>
+              <span>Akış ID</span>
               <strong>{selectedFlow?.akisId ?? '-'}</strong>
             </div>
             <div>
-              <span>Toplam Adim</span>
+              <span>Toplam Adım</span>
               <strong>{flowDetail?.steps.length ?? 0}</strong>
             </div>
             <div>
@@ -349,16 +349,16 @@ export default function Dashboard() {
               <h2>Akislar</h2>
               <span>{filteredFlows.length} / {flows.length} kayit</span>
             </div>
-            <p className="panel-subtitle">Detayini incelemek istediginiz akis kaydini secin.</p>
+            <p className="panel-subtitle">Detayını incelemek istediginiz akış kaydını seçin.</p>
 
             <div className="flow-list-toolbar">
               <label className="flow-search">
-                <span>Akis Ara</span>
+                <span>Akış Ara</span>
                 <input
                   className="input"
                   type="search"
                   value={flowSearchTerm}
-                  placeholder="ID, akis adi veya aciklama..."
+                  placeholder="ID, akış adı veya açıklama..."
                   onChange={(event) => setFlowSearchTerm(event.target.value)}
                 />
               </label>
@@ -387,12 +387,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {loading && <p className="hint">Yukleniyor...</p>}
+            {loading && <p className="hint">Yükleniyor...</p>}
             {error && <p className="error-text">{error}</p>}
 
             {!loading && !error && filteredFlows.length === 0 && (
               <p className="hint">
-                {flows.length === 0 ? 'Henuz kayitli akis yok.' : 'Arama kriterine uygun akis bulunamadi.'}
+                {flows.length === 0 ? 'Henüz kayıtlı akış yok.' : 'Arama kriterine uygun akış bulunamadı.'}
               </p>
             )}
 
@@ -400,8 +400,8 @@ export default function Dashboard() {
               <div className="flow-list-scroll">
                 <div className="flow-list-head">
                   <span>ID</span>
-                  <span>Akis Adi</span>
-                  <span>Aciklama</span>
+                  <span>Akış Adı</span>
+                  <span> Açıklama </span>
                 </div>
                 <div className="flow-list">
                   {filteredFlows.map((flow) => (
@@ -440,12 +440,12 @@ export default function Dashboard() {
               </div>
               {flowDetail && (
                 <span className={`flow-status ${flowDetail.steps.length ? 'active' : 'passive'}`}>
-                  {flowDetail.steps.length ? 'Adimlar Var' : 'Adim Yok'}
+                  {flowDetail.steps.length ? 'Adımlar Var' : 'Adım Yok'}
                 </span>
               )}
             </div>
 
-            {detailLoading && <p className="hint">Detay yukleniyor...</p>}
+            {detailLoading && <p className="hint">Detay yükleniyor...</p>}
             {detailError && <p className="error-text">{detailError}</p>}
 
             {!detailLoading && !detailError && flowDetail && (
@@ -456,19 +456,19 @@ export default function Dashboard() {
                 </div>
                 <div className="summary-meta">
                   <div>
-                    <span>Akis ID</span>
+                    <span>Akış ID</span>
                     <strong>{flowDetail.flowId}</strong>
                   </div>
                   <div>
-                    <span>Adim Sayisi</span>
+                    <span>Adım Sayısı</span>
                     <strong>{flowDetail.steps.length}</strong>
                   </div>
                   <div>
-                    <span>Aktif Adim</span>
+                    <span>Aktif Adım</span>
                     <strong>{selectedStepOrder ?? '-'}</strong>
                   </div>
                   <div>
-                    <span>Alan Sayisi</span>
+                    <span>Alan Sayısı</span>
                     <strong>{totalFieldCount}</strong>
                   </div>
                 </div>
@@ -497,9 +497,9 @@ export default function Dashboard() {
                           className="embedded-flow-pill"
                           type="button"
                           onClick={() => navigate(`/preview/${linkedFlowId}`)}
-                          title="Ara akis onizlemesini ac"
+                          title="Ara akış önizlemesini aç"
                         >
-                          Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
+                          Ara Akış: {linkedFlowName ?? `#${linkedFlowId}`}
                         </button>
                       ) : null}
                     </Fragment>
@@ -522,11 +522,11 @@ export default function Dashboard() {
                 <div className="fields-table">
                   <div className="fields-row fields-head">
                     <span>#</span>
-                    <span>Tur</span>
+                    <span>Tür</span>
                     <span>Etiket</span>
                     <span>Zorunlu</span>
                     <span>Yetkili Roller</span>
-                    <span>Yetkili Kullanicilar</span>
+                    <span>Yetkili Kullanıcılar</span>
                   </div>
                   {activeStep.fields.map((field) => (
                     <div key={field.fieldId} className="fields-row">

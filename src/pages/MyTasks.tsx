@@ -51,20 +51,20 @@ export default function MyTasks() {
           <p className="task-kicker">Operational Workspace</p>
           <h1>Workflow Task Inbox</h1>
           <p>
-            Bu listede sadece akis adi ve durum gorunur. Bir kayda tikladiginizda mevcut step detayi acilir.
+            Bu listede sadece akış adı ve durum görünür. Bir kayda tıkladığınızda mevcut step detayi açılır.
           </p>
           <div className="task-hero-metrics">
             <div>
-              <p>Toplam Gorev</p>
+              <p>Toplam Görev</p>
               <strong>{tasks.length}</strong>
             </div>
             <div>
-              <p>Toplam Akis</p>
+              <p>Toplam Akış</p>
               <strong>{uniqueFlowCount}</strong>
             </div>
             <div>
               <p>Aksiyon</p>
-              <strong className="task-action-label">Kart secimi ile devam edin</strong>
+              <strong className="task-action-label">Kart seçimi ile devam edin</strong>
             </div>
           </div>
         </div>

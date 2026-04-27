@@ -15,28 +15,28 @@ const TOOLBOX_ITEMS: ToolboxItemDefinition[] = [
     id: 'text-short',
     type: 'TEXT',
     label: 'Kisa Metin',
-    description: 'Ad, baslik, kisa giris',
+    description: 'Ad, başlık, kısa giriş',
     defaults: { label: 'Kisa Metin', placeholder: 'Metin girin' },
   },
   {
     id: 'text-email',
     type: 'TEXT',
     label: 'E-posta',
-    description: 'E-posta adresi girisi',
-    defaults: { label: 'E-posta', placeholder: 'ornek@site.com' },
+    description: 'E-posta adresi girişi',
+    defaults: { label: 'E-posta', placeholder: 'örnek@gmail.com' },
   },
   {
     id: 'text-phone',
     type: 'TEXT',
     label: 'Telefon',
-    description: 'Telefon numarasi girisi',
+    description: 'Telefon numarası girişi',
     defaults: { label: 'Telefon', placeholder: '05xx xxx xx xx' },
   },
   {
     id: 'text-password',
     type: 'TEXT',
     label: 'Sifre',
-    description: 'Parola girisi icin alan',
+    description: 'Parola girişi için alan',
     defaults: { label: 'Sifre', placeholder: 'Parola girin' },
   },
   {
@@ -44,82 +44,82 @@ const TOOLBOX_ITEMS: ToolboxItemDefinition[] = [
     type: 'TEXTAREA',
     label: 'Aciklama',
     description: 'Uzun metin ve notlar',
-    defaults: { label: 'Aciklama', placeholder: 'Detaylari yazin' },
+    defaults: { label: 'Açıklama', placeholder: 'Detayları yazın' },
   },
   {
     id: 'combobox',
     type: 'COMBOBOX',
     label: 'Acilir Liste',
-    description: 'Tek secimli liste',
+    description: 'Tek seçimli liste',
     defaults: {
-      label: 'Acilir Liste',
-      placeholder: 'Seciniz',
-      options: [{ label: 'Secenek A', value: 'A' }],
+      label: 'Açılır Liste',
+      placeholder: 'Seçiniz',
+      options: [{ label: 'Seçenek A', value: 'A' }],
     },
   },
   {
     id: 'radio',
     type: 'RADIO',
     label: 'Radyo Grubu',
-    description: 'Tek secenek isaretleme',
+    description: 'Tek seçenek işaretleme',
     defaults: {
       label: 'Radyo Grubu',
-      placeholder: 'Bir secenek secin',
-      options: [{ label: 'Secenek 1', value: '1' }],
+      placeholder: 'Bir seçenek seçin',
+      options: [{ label: 'Seçenek 1', value: '1' }],
     },
   },
   {
     id: 'checkbox',
     type: 'CHECKBOX',
     label: 'Onay Kutusu',
-    description: 'Kosul/onay icin',
+    description: 'Koşul/onay için',
     defaults: { label: 'Onay Kutusu' },
   },
   {
     id: 'date',
     type: 'DATE',
     label: 'Tarih',
-    description: 'Takvimden tarih secimi',
+    description: 'Takvimden tarih seçimi',
     defaults: { label: 'Tarih' },
   },
   {
     id: 'number',
     type: 'NUMBER',
     label: 'Sayi',
-    description: 'Tam sayi veya adet',
+    description: 'Tam sayı veya adet',
     defaults: { label: 'Sayi', placeholder: '0' },
   },
   {
     id: 'number-price',
     type: 'NUMBER',
     label: 'Tutar',
-    description: 'Para degeri girisi',
+    description: 'Para değeri girişi',
     defaults: { label: 'Tutar', placeholder: '0.00' },
   },
   {
     id: 'file-generic',
     type: 'FILE',
-    label: 'Dosya Yukleme',
-    description: 'Genel dosya secimi',
-    defaults: { label: 'Dosya Yukleme', accept: '*/*' },
+    label: 'Dosya Yükleme',
+    description: 'Genel dosya seçimi',
+    defaults: { label: 'Dosya Yükleme', accept: '*/*' },
   },
   {
     id: 'file-photo',
     type: 'FILE',
-    label: 'Fotograf Yukleme',
-    description: 'Yalnizca gorsel dosyalar',
+    label: 'Fotograf Yükleme',
+    description: 'Yalnızca görsel dosyalar',
     defaults: {
-      label: 'Fotograf Yukleme',
+      label: 'Fotograf Yükleme',
       accept: 'image/*,.png,.jpg,.jpeg,.webp',
     },
   },
   {
     id: 'file-photo-multi',
     type: 'FILE',
-    label: 'Coklu Fotograf',
-    description: 'Birden fazla gorsel yukleme',
+    label: 'Çoklu Fotograf',
+    description: 'Birden fazla görsel yükleme',
     defaults: {
-      label: 'Coklu Fotograf',
+      label: 'Çoklu Fotograf',
       accept: 'image/*,.png,.jpg,.jpeg,.webp',
       multiple: true,
     },
@@ -146,14 +146,14 @@ function ToolboxOnizleme({ type }: { type: FieldType }) {
     case 'TEXT':
       return <div className="toolbox-preview input">Metin</div>
     case 'TEXTAREA':
-      return <div className="toolbox-preview textarea">Metin alani</div>
+      return <div className="toolbox-preview textarea">Metin alanı</div>
     case 'COMBOBOX':
-      return <div className="toolbox-preview select">Seciniz</div>
+      return <div className="toolbox-preview select">Seçiniz</div>
     case 'RADIO':
       return (
         <div className="toolbox-preview radio">
           <span className="dot" />
-          Secenek
+          Seçenek
         </div>
       )
     case 'CHECKBOX':
@@ -168,9 +168,9 @@ function ToolboxOnizleme({ type }: { type: FieldType }) {
     case 'NUMBER':
       return <div className="toolbox-preview input">123</div>
     case 'FILE':
-      return <div className="toolbox-preview file">Dosya sec</div>
+      return <div className="toolbox-preview file">Dosya seç</div>
     case 'BUTTON':
-      return <div className="toolbox-preview button">Gonder</div>
+      return <div className="toolbox-preview button">Gönder</div>
     default:
       return null
   }

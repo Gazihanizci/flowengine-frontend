@@ -47,7 +47,7 @@ export default function FormField({ field, children }: FormFieldProps) {
       </div>
       {!field.editable ? (
         <div className="task-readonly-note">
-          Bu alan onceki adimlarda doldurulmustur.
+          Bu alan önceki adımlarda doldurulmuştur.
         </div>
       ) : null}
       {children}

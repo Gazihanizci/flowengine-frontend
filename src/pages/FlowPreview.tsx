@@ -20,11 +20,11 @@ function parseSubflowIdFromEvre(evre: string) {
 
 function formatPermissionItems(permissions: FlowPermissionItem[]) {
   if (!permissions || permissions.length === 0) {
-    return ['Tanimli baslatma yetkisi yok']
+    return ['TAnımlı başlatma yetkisi yok']
   }
 
   return permissions.map((permission) =>
-    permission.tip === 'ROLE' ? `Rol #${permission.refId}` : `Kullanici #${permission.refId}`,
+    permission.tip === 'ROLE' ? `Rol #${permission.refId}` : `Kullanıcı #${permission.refId}`,
   )
 }
 
@@ -102,7 +102,7 @@ export default function FlowPreview() {
         setLinkedFlowDetails(detailMap)
       } catch {
         if (mounted) {
-          setError('Akis detayi alinamadi.')
+          setError('Akış detayı alınamadı.')
         }
       } finally {
         if (mounted) {
@@ -136,7 +136,7 @@ export default function FlowPreview() {
           fromStepName: step.stepName,
           fromStepId: step.stepId,
           linkedFlowId,
-          toStepName: nextStep?.stepName ?? 'Akis Sonu',
+          toStepName: nextStep?.stepName ?? 'Akış Sonu',
           toStepId: nextStep?.stepId ?? null,
         }
       })
@@ -164,10 +164,10 @@ export default function FlowPreview() {
         const nextNormal = sorted.slice(index + 1).find((item) => parseSubflowIdFromEvre(item.evre) === null)
 
         return {
-          fromStepName: previousNormal?.adimAdi ?? `Adim #${node.adimId}`,
+          fromStepName: previousNormal?.adimAdi ?? `Adım #${node.adimId}`,
           fromStepId: previousNormal?.adimId ?? node.adimId,
           linkedFlowId,
-          toStepName: nextNormal?.adimAdi ?? 'Akis Sonu',
+          toStepName: nextNormal?.adimAdi ?? 'Akış Sonu',
           toStepId: nextNormal?.adimId ?? null,
         }
       })
@@ -237,7 +237,7 @@ export default function FlowPreview() {
     return (
       <div className="page flow-preview">
         <div className="card">
-          <h2>Akis bulunamadi</h2>
+          <h2>Akış bulunamadı</h2>
         </div>
       </div>
     )
@@ -248,30 +248,30 @@ export default function FlowPreview() {
       <div className="card flow-preview-card">
         <div className="card-header flow-preview-hero">
           <div>
-            <p className="eyebrow">Akis Onizleme</p>
-            <h1>{flowDetail?.flowName ?? 'Yukleniyor...'}</h1>
+            <p className="eyebrow">Akış Önizleme</p>
+            <h1>{flowDetail?.flowName ?? 'yükleniyor...'}</h1>
             <p className="hint">{flowDetail?.aciklama}</p>
           </div>
-          {flowDetail ? <div className="flow-status active">Adimlar Var</div> : null}
+          {flowDetail ? <div className="flow-status active">Adımlar Var</div> : null}
         </div>
 
-        {loading ? <p className="hint">Yukleniyor...</p> : null}
+        {loading ? <p className="hint">Yükleniyor...</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
 
         {!loading && !error && flowDetail ? (
           <>
             <section className="flow-summary flow-preview-summary">
               <div>
-                <h3>Akis Bilgileri</h3>
-                <p>Flow adimlarini, child flow baglantilarini ve baslatma yetkilerini inceleyin.</p>
+                <h3>Akış Bilgileri</h3>
+                <p>Flow adımlarını, child flow bağlantılarını ve başlatma yetkilerini inceleyin.</p>
               </div>
               <div className="summary-meta">
                 <div className="flow-preview-kpi">
-                  <span>Akis ID</span>
+                  <span>Akış ID</span>
                   <strong>{flowDetail.flowId}</strong>
                 </div>
                 <div className="flow-preview-kpi">
-                  <span>Adim Sayisi</span>
+                  <span>Adım Sayısı</span>
                   <strong>{flowDetail.steps.length}</strong>
                 </div>
                 <div className="flow-preview-kpi">
@@ -279,7 +279,7 @@ export default function FlowPreview() {
                   <strong>{childFlowList.length}</strong>
                 </div>
                 <div className="flow-preview-kpi">
-                  <span>Aktif Adim</span>
+                  <span>Aktif Adım</span>
                   <strong>{activeStep?.stepName ?? '-'}</strong>
                 </div>
               </div>
@@ -308,7 +308,7 @@ export default function FlowPreview() {
                         className="embedded-flow-pill"
                         type="button"
                         onClick={() => navigate(`/preview/${linkedFlowId}`)}
-                        title="Child flow onizlemesini ac"
+                        title="Child flow önizlemesini aç"
                       >
                         Child Flow #{linkedFlowId}
                       </button>
@@ -320,10 +320,10 @@ export default function FlowPreview() {
 
             <section className="panel flow-preview-panel">
               <div className="panel-header">
-                <h2>Child Flow Gecis Noktalari</h2>
+                <h2>Child Flow Geçiş Noktaları</h2>
               </div>
               {childFlowTransitions.length === 0 ? (
-                <p className="hint">Bu akista adimlar arasina bagli child flow tanimi yok.</p>
+                <p className="hint">Bu akışta adımlar arasına bağlı child flow tanımı yok.</p>
               ) : (
                 <div className="flow-list flow-preview-transition-list">
                   {childFlowTransitions.map((transition) => (
@@ -332,13 +332,13 @@ export default function FlowPreview() {
                         <h3>
                           {transition.fromStepName}
                           {' -> '}
-                          {linkedFlowDetails[transition.linkedFlowId]?.flowName ?? `Akis #${transition.linkedFlowId}`}
+                          {linkedFlowDetails[transition.linkedFlowId]?.flowName ?? `Akış #${transition.linkedFlowId}`}
                           {' -> '}
                           {transition.toStepName}
                         </h3>
                         <p>
-                          Adim #{transition.fromStepId} ile{' '}
-                          {transition.toStepId ? `Adim #${transition.toStepId}` : 'akis sonu'} arasina girer.
+                          Adım #{transition.fromStepId} ile{' '}
+                          {transition.toStepId ? `Adım #${transition.toStepId}` : 'akış sonu'} arasına girer.
                         </p>
                       </div>
                       <button
@@ -346,7 +346,7 @@ export default function FlowPreview() {
                         className="button secondary"
                         onClick={() => navigate(`/preview/${transition.linkedFlowId}`)}
                       >
-                        Child Ac
+                        Child Flow Önizle
                       </button>
                     </div>
                   ))}
@@ -356,7 +356,7 @@ export default function FlowPreview() {
 
             <section className="panel flow-preview-panel">
               <div className="panel-header">
-                <h2>Ana Akis Baslatma Yetkileri</h2>
+                <h2>Ana Akış Başlatma Yetkileri</h2>
               </div>
               <div className="step-tabs flow-preview-chip-row">
                 {formatPermissionItems(mainFlowPermissions).map((permission) => (
@@ -373,7 +373,7 @@ export default function FlowPreview() {
                   <h2>Secili Adimin Child Flow Yetkileri</h2>
                 </div>
                 <p className="hint">
-                  {linkedFlowDetails[activeStepLinkedFlowId]?.flowName ?? `Akis #${activeStepLinkedFlowId}`}
+                  {linkedFlowDetails[activeStepLinkedFlowId]?.flowName ?? `Akış #${activeStepLinkedFlowId}`}
                 </p>
                 <div className="step-tabs flow-preview-chip-row">
                   {formatPermissionItems(permissionsByFlowId.get(activeStepLinkedFlowId) ?? []).map((permission) => (
@@ -396,13 +396,13 @@ export default function FlowPreview() {
                       <div>
                         <h3>{child.detail.flowName}</h3>
                         <p>ID: {child.id}</p>
-                        <p>{child.detail.aciklama || 'Aciklama yok'}</p>
+                        <p>{child.detail.aciklama || 'Açıklama yok'}</p>
                         <p className="hint">
                           Yetkiler: {formatPermissionItems(permissionsByFlowId.get(child.id) ?? []).join(', ')}
                         </p>
                       </div>
                       <button type="button" className="button secondary" onClick={() => navigate(`/preview/${child.id}`)}>
-                        Ac
+                        Önizle
                       </button>
                     </div>
                   ))}
@@ -412,12 +412,12 @@ export default function FlowPreview() {
 
             <section className="panel flow-preview-panel flow-preview-form">
               <div className="panel-header">
-                <h2>Adim Form Alanlari</h2>
+                <h2>Adım Form Alanları</h2>
                 <span>{activeStep?.stepName ?? '-'}</span>
               </div>
               <div className="form">
-                {!activeStep ? <p className="hint">Adim seciniz.</p> : null}
-                {activeStep && activeStep.fields.length === 0 ? <p className="hint">Bu adimda alan yok.</p> : null}
+                {!activeStep ? <p className="hint">Adım seçiniz.</p> : null}
+                {activeStep && activeStep.fields.length === 0 ? <p className="hint">Bu adımda alan yok.</p> : null}
                 {activeStep?.fields.map((field) => (
                   <div key={field.fieldId} className="field">
                     <div className="field-label">

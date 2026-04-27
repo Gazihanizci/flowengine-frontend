@@ -149,7 +149,7 @@ export default function AppLayout() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="sidebar-brand">Is Akisi</div>
+        <div className="sidebar-brand">İş Akışı</div>
         {user ? (
           <div className="user-card">
             <span className="user-role">{user.rolAdi}</span>
@@ -163,14 +163,14 @@ export default function AppLayout() {
             end
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            Gosterge Paneli
+            Gösterge Paneli
           </NavLink>
 
           <NavLink
             to="/tasks"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            <span>Gorev Formlari</span>
+            <span>Görev Formları</span>
             {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
           </NavLink>
 
@@ -186,14 +186,14 @@ export default function AppLayout() {
             to="/pdf-reports"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            PDF Raporlari
+            PDF Raporları
           </NavLink>
 
           <NavLink
             to="/history"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            Islem Gecmisi
+            İşlem Geçmişi
           </NavLink>
 
           {user?.rolId === 4 ? (
@@ -210,7 +210,7 @@ export default function AppLayout() {
               to="/create-flow"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Akis Olustur
+              Akış Olustur
             </NavLink>
           ) : null}
 

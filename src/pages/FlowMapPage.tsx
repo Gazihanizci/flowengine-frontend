@@ -111,7 +111,7 @@ export default function FlowMapPage() {
         }
       } catch {
         if (mounted) {
-          setError('Akis listesi alinamadi.')
+          setError('Akış listesi alınamadı.')
         }
       } finally {
         if (mounted) {
@@ -157,7 +157,7 @@ export default function FlowMapPage() {
           setFlowMap(null)
           setVisibleNodeIds([])
           setOpenNodeIds([])
-          setError('Flow map bilgisi alinamadi.')
+          setError('Flow map bilgisi alınamadı.')
         }
       } finally {
         if (mounted) {
@@ -280,27 +280,27 @@ export default function FlowMapPage() {
         <div className="dashboard-top">
           <div>
             <h1>Flow Tree</h1>
-            <p>Ilk basta ANA adim gorunur. Dugumlere bastikca alt adimlar acilir.</p>
+            <p>İlk basta ANA adım görünür. Düğmelere bastıkça alt adımlar açılır.</p>
           </div>
         </div>
 
         <div className="flow-map-layout">
           <aside className="panel flow-map-sidebar">
             <div className="panel-header">
-              <h2>Akislar</h2>
+              <h2>Akışlar</h2>
               <span>
-                {filteredFlows.length} / {flows.length} kayit
+                {filteredFlows.length} / {flows.length} kayıt
               </span>
             </div>
 
             <div className="flow-map-filter">
               <label className="flow-map-search">
-                <span>Akis Ara</span>
+                <span>Akış Ara</span>
                 <input
                   className="input"
                   type="search"
                   value={flowSearch}
-                  placeholder="ID, akis adi, aciklama..."
+                  placeholder="ID, akış adı, açıklama..."
                   onChange={(event) => setFlowSearch(event.target.value)}
                 />
               </label>
@@ -346,9 +346,9 @@ export default function FlowMapPage() {
             {loadingFlows ? <p className="hint">Akislar yukleniyor...</p> : null}
             {error ? <p className="error-text">{error}</p> : null}
 
-            {!loadingFlows && flows.length === 0 ? <p className="hint">Kayitli akis bulunamadi.</p> : null}
+            {!loadingFlows && flows.length === 0 ? <p className="hint">Kayıtlı akış bulunamadı.</p> : null}
             {!loadingFlows && flows.length > 0 && filteredFlows.length === 0 ? (
-              <p className="hint">Filtreye uygun akis bulunamadi.</p>
+              <p className="hint">Filtreye uygun akış bulunamadı.</p>
             ) : null}
 
             <div className="flow-map-list">
@@ -367,31 +367,31 @@ export default function FlowMapPage() {
           </aside>
 
           <section className="panel flow-map-main">
-            {loadingMap ? <p className="hint">Flow map yukleniyor...</p> : null}
+            {loadingMap ? <p className="hint">Flow map yükleniyor...</p> : null}
 
             {!loadingMap && !flowMap ? (
-              <p className="hint">Gorsellestirmek icin bir akis secin.</p>
+              <p className="hint">Görselleştirmek için bir akış seçin.</p>
             ) : null}
 
             {!loadingMap && flowMap ? (
               <>
                 <div className="flow-map-summary">
                   <div className="summary-card">
-                    <span>Akis</span>
+                    <span>Akış</span>
                     <strong>{flowMap.akisAdi}</strong>
                   </div>
                   <div className="summary-card">
-                    <span>Toplam Adim</span>
+                    <span>Toplam Adım</span>
                     <strong>{totalStepCount}</strong>
                   </div>
                   <div className="summary-card">
-                    <span>Toplam Bilesen</span>
+                    <span>Toplam Bileşen</span>
                     <strong>{totalComponentCount}</strong>
                   </div>
                 </div>
 
                 <div className="mind-tree-canvas">
-                  {graph.rootId ? renderNode(graph.rootId) : <p className="hint">Kok adim bulunamadi.</p>}
+                  {graph.rootId ? renderNode(graph.rootId) : <p className="hint">Kök adım bulunamadı.</p>}
                 </div>
               </>
             ) : null}

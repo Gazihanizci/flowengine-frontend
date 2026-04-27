@@ -36,7 +36,7 @@ export default function CreateFlow() {
       })
       .catch(() => {
         if (!isMounted) return
-        setRolesError('Kullanici rolleri alinamadi.')
+        setRolesError('Kullanici rolleri alınamadı.')
       })
       .finally(() => {
         if (!isMounted) return
@@ -107,7 +107,7 @@ export default function CreateFlow() {
 
   const handleCreate = () => {
     if (!flowName.trim() || !aciklama.trim()) {
-      setFormError('Akis adi ve aciklama bos birakilamaz.')
+      setFormError('Akış adı ve açıklama boş bırakılamaz.')
       return
     }
 
@@ -133,10 +133,10 @@ export default function CreateFlow() {
 
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Flow Designer</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight">Akis Olustur</h1>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight">Akış Oluştur</h1>
               <p className="mt-3 text-sm leading-6 text-slate-300">
-                Bu ekranda akis kimligini tanimlarsin. Sonraki adimda her step icin form alanlarini ve
-                gecis davranislarini detaylandirirsin.
+                Bu ekranda akış kimliğini tanımlarsın. Sonraki adımda her adım için form alanlarını ve
+                geçiş davranışlarını detaylandırırsın.
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -145,8 +145,8 @@ export default function CreateFlow() {
                   <p className="mt-1 text-lg font-semibold">Taslak</p>
                 </div>
                 <div className="rounded-xl border border-white/20 bg-white/5 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-300">Baslangic Adimi</p>
-                  <p className="mt-1 text-lg font-semibold">Adim 1</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-300">Başlangıç Adımı</p>
+                  <p className="mt-1 text-lg font-semibold">Adım 1</p>
                 </div>
               </div>
             </div>
@@ -154,13 +154,13 @@ export default function CreateFlow() {
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.08)]">
             <div className="mb-5 border-b border-slate-100 pb-4">
-              <h2 className="text-2xl font-semibold text-slate-900">Akis Bilgileri</h2>
-              <p className="mt-1 text-sm text-slate-500">Akis adi, aciklama ve adim sayisini belirleyin.</p>
+              <h2 className="text-2xl font-semibold text-slate-900">Akış Bilgileri</h2>
+              <p className="mt-1 text-sm text-slate-500">Akış adı, açıklama ve adım sayısını belirleyin.</p>
             </div>
 
             <div className="grid gap-4">
               <label>
-                <span>Akis Adi</span>
+                <span>Akış Adı</span>
                 <input
                   className="input"
                   value={flowName}
@@ -170,18 +170,18 @@ export default function CreateFlow() {
               </label>
 
               <label>
-                <span>Aciklama</span>
+                <span>Açıklama</span>
                 <textarea
                   className="input"
                   rows={4}
                   value={aciklama}
                   onChange={(event) => setAciklamaInput(event.target.value)}
-                  placeholder="Akisin kapsamini ve is amacini yazin"
+                  placeholder="Akışın kapsamını ve iş amacını yazın"
                 />
               </label>
 
               <label>
-                <span>Adim Sayisi</span>
+                <span>Adım Sayısı</span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -208,10 +208,10 @@ export default function CreateFlow() {
               </label>
 
               <div className="access-section">
-                <h3>Flow Baslatma Yetkisi</h3>
+                <h3>Flow Başlatma Yetkisi</h3>
                 <div className="access-grid">
                   <label>
-                    <span>Rol Secimi</span>
+                    <span>Rol Seçimi</span>
                     <select
                       className="input"
                       value={selectedRoleId}
@@ -221,7 +221,7 @@ export default function CreateFlow() {
                       }}
                       disabled={rolesLoading}
                     >
-                      <option value="">Rol seciniz</option>
+                      <option value="">Rol seçiniz</option>
                       {roleOptions.map((role) => (
                         <option key={role.rolId} value={role.rolId}>
                           {role.rolAdi} (ID: {role.rolId})
@@ -258,7 +258,7 @@ export default function CreateFlow() {
 
                 <div className="access-grid single">
                   <label>
-                    <span>Kullanici Secimi</span>
+                    <span>Kullanıcı Seçimi</span>
                     <select
                       className="input"
                       value={selectedUserId}
@@ -266,7 +266,7 @@ export default function CreateFlow() {
                       disabled={!selectedRoleId || rolesLoading}
                     >
                       <option value="">
-                        {selectedRoleId ? 'Kullanici seciniz' : 'Once rol seciniz'}
+                        {selectedRoleId ? 'Kullanıcı seciniz' : 'Önce rol seciniz'}
                       </option>
                       {filteredUsers.map((user) => (
                         <option key={`${user.kullaniciId}-${user.email}`} value={user.kullaniciId}>
@@ -307,11 +307,11 @@ export default function CreateFlow() {
                 {rolesLoading && <p className="hint">Roller yukleniyor...</p>}
                 {rolesError && <p className="error-text">{rolesError}</p>}
                 {!rolesLoading && !rolesError && selectedRoleId && filteredUsers.length === 0 && (
-                  <p className="hint">Bu role ait kullanici bulunamadi.</p>
+                  <p className="hint">Bu role ait kullanıcı bulunamadı.</p>
                 )}
                 {!hasAnyStarterPermission ? (
                   <p className="error-text">
-                    Uyari: Akis baslatma yetkisi icin henuz rol veya kullanici secilmedi.
+                    Uyari: Akış başlatma yetkisi için henüz rol veya kullanıcı seçilmedi.
                   </p>
                 ) : null}
                 <p className="hint">

@@ -52,9 +52,9 @@ export default function NotificationPanel({
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status
-        setError(status ? `Bildirimler yuklenemedi. (HTTP ${status})` : 'Bildirimler yuklenemedi.')
+        setError(status ? `Bildirimler yüklenemedi. (HTTP ${status})` : 'Bildirimler yüklenemedi.')
       } else {
-        setError('Bildirimler yuklenemedi.')
+        setError('Bildirimler yüklenemedi.')
       }
     } finally {
       setLoading(false)
@@ -93,7 +93,7 @@ export default function NotificationPanel({
     try {
       await markAsReadAndSync(notification)
     } catch {
-      setError('Bildirim okundu olarak isaretlenemedi.')
+      setError('Bildirim okundu olarak işaretlenemedi.')
     } finally {
       setReadingIds((prev) => prev.filter((id) => id !== notification.bildirimId))
     }
@@ -133,7 +133,7 @@ export default function NotificationPanel({
                 disabled={isReading}
                 className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isReading ? 'Isleniyor...' : 'Okundu'}
+                {isReading ? 'İşleniyor...' : 'Okundu'}
               </button>
             ) : null}
           </div>
@@ -156,7 +156,7 @@ export default function NotificationPanel({
               }
               className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {requestActionState === 'approving' ? 'Onaylaniyor...' : requestActionState === 'approved' ? 'Onaylandi' : 'Onayla'}
+              {requestActionState === 'approving' ? 'Onaylanıyor...' : requestActionState === 'approved' ? 'Onaylandı' : 'Onayla'}
             </button>
             <button
               type="button"
@@ -175,10 +175,10 @@ export default function NotificationPanel({
             >
               {requestActionState === 'rejecting' ? 'Reddediliyor...' : requestActionState === 'rejected' ? 'Reddedildi' : 'Reddet'}
             </button>
-            {isReading ? <span className="text-xs text-slate-500">Okundu isaretleniyor...</span> : null}
+            {isReading ? <span className="text-xs text-slate-500">Okundu işaretleniyor...</span> : null}
           </div>
         ) : isReading ? (
-          <p className="mt-2 text-xs text-slate-500">Okundu isaretleniyor...</p>
+          <p className="mt-2 text-xs text-slate-500">Okundu işaretleniyor...</p>
         ) : null}
       </article>
     )
@@ -213,7 +213,7 @@ export default function NotificationPanel({
         ...prev,
         [notification.bildirimId]: 'idle',
       }))
-      setError(action === 'approve' ? 'Onay islemi basarisiz.' : 'Reddetme islemi basarisiz.')
+      setError(action === 'approve' ? 'Onay işlemi başarısız.' : 'Reddetme işlemi başarısız.')
     }
   }
 
@@ -223,7 +223,7 @@ export default function NotificationPanel({
         <div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
           <p className="text-xs text-slate-500">
-            Toplam: {notifications.length} | Okunmamis: {unreadCount}
+            Toplam: {notifications.length} | Okunmamış: {unreadCount}
           </p>
         </div>
         <button
@@ -239,7 +239,7 @@ export default function NotificationPanel({
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
-          Yukleniyor...
+          Yükleniyor...
         </div>
       ) : null}
 

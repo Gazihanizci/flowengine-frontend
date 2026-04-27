@@ -74,22 +74,22 @@ function normalizeRequiredApprovalCount(value?: number) {
 
 function validateFieldDefinition(field: FormField): string | null {
   if (isBlank(field.label)) {
-    return 'Alan etiketleri bos birakilamaz.'
+    return 'Alan etiketleri boş bırakılamaz.'
   }
 
   const needsPlaceholder = ['TEXT', 'TEXTAREA', 'NUMBER'].includes(field.type)
   if (needsPlaceholder && isBlank(field.placeholder)) {
-    return `${field.label || field.type} alani icin yer tutucu bos birakilamaz.`
+    return `${field.label || field.type} alanı için yer tutucu boş bırakılamaz.`
   }
 
   if ((field.type === 'COMBOBOX' || field.type === 'RADIO')) {
     if (!field.options || field.options.length === 0) {
-      return `${field.label || field.type} alani icin en az bir secenek eklenmelidir.`
+      return `${field.label || field.type} alanı için en az bir seçenek eklenmelidir.`
     }
 
     const hasInvalidOption = field.options.some((option) => isBlank(option.label) || isBlank(option.value))
     if (hasInvalidOption) {
-      return `${field.label || field.type} alanindaki tum secenekler dolu olmalidir.`
+      return `${field.label || field.type} alanındaki tüm seçenekler dolu olmalidir.`
     }
   }
 
@@ -98,11 +98,11 @@ function validateFieldDefinition(field: FormField): string | null {
 
 function validateStepDefinition(step: FlowStep): string | null {
   if (isBlank(step.stepName)) {
-    return 'Adim adi bos birakilamaz.'
+    return 'Adım adı boş bırakılamaz.'
   }
 
   if (!step.fields || step.fields.length === 0) {
-    return `${step.stepName || `Adim ${step.stepId}`} icin en az bir alan eklenmelidir.`
+    return `${step.stepName || `Adım ${step.stepId}`} için en az bir alan eklenmelidir.`
   }
 
   for (const field of step.fields) {
@@ -111,11 +111,11 @@ function validateStepDefinition(step: FlowStep): string | null {
   }
 
   if (step.externalFlowEnabled && !step.externalFlowId) {
-    return `${step.stepName || `Adim ${step.stepId}`} icin dis akis secimi zorunludur.`
+    return `${step.stepName || `Adım ${step.stepId}`} için dış akış seçimi zorunludur.`
   }
 
   if (!Number.isFinite(step.requiredApprovalCount) || step.requiredApprovalCount < 1) {
-    return `${step.stepName || `Adim ${step.stepId}`} icin gerekli onay sayisi en az 1 olmalidir.`
+    return `${step.stepName || `Adım ${step.stepId}`} için gerekli onay sayısı en az 1 olmalıdır.`
   }
 
   return null
@@ -170,7 +170,7 @@ export default function BuilderPage() {
         }
       } catch (error) {
         if (mounted) {
-          setFlowLoadError('Akis listesi yuklenemedi.')
+          setFlowLoadError('Akış listesi yüklenemedi.')
         }
       } finally {
         if (mounted) {
@@ -321,7 +321,7 @@ export default function BuilderPage() {
     const invalidStep = steps.find((step) => validateStepDefinition(step) !== null)
     if (invalidStep) {
       const invalidStepError = validateStepDefinition(invalidStep)
-      alert(invalidStepError ?? 'Step dogrulamasi basarisiz.')
+      alert(invalidStepError ?? 'Step doğrulaması başarısız.')
       return
     }
 
@@ -330,7 +330,7 @@ export default function BuilderPage() {
     )
 
     if (invalidExternalStep) {
-      alert(`${invalidExternalStep.stepName} icin dis akis secmeden kaydedemezsiniz.`)
+      alert(`${invalidExternalStep.stepName} için dış akış seçmeden kaydedemezsiniz.`)
       return
     }
 
@@ -431,8 +431,8 @@ export default function BuilderPage() {
       <div className="step-link-editor">
         <div className="step-link-top">
           <div>
-            <h3>Adim Sonrasi Dis Akis</h3>
-            <p>Bu adim tamamlandiginda, sonraki adıma gecmeden once secilen akis calissin mi?</p>
+            <h3>Adım Sonrası Dış Akış</h3>
+            <p>Bu adım tamamlandığında, sonraki adıma geçmeden önce seçilen akış çalışsın mı?</p>
           </div>
           <label className="step-link-toggle">
             <input
@@ -444,14 +444,14 @@ export default function BuilderPage() {
                 })
               }
             />
-            <span>Dis akis baslat</span>
+            <span>Dış akış başlat</span>
           </label>
         </div>
 
         {currentStep.externalFlowEnabled ? (
           <div className="step-link-controls">
             <label>
-              <span>Baslatilacak Akis</span>
+              <span>Başlatılacak Akış</span>
               <select
                 className="input"
                 value={currentStep.externalFlowId ?? ''}
@@ -464,7 +464,7 @@ export default function BuilderPage() {
                 disabled={loadingFlows}
               >
                 <option value="">
-                  {loadingFlows ? 'Akislar yukleniyor...' : 'Akis secin'}
+                  {loadingFlows ? 'Akışlar yukleniyor...' : 'Akış secin'}
                 </option>
                 {availableFlows.map((flow) => (
                   <option key={flow.akisId} value={flow.akisId}>
@@ -483,7 +483,7 @@ export default function BuilderPage() {
                   })
                 }
               />
-              <span>Alt akis tamamlanmadan bekle</span>
+              <span>Alt akış tamamlanmadan bekle</span>
             </label>
             <label className="checkbox">
               <input
@@ -495,10 +495,10 @@ export default function BuilderPage() {
                   })
                 }
               />
-              <span>Alt akistan sonra ana akis devam etsin</span>
+              <span>Alt akıştan sonra ana akış devam etsin</span>
             </label>
             <label>
-              <span>Iptal Davranisi</span>
+              <span>İptal Davranışı</span>
               <select
                 className="input"
                 value={currentStep.cancelBehavior ?? 'PROPAGATE'}
@@ -508,13 +508,13 @@ export default function BuilderPage() {
                   })
                 }
               >
-                <option value="PROPAGATE">Alt akis reddedilirse ana akis da iptal olsun</option>
-                <option value="WAIT">Ana akis beklemede kalsin</option>
+                <option value="PROPAGATE">Alt akış reddedilirse ana akış da iptal olsun</option>
+                <option value="WAIT">Ana akış beklemede kalsın</option>
               </select>
             </label>
             {flowLoadError ? <p className="error-text">{flowLoadError}</p> : null}
             <p className="hint">
-              Secilen akis tamamlandiktan sonra mevcut akisin bir sonraki adimina donulur.
+              Seçilen akış tamamlandığında sonra mevcut akışın bir sonraki adımına dönülür.
             </p>
           </div>
         ) : null}
@@ -542,9 +542,9 @@ export default function BuilderPage() {
                     className="embedded-flow-pill"
                     type="button"
                     onClick={() => navigate(`/preview/${linkedFlowId}`)}
-                    title="Ara akis onizlemesini ac"
+                    title="Ara akış özetini aç"
                   >
-                    Ara Akis: {linkedFlowName ?? `#${linkedFlowId}`}
+                    Ara Akış: {linkedFlowName ?? `#${linkedFlowId}`}
                   </button>
                 ) : null}
               </Fragment>

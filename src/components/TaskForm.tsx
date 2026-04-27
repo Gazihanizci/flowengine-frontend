@@ -30,8 +30,8 @@ export default function TaskForm({
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-          <p className="text-sm font-medium text-slate-500">Soldan bir gorev secin.</p>
-          <p className="mt-1 text-xs text-slate-400">Secim yapildiginda adim formu burada acilir.</p>
+          <p className="text-sm font-medium text-slate-500">Soldan bir görev seçin.</p>
+          <p className="mt-1 text-xs text-slate-400">Seçim yapıldığında adım formu burada açılır.</p>
         </div>
       </section>
     )
@@ -48,7 +48,7 @@ export default function TaskForm({
           </div>
           <div className="flex gap-2">
             <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
-              {task.form.filter((field) => field.editable).length} Duzenlenebilir
+              {task.form.filter((field) => field.editable).length} Düzenlenebilir
             </span>
             <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
               {task.form.length} Toplam Alan
@@ -59,23 +59,23 @@ export default function TaskForm({
 
       <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akis Adi</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akış Adı</p>
           <p className="mt-1 text-sm font-medium text-slate-900">{task.akisAdi?.trim() || '-'}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akis Aciklamasi</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Akış Açıklaması</p>
           <p className="mt-1 text-sm text-slate-700">{task.akisAciklama?.trim() || '-'}</p>
         </div>
       </div>
 
       <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
         <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Duzenlenebilir Alanlar</p>
-          <p className="mt-1 text-sm text-cyan-900">Bu alanlar uzerinde degisiklik yapabilirsiniz.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Düzenlenebilir Alanlar</p>
+          <p className="mt-1 text-sm text-cyan-900">Bu alanlar üzerinde değişiklik yapabilirsiniz.</p>
         </div>
         <div className="rounded-xl border border-slate-300 bg-slate-200 px-3 py-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Salt Okunur Alanlar</p>
-          <p className="mt-1 text-sm text-slate-700">Bu alanlar onceki adimlardan gelir ve duzenlenemez.</p>
+          <p className="mt-1 text-sm text-slate-700">Bu alanlar önceki adımlardan gelir ve düzenlenemez.</p>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export default function TaskForm({
         {task.form.some((field) => field.editable) ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="mb-3 text-sm font-medium text-slate-700">
-              Kaydet taslak olusturur ve validation atlar. Gonder butonu zorunlu alan kontrolu yapar.
+              Kaydet taslak oluşturma ve validation atlama. Gonder butonu zorunlu alan kontrolu yapar.
             </p>
             <div className="flex flex-wrap gap-3">
               <button
@@ -134,10 +134,10 @@ export default function TaskForm({
                 {loadingAction === 'cancel' ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                    Iptal ediliyor...
+                    İptal ediliyor...
                   </>
                 ) : (
-                  'Formu Iptal Et'
+                  'Formu İptal Et'
                 )}
               </button>
               <button
@@ -149,10 +149,10 @@ export default function TaskForm({
                 {loadingAction === 'submit' ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                    Gonderiliyor...
+                    Gönderiliyor...
                   </>
                 ) : (
-                  'Gonder'
+                  'Gönder'
                 )}
               </button>
             </div>

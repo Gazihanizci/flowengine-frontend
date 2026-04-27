@@ -25,7 +25,7 @@ export default function FileInput({ disabled, fileName, accept, onFileChange }: 
       />
       {hasFile ? (
         <p className="text-xs text-slate-600">
-          <span aria-hidden="true">{'\u{1F4CE}'}</span> Secilen dosya: {fileName}
+          <span aria-hidden="true">{'\u{1F4CE}'}</span> Seçilen dosya: {fileName}
         </p>
       ) : null}
     </div>

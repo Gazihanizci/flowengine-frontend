@@ -68,7 +68,7 @@ export default function HistoryPage() {
         ? requestError.response?.data?.message || requestError.message
         : requestError instanceof Error
           ? requestError.message
-          : 'Islem gecmisi alinamadi.'
+          : 'İşlem geçmişi alınamadı.'
       setError(String(message))
     } finally {
       setLoading(false)
@@ -131,19 +131,19 @@ export default function HistoryPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">History</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900">Yaptigim Islemler</h1>
         <p className="mt-2 text-sm text-slate-600">
-          `/api/history/my` kaydina gore kullanicinin tum onay/red/islem gecmisi burada listelenir.
+          `/api/history/my` kaydına göre kullanıcının tüm onay/red/işlem geçmişi burada listelenir.
         </p>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Akis adi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Akış adı</span>
             <input
               type="text"
               value={flowFilter}
               onChange={(event) => setFlowFilter(event.target.value)}
-              placeholder="Akis adinda ara"
+              placeholder="Akış adında ara"
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
@@ -155,7 +155,7 @@ export default function HistoryPage() {
               onChange={(event) => setActionFilter(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             >
-              <option value="">Tum aksiyonlar</option>
+              <option value="">Tüm aksiyonlar</option>
               {actionOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
@@ -165,18 +165,18 @@ export default function HistoryPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Adim adi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Adım adı</span>
             <input
               type="text"
               value={stepFilter}
               onChange={(event) => setStepFilter(event.target.value)}
-              placeholder="Adim adinda ara"
+              placeholder="Adım adında ara"
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Surec ID</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Süreç ID</span>
             <input
               type="number"
               min={1}
@@ -188,18 +188,18 @@ export default function HistoryPage() {
           </label>
 
           <label className="block xl:col-span-2">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Form iceriginde ara</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Form içeriğinde ara</span>
             <input
               type="text"
               value={contentFilter}
               onChange={(event) => setContentFilter(event.target.value)}
-              placeholder="Metin iceriginde arama"
+              placeholder="Metin içeriğinde arama"
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Baslangic tarihi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Başlangıç tarihi</span>
             <input
               type="date"
               value={startDateFilter}
@@ -209,7 +209,7 @@ export default function HistoryPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Bitis tarihi</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Bitiş tarihi</span>
             <input
               type="date"
               value={endDateFilter}
@@ -226,7 +226,7 @@ export default function HistoryPage() {
             disabled={loading}
             className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {loading ? 'Yukleniyor...' : 'Listeyi Yenile'}
+            {loading ? 'Yükleniyor...' : 'Listeyi Yenile'}
           </button>
           <button
             type="button"
@@ -248,15 +248,15 @@ export default function HistoryPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">Kayitlar ({filteredHistory.length})</p>
+          <p className="text-sm font-semibold text-slate-700">Kayıtlar ({filteredHistory.length})</p>
         </div>
 
         {error ? <p className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
 
         {loading ? (
-          <p className="text-sm text-slate-500">Islem gecmisi yukleniyor...</p>
+          <p className="text-sm text-slate-500">İşlem geçmişi yükleniyor...</p>
         ) : filteredHistory.length === 0 ? (
-          <p className="text-sm text-slate-500">Filtreye uygun kayit bulunamadi.</p>
+          <p className="text-sm text-slate-500">Filtreye uygun kayıt bulunamadı.</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {filteredHistory.map((item, index) => (
@@ -291,11 +291,11 @@ export default function HistoryPage() {
                 <p className="mt-3 line-clamp-2 text-sm text-slate-700">{item.formIcerik?.trim() || '-'}</p>
                 {item.aciklama?.trim() ? (
                   <p className="mt-2 line-clamp-2 text-sm text-rose-700">
-                    <span className="font-semibold">Iptal Aciklamasi:</span> {item.aciklama.trim()}
+                    <span className="font-semibold">İptal Açıklaması:</span> {item.aciklama.trim()}
                   </p>
                 ) : null}
                 <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-cyan-700 group-hover:text-cyan-800">
-                  Detay kutucugunu acmak icin tikla
+                  Detay kutucuğunu açmak için tıkla
                 </p>
               </button>
             ))}
@@ -331,7 +331,7 @@ export default function HistoryPage() {
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Adim</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Adım</p>
                 <p className="mt-1 text-sm font-semibold text-cyan-900">{selectedItem.adimAdi}</p>
               </div>
               <div
@@ -347,7 +347,7 @@ export default function HistoryPage() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Form Icerigi</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Form İçeriği</p>
               {detailLines.length > 0 ? (
                 <ul className="space-y-2">
                   {detailLines.map((line, idx) => (
@@ -357,7 +357,7 @@ export default function HistoryPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500">Bu kayit icin form icerigi bulunamadi.</p>
+                <p className="text-sm text-slate-500">Bu kayıt için form içeriği bulunamadı.</p>
               )}
             </div>
 
@@ -365,7 +365,7 @@ export default function HistoryPage() {
               selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('IPTAL')) &&
             selectedItem.aciklama?.trim() ? (
               <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-rose-700">Iptal Aciklamasi</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-rose-700">İptal Açıklaması</p>
                 <p className="text-sm text-rose-900">{selectedItem.aciklama.trim()}</p>
               </div>
             ) : null}

@@ -42,7 +42,7 @@ export default function UserRoleCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kullanici</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kullanıcı</p>
           <h3 className="mt-1 text-lg font-semibold text-slate-900">{user.adSoyad}</h3>
           <p className="mt-1 text-sm text-slate-500">ID: {user.kullaniciId}</p>
         </div>
@@ -71,7 +71,7 @@ export default function UserRoleCard({
       <div className="mt-4 space-y-3">
         {user.roller.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-500">
-            Bu kullaniciya atanmis rol yok.
+            Bu kullanıcıya atanmış rol yok.
           </p>
         ) : (
           user.roller.map((role) => {
@@ -114,7 +114,7 @@ export default function UserRoleCard({
                     disabled={loading || nextRoleId === role.rolId}
                     className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
                   >
-                    Guncelle
+                    Güncelle
                   </button>
 
                   <button

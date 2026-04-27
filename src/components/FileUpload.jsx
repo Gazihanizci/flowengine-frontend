@@ -39,7 +39,7 @@ export default function FileUpload({ onUploadSuccess }) {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setErrorMessage('Lutfen once bir dosya secin.')
+      setErrorMessage('Lütfen önce bir dosya seçin.')
       return
     }
 
@@ -52,11 +52,11 @@ export default function FileUpload({ onUploadSuccess }) {
       const dosyaId = result?.dosyaId ?? result?.fileId ?? result?.fotografId
 
       if (!dosyaId) {
-        throw new Error('API yanitinda dosyaId/fotografId bulunamadi.')
+        throw new Error('API yanıtında dosyaId/fotografId bulunamadı.')
       }
 
       setUploadedId(dosyaId)
-      setSuccessMessage(`Yukleme basarili: ${result?.dosyaAdi ?? result?.fotografAdi ?? selectedFile.name}`)
+      setSuccessMessage(`Yükleme başarılı: ${result?.dosyaAdi ?? result?.fotografAdi ?? selectedFile.name}`)
       setDownloadUrl(result?.imageUrl ?? result?.downloadUrl ?? `/api/fotograflar/view/${dosyaId}`)
 
       if (typeof onUploadSuccess === 'function') {
@@ -67,7 +67,7 @@ export default function FileUpload({ onUploadSuccess }) {
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.message ||
-        'Dosya yukleme basarisiz oldu.'
+        'Dosya yükleme başarısız oldu.'
 
       setErrorMessage(apiMessage)
     } finally {
@@ -78,7 +78,7 @@ export default function FileUpload({ onUploadSuccess }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-800">File Upload</h2>
-      <p className="mt-1 text-sm text-slate-500">Dosya secip yukleyebilirsiniz.</p>
+      <p className="mt-1 text-sm text-slate-500">Dosya seçip yükleyebilirsiniz.</p>
 
       <div className="mt-4 space-y-3">
         <input
@@ -88,7 +88,7 @@ export default function FileUpload({ onUploadSuccess }) {
           className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-200 file:px-3 file:py-2 file:font-medium hover:file:bg-slate-300 disabled:cursor-not-allowed"
         />
 
-        {selectedFile ? <p className="text-sm text-slate-600">Secilen dosya: {selectedFile.name}</p> : null}
+        {selectedFile ? <p className="text-sm text-slate-600">Seçilen dosya: {selectedFile.name}</p> : null}
 
         <button
           type="button"
@@ -96,7 +96,7 @@ export default function FileUpload({ onUploadSuccess }) {
           disabled={loading || !selectedFile}
           className="inline-flex items-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-cyan-300"
         >
-          {loading ? 'Yukleniyor...' : 'Upload'}
+          {loading ? 'Yükleniyor...' : 'Upload'}
         </button>
 
         {successMessage ? <p className="text-sm text-emerald-700">{successMessage}</p> : null}

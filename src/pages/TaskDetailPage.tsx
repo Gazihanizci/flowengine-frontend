@@ -147,7 +147,7 @@ function normalizeFlowSteps(rawDetail: RawFlowDetail, surecId: number): FlowStep
     return {
       stepKey: `main-${surecId}-${Number(step.adimId ?? stepIndex + 1)}`,
       adimId: Number(step.adimId ?? stepIndex + 1),
-      adimAdi: String(step.adimAdi ?? `Adim ${stepIndex + 1}`),
+      adimAdi: String(step.adimAdi ?? `Adım ${stepIndex + 1}`),
       form,
       source: 'main',
     }
@@ -257,7 +257,7 @@ export default function TaskDetailPage() {
         const currentStepFromTask: FlowStepView = {
           stepKey: `main-${currentTask.surecId}-${currentTask.adimId}`,
           adimId: currentTask.adimId,
-          adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
+          adimAdi: currentTask.adimAdi || `Adım ${currentTask.adimId}`,
           form: sanitizeEditableFieldValues(currentTask.form ?? []),
           source: 'main',
         }
@@ -270,7 +270,7 @@ export default function TaskDetailPage() {
         const relatedSteps: FlowStepView[] = pickRelatedTasks(currentTask, taskList).map((task) => ({
           stepKey: `related-${task.taskId}-${task.adimId}`,
           adimId: task.adimId,
-          adimAdi: task.adimAdi || `Adim ${task.adimId}`,
+          adimAdi: task.adimAdi || `Adım ${task.adimId}`,
           form: sanitizeEditableFieldValues(task.form ?? []),
           source: 'related',
           relatedTask: {
@@ -287,7 +287,7 @@ export default function TaskDetailPage() {
           {
             stepKey: `main-${currentTask.surecId}-${currentTask.adimId}`,
             adimId: currentTask.adimId,
-            adimAdi: currentTask.adimAdi || `Adim ${currentTask.adimId}`,
+            adimAdi: currentTask.adimAdi || `Adım ${currentTask.adimId}`,
             form: sanitizeEditableFieldValues(currentTask.form ?? []),
             source: 'main',
           },
@@ -295,7 +295,7 @@ export default function TaskDetailPage() {
         setSelectedStepKey(`main-${currentTask.surecId}-${currentTask.adimId}`)
       }
     } catch {
-      setError('Gorev detayi alinamadi.')
+      setError('Görev detayları alınamadı.')
     } finally {
       setLoading(false)
     }
@@ -350,10 +350,10 @@ export default function TaskDetailPage() {
 
     const confirmMessage =
       aksiyonId === 2
-        ? 'Formu kaydetmek istediginize emin misiniz?'
+        ? 'Formu kaydetmek istediğinize emin misiniz?'
         : aksiyonId === 3
-          ? 'Formu reddetmek istediginize emin misiniz?'
-          : 'Formu gondermek istediginize emin misiniz?'
+          ? 'Formu reddetmek istediğinize emin misiniz?'
+          : 'Formu gondermek istediğinize emin misiniz?'
 
     if (!options?.skipConfirm && !window.confirm(confirmMessage)) {
       return
@@ -394,7 +394,7 @@ export default function TaskDetailPage() {
       }
 
       if (!userId) {
-        throw new Error('Aksiyon icin kullanici bilgisi bulunamadi. Lutfen tekrar giris yapin.')
+        throw new Error('Aksiyon için kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapın.')
       }
 
       await submitTaskAction(selectedTask.taskId, payload, aksiyonId, filePayload, {
@@ -407,7 +407,7 @@ export default function TaskDetailPage() {
       })
 
       if (aksiyonId === 2) {
-        setSuccessMessage(hasFile ? 'Taslak kaydedildi. Dosyalar yuklendi.' : 'Taslak kaydedildi.')
+        setSuccessMessage(hasFile ? 'Taslak kaydedildi. Dosyalar yüklendi.' : 'Taslak kaydedildi.')
         await loadTask()
       } else if (aksiyonId === 3) {
         setRejectAciklama('')
@@ -416,7 +416,7 @@ export default function TaskDetailPage() {
         setSuccessMessage('Form reddedildi.')
         navigate('/tasks')
       } else {
-        setSuccessMessage(hasFile ? 'Form gonderildi. Dosyalar yuklendi.' : 'Form gonderildi.')
+        setSuccessMessage(hasFile ? 'Form gönderildi. Dosyalar yüklendi.' : 'Form gönderildi.')
         navigate('/tasks')
       }
     } catch (requestError) {
@@ -431,7 +431,7 @@ export default function TaskDetailPage() {
       setSubmitError(
         runtimeMessage ??
           apiMessage ??
-          `${aksiyonId === 2 ? 'Kaydetme' : aksiyonId === 3 ? 'Reddetme' : 'Gonderim'} islemi basarisiz oldu.${
+          `${aksiyonId === 2 ? 'Kaydetme' : aksiyonId === 3 ? 'Reddetme' : 'Gönderim'} işlemi başarısız oldu.${
             status ? ` (HTTP ${status})` : ''
           }`,
       )
@@ -454,18 +454,18 @@ export default function TaskDetailPage() {
   const handleConfirmReject = async () => {
     const trimmed = rejectAciklama.trim()
     if (!trimmed) {
-      setRejectValidationError('Aciklama zorunludur')
+      setRejectValidationError('Açıklama zorunludur')
       return
     }
     await handleSubmitAction(3, { skipConfirm: true, aciklama: trimmed })
   }
 
   if (!taskId || Number.isNaN(numericTaskId)) {
-    return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Gecersiz gorev adresi.</div>
+    return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Geçersiz görev adresi.</div>
   }
 
   if (loading) {
-    return <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Gorev detaylari yukleniyor...</div>
+    return <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Görev detayları yükleniyor...</div>
   }
 
   if (error) {
@@ -476,14 +476,14 @@ export default function TaskDetailPage() {
     return (
       <div className="space-y-3">
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-          Bu gorev listede bulunamadi veya tamamlanmis olabilir.
+          Bu görev listede bulunamadı veya tamamlanmış olabilir.
         </div>
         <button
           type="button"
           onClick={() => navigate('/tasks')}
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
-          Gorev listesine don
+          Görev listesine dön
         </button>
       </div>
     )
@@ -494,12 +494,12 @@ export default function TaskDetailPage() {
       <section className="task-detail-hero">
         <div>
           <p className="task-kicker">Task Workspace</p>
-          <h1>{selectedTask.akisAdi?.trim() || 'Akis formu'}</h1>
-          <p>Gorev #{selectedTask.taskId} | Surec #{selectedTask.surecId}</p>
+          <h1>{selectedTask.akisAdi?.trim() || 'Akış formu'}</h1>
+          <p>örev #{selectedTask.taskId} | Süreç #{selectedTask.surecId}</p>
         </div>
         <div className="task-detail-hero-meta">
-          <span>Aktif Adim: {selectedTask.adimAdi || `Adim ${selectedTask.adimId}`}</span>
-          <span>Duzenlenebilir Alan: {editableCount}</span>
+          <span>Aktif Adım: {selectedTask.adimAdi || `Adim ${selectedTask.adimId}`}</span>
+          <span> Düzenlenebilir Alan: {editableCount}</span>
         </div>
       </section>
 
@@ -508,7 +508,7 @@ export default function TaskDetailPage() {
 
       <div className="task-detail-layout">
         <aside className="task-steps-panel">
-          <h2>Akis Adimlari</h2>
+          <h2>Akış Adımları</h2>
           <div className="task-steps-list">
             {mainSteps.map((step, index) => {
               const isSelected = step.stepKey === selectedStepKey
@@ -530,14 +530,14 @@ export default function TaskDetailPage() {
                   <p>
                     {index + 1}. {step.adimAdi}
                   </p>
-                  <span>{!canView ? 'Yetki yok' : isCurrent ? 'Mevcut adim' : 'Salt goruntuleme'}</span>
+                  <span>{!canView ? 'Yetki yok' : isCurrent ? 'Mevcut adım' : 'Salt görüntüleme'}</span>
                 </button>
               )
             })}
           </div>
           {relatedSteps.length > 0 ? (
             <>
-              <h2 className="task-steps-subtitle">Iliskili Akis Adimlari</h2>
+              <h2 className="task-steps-subtitle">İlişkili Akış Adımları</h2>
               <div className="task-steps-list">
                 {relatedSteps.map((step, index) => {
                   const isSelected = step.stepKey === selectedStepKey
@@ -554,9 +554,9 @@ export default function TaskDetailPage() {
                       }}
                       className={`task-step-btn related ${isSelected ? 'selected' : ''} ${!canView ? 'disabled' : ''}`}
                     >
-                      <p>{step.relatedTask?.akisAdi?.trim() || 'Iliskili Akis'} | {step.adimAdi}</p>
+                      <p>{step.relatedTask?.akisAdi?.trim() || 'İlişkili Akis'} | {step.adimAdi}</p>
                       <span>
-                        Surec #{step.relatedTask?.surecId ?? '-'} | Iliskili adim
+                        Süreç #{step.relatedTask?.surecId ?? '-'} | İlişkili Adım
                       </span>
                     </button>
                   )
@@ -568,22 +568,22 @@ export default function TaskDetailPage() {
 
         <section className="task-form-panel">
           {!selectedStep ? (
-            <p className="hint">Goruntulenecek adim bulunamadi.</p>
+            <p className="hint">Görüntülenecek adım bulunamadı.</p>
           ) : (
             <>
               <header className="task-form-panel-head">
                 <h2>{selectedStep.adimAdi}</h2>
                 <p>
                   {selectedStep?.source === 'related'
-                    ? 'Bu adim iliskili bir akistan geliyor. Salt okunur olarak goruntulenir.'
+                    ? 'Bu adım ilişkili bir akıştan geliyor. Salt okunur olarak görüntülenir.'
                     : isCurrentStepSelected
-                    ? 'Bu adim size ait. Alanlari duzenleyip aksiyon alabilirsiniz.'
-                    : 'Bu adim sadece goruntulenebilir. Alanlar salt okunur durumdadir.'}
+                    ? 'Bu adım size ait. Alanları düzenleyip aksiyon alabilirsiniz.'
+                    : 'Bu adım sadece görüntülenebilir. Alanlar salt okunur durumdadır.'}
                 </p>
               </header>
 
               {(isCurrentStepSelected ? form : selectedStep.form).length === 0 ? (
-                <p className="hint">Bu adim icin gosterilecek alan yok.</p>
+                <p className="hint">Bu adım için gösterilecek alan yok.</p>
               ) : (
                 <div className="task-form-grid">
                   {(isCurrentStepSelected ? form : selectedStep.form).map((field) => (
@@ -623,7 +623,7 @@ export default function TaskDetailPage() {
                     onClick={() => handleSubmitAction(1)}
                     className="button primary task-action-submit"
                   >
-                    {loadingAction === 'submit' ? 'Gonderiliyor...' : 'Gonder'}
+                    {loadingAction === 'submit' ? 'Gönderiliyor...' : 'Gönder'}
                   </button>
                 </div>
               ) : null}
@@ -633,13 +633,13 @@ export default function TaskDetailPage() {
       </div>
 
       <button type="button" onClick={() => navigate('/tasks')} className="button secondary task-back-button">
-        Gorev listesine don
+        Görev listesine dön
       </button>
 
       {rejectModalOpen ? (
         <div className="task-modal-backdrop">
           <div className="task-modal">
-            <h2>Iptal Aciklamasi</h2>
+            <h2>İptal çıklaması</h2>
             <textarea
               className="input"
               rows={5}
@@ -650,7 +650,7 @@ export default function TaskDetailPage() {
                   setRejectValidationError(null)
                 }
               }}
-              placeholder="Iptal sebebini yaziniz..."
+              placeholder="İptal sebebini yazınız..."
             />
 
             {rejectValidationError ? <p className="error-text">{rejectValidationError}</p> : null}
@@ -662,7 +662,7 @@ export default function TaskDetailPage() {
                 disabled={loadingAction === 'cancel'}
                 className="button secondary"
               >
-                Vazgec
+                Vazgeç
               </button>
               <button
                 type="button"
@@ -670,7 +670,7 @@ export default function TaskDetailPage() {
                 disabled={loadingAction === 'cancel'}
                 className="button reject"
               >
-                {loadingAction === 'cancel' ? 'Iptal Ediliyor...' : 'Iptal Et'}
+                {loadingAction === 'cancel' ? 'İptal Ediliyor...' : 'Iptal Et'}
               </button>
             </div>
           </div>

@@ -38,17 +38,17 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
       <div className="task-inbox-head">
         <div>
           <p className="task-kicker">Execution Queue</p>
-          <h2>Gorev Formlari</h2>
+          <h2>Görev Formlari</h2>
         </div>
         <div className="task-inbox-count">
           <strong>{filteredTasks.length}</strong>
-          <span>Aktif Kayit</span>
+          <span>Aktif Kayıt</span>
         </div>
       </div>
 
       <div className="task-toolbar">
         <label className="task-search">
-          <span>Gorev Ara</span>
+          <span>Görev Ara</span>
           <input
             className="input"
             type="search"
@@ -78,7 +78,7 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
       {loading ? (
         <div className="task-list-state">
           <span className="task-spinner" />
-          Yukleniyor...
+          Yükleniyor...
         </div>
       ) : null}
 
@@ -97,7 +97,7 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
 
       {!loading && !error && filteredTasks.length === 0 ? (
         <div className="task-list-empty">
-          {tasks.length === 0 ? 'Gorev bulunamadi' : 'Arama kriterine uygun gorev bulunamadi'}
+          {tasks.length === 0 ? 'Görev bulunamadı' : 'Arama kriterine uygun görev bulunamadı'}
         </div>
       ) : null}
 
@@ -115,7 +115,7 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
             <div className="task-list-card-meta">
               <span>Surec #{task.surecId}</span>
               <span>Adim {task.adimId}</span>
-              <span className="task-chip">Yanit Bekleniyor</span>
+              <span className="task-chip">Yanıt Bekleniyor</span>
             </div>
           </button>
         ))}

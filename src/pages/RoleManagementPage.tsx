@@ -80,7 +80,7 @@ export default function RoleManagementPage() {
         setSelectedUser(data[0].kullaniciId)
       }
     } catch (error) {
-      setErrorMessage(resolveErrorMessage(error, 'Kullanici rol listesi alinamadi.'))
+      setErrorMessage(resolveErrorMessage(error, 'Kullanıcı rol listesi alınamadı.'))
     } finally {
       setLoading(false)
     }
@@ -132,7 +132,7 @@ export default function RoleManagementPage() {
 
   const handleAssignRole = async () => {
     if (selectedUser === null || selectedRole === null) {
-      setErrorMessage('Rol atamasi icin kullanici ve rol secmelisiniz.')
+      setErrorMessage('Rol ataması için kullanıcı ve rol seçmelisiniz.')
       return
     }
 
@@ -143,11 +143,11 @@ export default function RoleManagementPage() {
       await assignRoleToUser(selectedUser, selectedRole)
       await loadUsersRoles()
       await refreshSelectedUserRoles(selectedUser)
-      setSuccessMessage('Rol basariyla eklendi.')
+      setSuccessMessage('Rol başarıyla eklendi.')
       setAssignModalOpen(false)
       setSelectedRole(null)
     } catch (error) {
-      setErrorMessage(resolveErrorMessage(error, 'Rol ekleme islemi basarisiz oldu.'))
+      setErrorMessage(resolveErrorMessage(error, 'Rol ekleme işlemi başarısız oldu.'))
     } finally {
       setActionLoading(false)
     }
@@ -161,9 +161,9 @@ export default function RoleManagementPage() {
       await removeRoleFromUser(kullaniciId, rolId)
       await loadUsersRoles()
       await refreshSelectedUserRoles(kullaniciId)
-      setSuccessMessage('Rol basariyla kaldirildi.')
+      setSuccessMessage('Rol başarıyla kaldırıldı.')
     } catch (error) {
-      setErrorMessage(resolveErrorMessage(error, 'Rol kaldirma islemi basarisiz oldu.'))
+      setErrorMessage(resolveErrorMessage(error, 'Rol kaldırma işlemi başarısız oldu.'))
     } finally {
       setActionLoading(false)
     }
@@ -171,7 +171,7 @@ export default function RoleManagementPage() {
 
   const handleUpdateRole = async (kullaniciId: number, eskiRolId: number, yeniRolId: number) => {
     if (eskiRolId === yeniRolId) {
-      setErrorMessage('Ayni rol ile guncelleme yapilamaz.')
+      setErrorMessage('Aynı rol ile güncelleme yapılamaz.')
       return
     }
 
@@ -182,9 +182,9 @@ export default function RoleManagementPage() {
       await updateUserRole(kullaniciId, eskiRolId, yeniRolId)
       await loadUsersRoles()
       await refreshSelectedUserRoles(kullaniciId)
-      setSuccessMessage('Rol basariyla guncellendi.')
+      setSuccessMessage('Rol başarıyla güncellendi.')
     } catch (error) {
-      setErrorMessage(resolveErrorMessage(error, 'Rol guncelleme islemi basarisiz oldu.'))
+      setErrorMessage(resolveErrorMessage(error, 'Rol güncelleme işlemi başarısız oldu.'))
     } finally {
       setActionLoading(false)
     }
@@ -200,22 +200,22 @@ export default function RoleManagementPage() {
     <div className="space-y-5">
       <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-[0_20px_45px_rgba(2,6,23,0.35)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Admin Workspace</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Rol Yonetim Paneli</h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Rol Yönetimi Paneli</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-300">
-          Kullanici rollerini ekleyin, kaldirin ve guncelleyin. Tum islemler sonrasinda liste otomatik yenilenir.
+          Kullanıcı rollerini ekleyin, kaldirin ve guncelleyin. Tüm işlemler sonrasında liste otomatik yenilenir.
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Kullanici</p>
+            <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Kullanıcı</p>
             <p className="mt-1 text-2xl font-semibold">{usersCount}</p>
           </div>
           <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Rol Atamasi</p>
+            <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Rol Ataması</p>
             <p className="mt-1 text-2xl font-semibold">{totalRoleAssignments}</p>
           </div>
           <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-slate-300">Secili Kullanici</p>
+            <p className="text-xs uppercase tracking-wide text-slate-300">Seçili Kullanıcı</p>
             <p className="mt-1 text-2xl font-semibold">{selectedUser ?? '-'}</p>
           </div>
         </div>
@@ -224,8 +224,8 @@ export default function RoleManagementPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Kullanici Listesi</h2>
-            <p className="text-sm text-slate-500">Her kullanici kartinda rol ekleme, silme ve guncelleme islemleri var.</p>
+            <h2 className="text-lg font-semibold text-slate-900">Kullanıcı Listesi</h2>
+            <p className="text-sm text-slate-500">Her kullanıcı kartında rol ekleme, silme ve güncelleme işlemleri var.</p>
           </div>
           <button
             type="button"
@@ -239,7 +239,7 @@ export default function RoleManagementPage() {
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr,220px,auto]">
           <input
             type="text"
-            placeholder="Kullanici ara (ad veya ID)"
+            placeholder="Kullanıcı ara (ad veya ID)"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
@@ -251,7 +251,7 @@ export default function RoleManagementPage() {
             }
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
           >
-            <option value="all">Tum Roller</option>
+            <option value="all">Tüm Roller</option>
             {roleOptions.map((role) => (
               <option key={role.id} value={role.id}>
                 {role.name} (ID: {role.id})
@@ -270,7 +270,7 @@ export default function RoleManagementPage() {
           </button>
         </div>
         <p className="mt-3 text-xs font-medium text-slate-500">
-          Gosterilen: {filteredUsers.length} / {usersRoles.length}
+          Gösterilen: {filteredUsers.length} / {usersRoles.length}
         </p>
       </section>
 
@@ -288,11 +288,11 @@ export default function RoleManagementPage() {
 
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm font-medium text-slate-500 shadow-sm">
-          Rol verileri yukleniyor...
+          Rol verileri yükleniyor...
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm font-medium text-slate-500 shadow-sm">
-          Filtreye uygun kullanici bulunamadi.
+          Filtreye uygun kullanıcı bulunamadı.
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
