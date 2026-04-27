@@ -275,7 +275,7 @@ export default function FlowMapPage() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard flow-map-page">
       <div className="dashboard-shell">
         <div className="dashboard-top">
           <div>

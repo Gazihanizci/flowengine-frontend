@@ -86,7 +86,6 @@ body {
 }
 
 .logout-button {
-  margin-top: auto;
   width: 100%;
   min-height: 50px;
   border-radius: 12px;
@@ -94,6 +93,30 @@ body {
   background: linear-gradient(180deg, #f8fbff 0%, #e6eefc 100%);
   color: #1b4279;
   font-weight: 700;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.theme-toggle {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(186, 210, 247, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(208, 228, 255, 0.12) 100%);
+  color: #f2f7ff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(169, 196, 240, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(208, 228, 255, 0.16) 100%);
 }
 
 .nav-link {
@@ -2924,6 +2947,218 @@ label {
   font-size: 0.75rem;
 }
 
+.flow-map-page {
+  --fm-surface: #f6f9ff;
+  --fm-surface-soft: #eef4ff;
+  --fm-card: #ffffff;
+  --fm-line: #cddbf4;
+  --fm-line-strong: #9eb8e7;
+  --fm-text: #0f2b52;
+  --fm-muted: #4a6387;
+  --fm-primary: #1f5eff;
+  --fm-primary-strong: #1546c0;
+}
+
+.flow-map-page .dashboard-shell {
+  width: min(1320px, 100%);
+}
+
+.flow-map-page .dashboard-top {
+  border-color: #bfcff0;
+  background:
+    radial-gradient(circle at 92% -20%, rgba(29, 78, 216, 0.28), transparent 46%),
+    radial-gradient(circle at 0% 100%, rgba(39, 119, 255, 0.1), transparent 44%),
+    linear-gradient(135deg, #f9fbff 0%, #f1f6ff 45%, #ffffff 100%);
+}
+
+.flow-map-page .dashboard-top h1 {
+  color: var(--fm-text);
+}
+
+.flow-map-page .dashboard-top p {
+  color: var(--fm-muted);
+}
+
+.flow-map-page .flow-map-layout {
+  gap: 18px;
+}
+
+.flow-map-page .flow-map-sidebar,
+.flow-map-page .flow-map-main {
+  border-color: var(--fm-line);
+  background: linear-gradient(165deg, var(--fm-card) 0%, var(--fm-surface) 100%);
+  box-shadow: 0 14px 30px rgba(16, 35, 74, 0.12);
+}
+
+.flow-map-page .flow-map-sidebar {
+  animation: flowMapRise 0.38s ease both;
+}
+
+.flow-map-page .flow-map-main {
+  animation: flowMapRise 0.46s ease both;
+}
+
+.flow-map-page .flow-map-filter {
+  border-color: #bfd1ef;
+  border-radius: 14px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(55, 121, 245, 0.1), transparent 46%),
+    linear-gradient(180deg, #f9fbff 0%, #f3f7ff 100%);
+}
+
+.flow-map-page .flow-map-search span {
+  color: #36598a;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+
+.flow-map-page .flow-map-search .input {
+  border: 1px solid #b6caed;
+  border-radius: 11px;
+  min-height: 42px;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #1e3d6b;
+}
+
+.flow-map-page .flow-map-search .input::placeholder {
+  color: #8a9db9;
+}
+
+.flow-map-page .flow-map-search .input:focus {
+  border-color: #6e97df;
+  box-shadow: 0 0 0 3px rgba(62, 120, 224, 0.14);
+}
+
+.flow-map-page .flow-map-filter-chips {
+  gap: 8px;
+}
+
+.flow-map-page .flow-map-filter-chip {
+  border: 1px solid #b7c9e7;
+  color: #31547f;
+  background: #f1f6ff;
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 0.84rem;
+}
+
+.flow-map-page .flow-map-filter-chip:hover {
+  border-color: #8db0ea;
+  background: #e8f0ff;
+}
+
+.flow-map-page .flow-map-filter-chip.active {
+  background: linear-gradient(135deg, var(--fm-primary) 0%, var(--fm-primary-strong) 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(25, 72, 185, 0.27);
+}
+
+.flow-map-page .flow-map-list {
+  scrollbar-width: thin;
+  scrollbar-color: #adc3ea transparent;
+}
+
+.flow-map-page .flow-map-item {
+  border-color: #d0dcf0;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.flow-map-page .flow-map-item:hover {
+  transform: translateY(-1px);
+  border-color: #a8c0ea;
+  box-shadow: 0 10px 18px rgba(16, 33, 64, 0.1);
+}
+
+.flow-map-page .flow-map-item.selected {
+  border-color: #5383df;
+  box-shadow: 0 12px 20px rgba(31, 94, 255, 0.2);
+  background: linear-gradient(145deg, #edf4ff 0%, #f8fbff 100%);
+}
+
+.flow-map-page .flow-map-summary .summary-card {
+  border-color: #c5d6f3;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(36, 109, 244, 0.12), transparent 48%),
+    linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+}
+
+.flow-map-page .mind-tree-canvas {
+  border-color: #c6d8f3;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(49, 119, 244, 0.18), transparent 45%),
+    linear-gradient(180deg, #f8fbff 0%, #f3f8ff 50%, #ffffff 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.flow-map-page .mind-node {
+  border-color: #c2d4f3;
+  background: linear-gradient(180deg, #f3f8ff 0%, #ebf3ff 100%);
+  color: #12305a;
+}
+
+.flow-map-page .mind-node:hover {
+  box-shadow: 0 12px 18px rgba(14, 42, 92, 0.16);
+}
+
+.flow-map-page .mind-node.root {
+  border-color: #82a8ea;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(39, 106, 228, 0.2), transparent 45%),
+    linear-gradient(180deg, #e5efff 0%, #dbe9ff 100%);
+}
+
+.flow-map-page .mind-node.open {
+  border-color: #6d9ae8;
+  background: linear-gradient(180deg, #eaf2ff 0%, #e1edff 100%);
+}
+
+.flow-map-page .mind-node-title-row span {
+  background: #c9ddff;
+  color: #1e438d;
+}
+
+.flow-map-page .mind-node-meta-row {
+  color: #3a5a86;
+}
+
+.flow-map-page .mind-children {
+  border-left-color: #b2c9ef;
+}
+
+.flow-map-page .mind-children .mind-node-wrapper::before {
+  background: #b2c9ef;
+}
+
+.flow-map-page .mind-component-chip {
+  border-color: #bfd2f2;
+  background:
+    linear-gradient(180deg, #f9fbff 0%, #f2f7ff 100%);
+}
+
+.flow-map-page .mind-component-chip .tag {
+  background: #dcebff;
+  color: #184388;
+}
+
+.flow-map-page .mind-component-chip small {
+  color: #4a6387;
+}
+
+@keyframes flowMapRise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .auth-page {
   min-height: 100vh;
   display: flex;
@@ -3202,6 +3437,272 @@ label {
     transform: translateX(65%);
     opacity: 0;
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b1322;
+  --panel: #121d31;
+  --panel-soft: #16253d;
+  --text: #e4ebf7;
+  --muted: #9fb2cd;
+  --line: #2a3b59;
+  --line-strong: #365174;
+  --primary: #4d8dff;
+  --primary-strong: #2f6ce6;
+  --accent: #67a6ff;
+  --success: #24b36b;
+  --warning: #e89b2f;
+  --danger: #ff7772;
+  --shadow: 0 14px 30px rgba(2, 8, 22, 0.44);
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at 0% 0%, #15223b 0%, #0e1729 44%, #0a1220 100%);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .layout {
+  background:
+    radial-gradient(circle at 82% 6%, rgba(83, 138, 235, 0.16), transparent 34%),
+    linear-gradient(180deg, #0d1629 0%, #0a1323 100%);
+}
+
+:root[data-theme='dark'] .sidebar {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(112, 173, 255, 0.2), transparent 30%),
+    linear-gradient(175deg, #081327 0%, #0a1a33 54%, #0d2244 100%);
+  border-right-color: rgba(146, 179, 230, 0.2);
+}
+
+:root[data-theme='dark'] .user-card,
+:root[data-theme='dark'] .flow-list-toolbar,
+:root[data-theme='dark'] .flow-map-filter,
+:root[data-theme='dark'] .summary-card,
+:root[data-theme='dark'] .flow-map-item,
+:root[data-theme='dark'] .flow-row,
+:root[data-theme='dark'] .flow-card,
+:root[data-theme='dark'] .file-list,
+:root[data-theme='dark'] .step-link-editor,
+:root[data-theme='dark'] .flow-field-card,
+:root[data-theme='dark'] .task-history-toolbar,
+:root[data-theme='dark'] .task-detail-hero-chip,
+:root[data-theme='dark'] .task-history-item,
+:root[data-theme='dark'] .notification-item,
+:root[data-theme='dark'] .auth-alert {
+  border-color: var(--line);
+  background: linear-gradient(180deg, #16253d 0%, #122033 100%);
+}
+
+:root[data-theme='dark'] .dashboard-top,
+:root[data-theme='dark'] .dashboard-user-hero,
+:root[data-theme='dark'] .panel,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .task-form-panel,
+:root[data-theme='dark'] .task-steps-panel,
+:root[data-theme='dark'] .flow-preview-card,
+:root[data-theme='dark'] .flow-preview-hero,
+:root[data-theme='dark'] .flow-preview-summary,
+:root[data-theme='dark'] .auth-card {
+  border-color: var(--line-strong);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(77, 141, 255, 0.12), transparent 45%),
+    linear-gradient(165deg, #172740 0%, #121d31 60%, #101a2d 100%);
+  box-shadow: 0 16px 32px rgba(3, 10, 26, 0.46);
+}
+
+:root[data-theme='dark'] .dashboard-top h1,
+:root[data-theme='dark'] .dashboard-user-hero-main h1,
+:root[data-theme='dark'] .panel-header h2,
+:root[data-theme='dark'] .summary-card strong,
+:root[data-theme='dark'] .task-hero-title h1,
+:root[data-theme='dark'] .flow-preview-hero h1,
+:root[data-theme='dark'] .auth-card-header h2 {
+  color: #f0f5ff;
+}
+
+:root[data-theme='dark'] .dashboard-top p,
+:root[data-theme='dark'] .dashboard-user-hero-main p,
+:root[data-theme='dark'] .panel-header span,
+:root[data-theme='dark'] .summary-card span,
+:root[data-theme='dark'] .hint,
+:root[data-theme='dark'] .eyebrow,
+:root[data-theme='dark'] .auth-card-header p {
+  color: #9fb2cd;
+}
+
+:root[data-theme='dark'] .input,
+:root[data-theme='dark'] .auth-input,
+:root[data-theme='dark'] select.input,
+:root[data-theme='dark'] textarea.input {
+  border-color: #395171;
+  background: #0f1b2f;
+  color: #e4ebf7;
+}
+
+:root[data-theme='dark'] .input::placeholder,
+:root[data-theme='dark'] .auth-input::placeholder {
+  color: #8ea5c7;
+}
+
+:root[data-theme='dark'] .input:focus,
+:root[data-theme='dark'] .auth-input:focus {
+  border-color: #4d8dff;
+  outline: 2px solid rgba(77, 141, 255, 0.24);
+}
+
+:root[data-theme='dark'] .button.secondary {
+  background: #22395c;
+  color: #dce8ff;
+  border: 1px solid #3f618f;
+}
+
+:root[data-theme='dark'] .theme-toggle {
+  border-color: #3f618f;
+  background: linear-gradient(180deg, #27466e 0%, #1d3453 100%);
+  color: #e5efff;
+}
+
+:root[data-theme='dark'] .theme-toggle:hover {
+  border-color: #5c85bd;
+  background: linear-gradient(180deg, #305584 0%, #223e62 100%);
+}
+
+:root[data-theme='dark'] .flow-map-page {
+  --fm-surface: #132138;
+  --fm-surface-soft: #172844;
+  --fm-card: #121f35;
+  --fm-line: #2f4466;
+  --fm-line-strong: #42618d;
+  --fm-text: #e6efff;
+  --fm-muted: #a6b9d8;
+  --fm-primary: #4f8fff;
+  --fm-primary-strong: #2e6de8;
+}
+
+:root[data-theme='dark'] .flow-map-page .flow-map-sidebar,
+:root[data-theme='dark'] .flow-map-page .flow-map-main,
+:root[data-theme='dark'] .flow-map-page .mind-tree-canvas,
+:root[data-theme='dark'] .flow-map-page .flow-map-components-panel {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(77, 141, 255, 0.14), transparent 42%),
+    linear-gradient(165deg, #15253f 0%, #112038 100%);
+  border-color: #38557f;
+}
+
+:root[data-theme='dark'] .flow-map-page .mind-node,
+:root[data-theme='dark'] .flow-map-page .mind-component-chip {
+  border-color: #43618e;
+  background: linear-gradient(180deg, #1a2d4a 0%, #162741 100%);
+  color: #dce9ff;
+}
+
+:root[data-theme='dark'] .flow-map-page .mind-node-title-row span {
+  background: #2f4d77;
+  color: #dce9ff;
+}
+
+:root[data-theme='dark'] .flow-map-page .mind-node-meta-row,
+:root[data-theme='dark'] .flow-map-page .mind-component-chip small {
+  color: #9fb2cd;
+}
+
+:root[data-theme='dark'] .flow-map-page .flow-map-item {
+  border-color: #395171;
+  background: linear-gradient(180deg, #182a46 0%, #15253f 100%);
+}
+
+:root[data-theme='dark'] .flow-map-page .flow-map-item.selected {
+  border-color: #5a8dde;
+  box-shadow: 0 12px 22px rgba(6, 17, 38, 0.45);
+}
+
+:root[data-theme='dark'] .auth-page {
+  background:
+    radial-gradient(circle at 6% 12%, rgba(66, 128, 225, 0.16), transparent 30%),
+    radial-gradient(circle at 94% 88%, rgba(45, 92, 182, 0.16), transparent 36%),
+    linear-gradient(145deg, #0d1628 0%, #101a2e 48%, #0a1222 100%);
+}
+
+:root[data-theme='dark'] .auth-footer {
+  border-top-color: #334965;
+  color: #9fb2cd;
+}
+
+/* Tailwind utility overrides for pages using direct bg/text/border classes */
+:root[data-theme='dark'] .bg-white {
+  background-color: #121d31 !important;
+}
+
+:root[data-theme='dark'] .bg-slate-50,
+:root[data-theme='dark'] .bg-slate-50\/50,
+:root[data-theme='dark'] .bg-slate-100 {
+  background-color: #16253d !important;
+}
+
+:root[data-theme='dark'] .border-slate-100,
+:root[data-theme='dark'] .border-slate-200,
+:root[data-theme='dark'] .border-slate-300 {
+  border-color: #324a6b !important;
+}
+
+:root[data-theme='dark'] .text-slate-900 {
+  color: #eef4ff !important;
+}
+
+:root[data-theme='dark'] .text-slate-800 {
+  color: #dce8fb !important;
+}
+
+:root[data-theme='dark'] .text-slate-700 {
+  color: #c8d8ef !important;
+}
+
+:root[data-theme='dark'] .text-slate-600,
+:root[data-theme='dark'] .text-slate-500 {
+  color: #9fb2cd !important;
+}
+
+:root[data-theme='dark'] .text-cyan-900,
+:root[data-theme='dark'] .text-cyan-800,
+:root[data-theme='dark'] .text-cyan-700 {
+  color: #8fd1ff !important;
+}
+
+:root[data-theme='dark'] .bg-cyan-50,
+:root[data-theme='dark'] .bg-cyan-50\/60,
+:root[data-theme='dark'] .bg-cyan-100 {
+  background-color: #11314d !important;
+}
+
+:root[data-theme='dark'] .border-cyan-200,
+:root[data-theme='dark'] .border-cyan-300 {
+  border-color: #2f6d96 !important;
+}
+
+:root[data-theme='dark'] .bg-emerald-50,
+:root[data-theme='dark'] .bg-rose-50 {
+  background-color: #1a2a40 !important;
+}
+
+:root[data-theme='dark'] .border-emerald-200,
+:root[data-theme='dark'] .border-rose-200 {
+  border-color: #3d587c !important;
+}
+
+:root[data-theme='dark'] .from-white {
+  --tw-gradient-from: #1a2a44 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(26 42 68 / 0) var(--tw-gradient-to-position) !important;
+}
+
+:root[data-theme='dark'] .via-slate-50 {
+  --tw-gradient-to: rgb(20 34 56 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #142238 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+:root[data-theme='dark'] .to-cyan-50 {
+  --tw-gradient-to: #16324d var(--tw-gradient-to-position) !important;
 }
 
 @media (max-width: 1100px) {

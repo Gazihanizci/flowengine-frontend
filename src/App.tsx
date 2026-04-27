@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import Dashboard from './pages/Dashboard'
@@ -54,6 +54,18 @@ function RedirectIfAuthed({ children }: { children: ReactElement }) {
 }
 
 function App() {
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('ui_theme')
+    const resolvedTheme =
+      storedTheme === 'dark' || storedTheme === 'light'
+        ? storedTheme
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+
+    document.documentElement.setAttribute('data-theme', resolvedTheme)
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

@@ -5,16 +5,35 @@ import { fetchUnreadNotificationCount } from '../services/notificationApi'
 import { fetchMyTasks } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
 
+type ThemeMode = 'light' | 'dark'
+
+const THEME_KEY = 'ui_theme'
+
+function getInitialTheme(): ThemeMode {
+  const stored = localStorage.getItem(THEME_KEY)
+  if (stored === 'light' || stored === 'dark') {
+    return stored
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 export default function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [user, setUserState] = useState<MeResponseItem | null>(null)
   const [taskCount, setTaskCount] = useState(0)
   const [notificationCount, setNotificationCount] = useState(0)
+  const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme())
   const knownTaskIdsRef = useRef<Set<number> | null>(null)
   const setUser = useUserStore((state) => state.setUser)
   const setLoaded = useUserStore((state) => state.setLoaded)
   const clearUser = useUserStore((state) => state.clearUser)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
@@ -123,6 +142,10 @@ export default function AppLayout() {
     navigate('/login')
   }
 
+  const handleThemeToggle = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -201,9 +224,15 @@ export default function AppLayout() {
           ) : null}
         </nav>
 
-        <button className="button secondary logout-button" onClick={handleLogout}>
-          Cikis Yap
-        </button>
+        <div className="sidebar-footer">
+          <button type="button" className="theme-toggle" onClick={handleThemeToggle}>
+            Tema: {theme === 'dark' ? 'Koyu' : 'Acik'}
+          </button>
+
+          <button className="button secondary logout-button" onClick={handleLogout}>
+            Cikis Yap
+          </button>
+        </div>
       </aside>
 
       <main className="content">
