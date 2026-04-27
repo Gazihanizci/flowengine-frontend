@@ -12,7 +12,7 @@ export function validateTaskForm(task: WorkflowTask, formData: TaskFormData): st
     if (!field.editable) return false
     const value = formData[field.fieldId]
     return !isFilledByType(field.type, value)
-  })
+  }) 
 
   if (missing.length === 0) return null
   return `${missing.length} alan doldurulmadan ilerleyemezsiniz.`
