@@ -8,7 +8,7 @@ import FieldEditModal from './FieldEditModal'
 import './FlowEditPage.css'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -39,6 +39,44 @@ function parseErrorMessage(error) {
   }
 
   return error.message || `HTTP ${status ?? '-'}`
+}
+
+function buildErrorDetail(error, fallbackAction) {
+  if (!axios.isAxiosError(error)) {
+    return {
+      action: fallbackAction,
+      status: '-',
+      method: '-',
+      url: '-',
+      message: error instanceof Error ? error.message : 'Bilinmeyen hata',
+      responseBody: null,
+    }
+  }
+
+  return {
+    action: fallbackAction,
+    status: String(error.response?.status ?? '-'),
+    method: String(error.config?.method ?? '-').toUpperCase(),
+    url: error.config?.url ?? '-',
+    message: parseErrorMessage(error),
+    responseBody: error.response?.data ?? null,
+  }
+}
+
+function extractBackendErrorText(responseBody) {
+  if (responseBody === null || responseBody === undefined) return null
+  if (typeof responseBody === 'string') return responseBody
+  if (typeof responseBody === 'object') {
+    return (
+      responseBody.message ||
+      responseBody.error ||
+      responseBody.detail ||
+      responseBody.mesaj ||
+      responseBody.title ||
+      null
+    )
+  }
+  return null
 }
 
 function normalizePermissions(field) {
@@ -130,11 +168,51 @@ export default function FlowEditPage() {
   const [fieldSaving, setFieldSaving] = useState(false)
   const [flowForm, setFlowForm] = useState({ flowName: '', aciklama: '' })
   const [toasts, setToasts] = useState([])
+  const [errorDetail, setErrorDetail] = useState(null)
+  const [stepQuery, setStepQuery] = useState('')
+  const [fieldQuery, setFieldQuery] = useState('')
+  const [editableOnly, setEditableOnly] = useState(false)
 
   const selectedStep = useMemo(
     () => flow?.steps.find((step) => step.stepId === selectedStepId) ?? null,
     [flow, selectedStepId],
   )
+  const totalFieldCount = useMemo(
+    () => (flow?.steps || []).reduce((sum, step) => sum + (step.fields?.length || 0), 0),
+    [flow],
+  )
+  const flowFormDirty = useMemo(() => {
+    if (!flow) return false
+    return flowForm.flowName.trim() !== (flow.flowName || '') || flowForm.aciklama.trim() !== (flow.aciklama || '')
+  }, [flow, flowForm])
+  const filteredSteps = useMemo(() => {
+    const list = flow?.steps || []
+    const query = stepQuery.trim().toLocaleLowerCase('tr-TR')
+    if (!query) return list
+    return list.filter((step) => {
+      const name = String(step.stepName || '').toLocaleLowerCase('tr-TR')
+      return name.includes(query) || String(step.stepOrder).includes(query) || String(step.stepId).includes(query)
+    })
+  }, [flow, stepQuery])
+  const filteredFields = useMemo(() => {
+    const list = selectedStep?.fields || []
+    const query = fieldQuery.trim().toLocaleLowerCase('tr-TR')
+    return list.filter((field) => {
+      if (editableOnly && !field.editable) return false
+      if (!query) return true
+      const label = String(field.label || '').toLocaleLowerCase('tr-TR')
+      const type = String(field.type || '').toLocaleLowerCase('tr-TR')
+      return label.includes(query) || type.includes(query) || String(field.fieldId).includes(query)
+    })
+  }, [selectedStep, fieldQuery, editableOnly])
+
+  useEffect(() => {
+    if (!selectedStepId) return
+    const existsInFiltered = filteredSteps.some((step) => step.stepId === selectedStepId)
+    if (!existsInFiltered) {
+      setSelectedStepId(filteredSteps[0]?.stepId ?? null)
+    }
+  }, [filteredSteps, selectedStepId])
 
   function pushToast(type, message) {
     const id = Date.now() + Math.random()
@@ -158,12 +236,14 @@ export default function FlowEditPage() {
         const { data } = await api.get(`/api/flows/${flowId}`)
         const normalized = normalizeFlow(data, flowId)
         setFlow(normalized)
+        setErrorDetail(null)
         setFlowForm({
           flowName: normalized.flowName,
           aciklama: normalized.aciklama,
         })
         setSelectedStepId(normalized.steps[0]?.stepId ?? null)
       } catch (error) {
+        setErrorDetail(buildErrorDetail(error, 'Akış detayını yükleme'))
         pushToast('error', parseErrorMessage(error))
       } finally {
         setLoading(false)
@@ -200,81 +280,122 @@ export default function FlowEditPage() {
     })
   }
 
-  async function handleFlowUpdate(event) {
-    event.preventDefault()
+  async function updateFlow() {
     if (!flow) return
-
     const rollback = {
       flowName: flow.flowName,
       aciklama: flow.aciklama,
     }
-
     const optimisticFlow = {
       ...flow,
       flowName: flowForm.flowName.trim(),
       aciklama: flowForm.aciklama.trim(),
     }
-
     setFlow(optimisticFlow)
     setFlowSaving(true)
-
     try {
-      await api.put(`/api/flows/edit/${flow.flowId}`, {
+      const normalizedBaslatmaYetkileri = Array.isArray(flow.baslatmaYetkileri)
+        ? flow.baslatmaYetkileri
+            .map((item) => ({
+              tip: item?.tip === 'ROLE' ? 'ROLE' : 'USER',
+              refId: parseInt(String(item?.refId ?? 0), 10),
+            }))
+            .filter((item) => Number.isFinite(item.refId) && item.refId > 0)
+        : []
+
+      const requestBody = {
         flowName: optimisticFlow.flowName,
         aciklama: optimisticFlow.aciklama,
-        baslatmaYetkileri: flow.baslatmaYetkileri,
-      })
-      pushToast('success', 'Akış güncellendi')
+        ...(normalizedBaslatmaYetkileri.length > 0
+          ? { baslatmaYetkileri: normalizedBaslatmaYetkileri }
+          : {}),
+      }
+      console.log('PUT /api/flows/edit/{flowId}', requestBody)
+      await api.put(`/api/flows/edit/${flow.flowId}`, requestBody)
+      setErrorDetail(null)
+      pushToast('success', 'Ak?? g?ncellendi')
     } catch (error) {
       setFlow((prev) => (prev ? { ...prev, ...rollback } : prev))
+      setErrorDetail(buildErrorDetail(error, 'Akış güncelleme'))
       pushToast('error', parseErrorMessage(error))
     } finally {
       setFlowSaving(false)
     }
   }
-
-  async function handleStepUpdate(stepId, payload) {
+  async function updateStep(stepId, payload) {
     if (!flow) return
-
-    const previousStep = flow.steps.find((step) => step.stepId === stepId)
+    const numericStepId = parseInt(String(stepId), 10)
+    const previousStep = flow.steps.find((step) => step.stepId === numericStepId)
     if (!previousStep) return
-
-    patchStepInFlow(stepId, payload)
+    const requestBody = {
+      stepName: String(payload.stepName ?? '').trim(),
+      stepOrder: parseInt(String(payload.stepOrder ?? 0), 10),
+      requiredApprovalCount: parseInt(String(payload.requiredApprovalCount ?? 0), 10),
+      externalFlowEnabled: Boolean(payload.externalFlowEnabled),
+      externalFlowId:
+        payload.externalFlowId === '' || payload.externalFlowId === undefined || payload.externalFlowId === null
+          ? null
+          : parseInt(String(payload.externalFlowId), 10),
+      waitForExternalFlowCompletion: Boolean(payload.waitForExternalFlowCompletion),
+      resumeParentAfterSubFlow: Boolean(payload.resumeParentAfterSubFlow),
+      cancelBehavior: String(payload.cancelBehavior ?? 'PROPAGATE'),
+    }
+    patchStepInFlow(numericStepId, requestBody)
     setStepSaving(true)
-
     try {
-      await api.put(`/api/flows/edit/step/${stepId}`, payload)
-      pushToast('success', 'Adım güncellendi')
+      console.log('PUT /api/flows/edit/step/{stepId}', requestBody)
+      await api.put(`/api/flows/edit/step/${numericStepId}`, requestBody)
+      setErrorDetail(null)
+      pushToast('success', 'Ad?m g?ncellendi')
     } catch (error) {
-      patchStepInFlow(stepId, previousStep)
+      patchStepInFlow(numericStepId, previousStep)
+      setErrorDetail(buildErrorDetail(error, 'Adım güncelleme'))
       pushToast('error', parseErrorMessage(error))
     } finally {
       setStepSaving(false)
     }
   }
-
-  async function handleFieldUpdate(fieldId, payload) {
+  async function updateField(fieldId, payload) {
     if (!flow || !selectedStepId) return
-
-    const currentStep = flow.steps.find((step) => step.stepId === selectedStepId)
-    const previousField = currentStep?.fields.find((field) => field.fieldId === fieldId)
+    const numericStepId = parseInt(String(selectedStepId), 10)
+    const currentStep = flow.steps.find((step) => step.stepId === numericStepId)
+    const effectiveFieldId = parseInt(String(selectedField?.fieldId ?? fieldId), 10)
+    const previousField = currentStep?.fields.find((field) => field.fieldId === effectiveFieldId)
     if (!currentStep || !previousField) return
-
-    patchFieldInFlow(selectedStepId, fieldId, payload)
+    const requestBody = {
+      label: String(payload.label ?? '').trim(),
+      placeholder: String(payload.placeholder ?? '').trim(),
+      required: Boolean(payload.required),
+      permissions: Array.isArray(payload.permissions)
+        ? payload.permissions.map((permission) => ({
+            tip: permission.tip === 'ROLE' ? 'ROLE' : 'USER',
+            refId: parseInt(String(permission.refId ?? 0), 10),
+            yetkiTipi: permission.yetkiTipi === 'EDIT' ? 'EDIT' : 'VIEW',
+          }))
+        : [],
+      options: Array.isArray(payload.options)
+        ? payload.options.map((option) => ({
+            label: String(option.label ?? ''),
+            value: String(option.value ?? ''),
+          }))
+        : [],
+    }
+    patchFieldInFlow(numericStepId, effectiveFieldId, requestBody)
     setFieldSaving(true)
-
     try {
-      await api.put(`/api/flows/edit/field/${fieldId}`, payload)
+      console.log('PUT /api/flows/edit/field/{fieldId}', requestBody)
+      await api.put(`/api/flows/edit/field/${effectiveFieldId}`, requestBody)
       setSelectedField(null)
-      pushToast('success', 'Alan güncellendi')
+      setErrorDetail(null)
+      pushToast('success', 'Alan g?ncellendi')
     } catch (error) {
-      patchFieldInFlow(selectedStepId, fieldId, previousField)
+      patchFieldInFlow(numericStepId, effectiveFieldId, previousField)
+      setErrorDetail(buildErrorDetail(error, 'Alan güncelleme'))
       pushToast('error', parseErrorMessage(error))
     } finally {
       setFieldSaving(false)
     }
   }
-
   if (loading) {
     return (
       <div className="panel flow-edit-loading">
@@ -298,9 +419,35 @@ export default function FlowEditPage() {
 
   return (
     <div className="flow-edit-page">
-      <section className="panel">
-        <h1>Akış Düzenleme Paneli</h1>
-        <form className="flow-edit-grid" onSubmit={handleFlowUpdate}>
+      {errorDetail ? (
+        <section className="panel flow-edit-error-panel">
+          <h2>Detaylı Hata</h2>
+          <p className="error-text">
+            {errorDetail.action}: {errorDetail.message}
+          </p>
+          <p className="hint">
+            Backend Mesajı:{' '}
+            {extractBackendErrorText(errorDetail.responseBody) ?? 'Backend tarafından okunabilir bir hata mesajı dönmedi.'}
+          </p>
+          <p className="hint">
+            HTTP {errorDetail.status} | {errorDetail.method} {errorDetail.url}
+          </p>
+          <pre className="hint" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {JSON.stringify(errorDetail.responseBody, null, 2)}
+          </pre>
+        </section>
+      ) : null}
+
+      <section className="panel flow-edit-main-panel">
+        <h1 className="flow-edit-title">Akış Düzenleme Paneli</h1>
+        <p className="hint flow-edit-subtitle">Akış bilgilerini, adımları ve alan ayarlarını tek ekrandan yönetin.</p>
+        <form
+          className="flow-edit-grid"
+          onSubmit={async (event) => {
+            event.preventDefault()
+            await updateFlow()
+          }}
+        >
           <label>
             Akış Adı
             <input
@@ -319,7 +466,7 @@ export default function FlowEditPage() {
               onChange={(event) => setFlowForm((prev) => ({ ...prev, aciklama: event.target.value }))}
             />
           </label>
-          <button type="submit" className="button" disabled={flowSaving}>
+          <button type="submit" className="button" disabled={flowSaving || !flowFormDirty}>
             {flowSaving ? (
               <span className="flow-edit-loading-line">
                 <span className="flow-edit-spinner" />
@@ -333,11 +480,45 @@ export default function FlowEditPage() {
       </section>
 
       <div className="flow-edit-layout">
-        <StepList steps={flow.steps} selectedStepId={selectedStepId} onSelectStep={setSelectedStepId} />
+        <section className="panel flow-edit-step-list-panel">
+          <h2>Adimlar</h2>
+          <p className="hint">
+            Toplam {flow.steps.length} adim, {totalFieldCount} alan
+          </p>
+          <input
+            className="input"
+            placeholder="Adim ara (ad, sira, id)"
+            value={stepQuery}
+            onChange={(event) => setStepQuery(event.target.value)}
+          />
+          <StepList steps={filteredSteps} selectedStepId={selectedStepId} onSelectStep={setSelectedStepId} />
+        </section>
 
         <div className="flow-edit-right">
-          <StepEditPanel step={selectedStep} loading={stepSaving} onSave={handleStepUpdate} />
-          <FieldList fields={selectedStep?.fields || []} onEditField={setSelectedField} />
+          <StepEditPanel step={selectedStep} loading={stepSaving} onSave={updateStep} />
+          <section className="panel">
+            <h2>Alan Filtreleri</h2>
+            <div className="flow-edit-grid">
+              <label>
+                Alan ara
+                <input
+                  className="input"
+                  placeholder="Etiket, tip veya id"
+                  value={fieldQuery}
+                  onChange={(event) => setFieldQuery(event.target.value)}
+                />
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={editableOnly}
+                  onChange={(event) => setEditableOnly(event.target.checked)}
+                />
+                Sadece duzenlenebilir alanlari goster
+              </label>
+            </div>
+          </section>
+          <FieldList fields={filteredFields} onEditField={setSelectedField} />
         </div>
       </div>
 
@@ -350,10 +531,11 @@ export default function FlowEditPage() {
             setSelectedField(null)
           }
         }}
-        onSave={handleFieldUpdate}
+        onSave={updateField}
       />
 
       <ToastList toasts={toasts} />
     </div>
   )
 }
+

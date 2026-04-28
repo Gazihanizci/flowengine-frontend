@@ -22,11 +22,12 @@ export default function StepEditPanel({ step, loading, onSave }) {
     resumeParentAfterSubFlow: false,
     cancelBehavior: 'PROPAGATE',
   })
+  const [initialForm, setInitialForm] = useState(null)
 
   useEffect(() => {
     if (!step) return
 
-    setForm({
+    const nextForm = {
       stepName: step.stepName || '',
       stepOrder: Number(step.stepOrder ?? 1),
       requiredApprovalCount: Number(step.requiredApprovalCount ?? 0),
@@ -35,8 +36,12 @@ export default function StepEditPanel({ step, loading, onSave }) {
       waitForExternalFlowCompletion: Boolean(step.waitForExternalFlowCompletion),
       resumeParentAfterSubFlow: Boolean(step.resumeParentAfterSubFlow),
       cancelBehavior: step.cancelBehavior || 'PROPAGATE',
-    })
+    }
+    setForm(nextForm)
+    setInitialForm(nextForm)
   }, [step])
+
+  const stepDirty = JSON.stringify(form) !== JSON.stringify(initialForm)
 
   if (!step) {
     return (
@@ -151,7 +156,7 @@ export default function StepEditPanel({ step, loading, onSave }) {
           Alt akış sonrası ana akışa dön
         </label>
 
-        <button className="button" type="submit" disabled={loading}>
+        <button className="button" type="submit" disabled={loading || !stepDirty}>
           {loading ? (
             <span className="flow-edit-loading-line">
               <span className="flow-edit-spinner" />

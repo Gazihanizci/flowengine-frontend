@@ -14,9 +14,9 @@ export default function FieldList({ fields, onEditField }) {
               className="flow-edit-field-card"
               onClick={() => onEditField(field)}
             >
-              <div>
+              <div className="flow-edit-field-copy">
                 <strong>{field.label || 'İsimsiz Alan'}</strong>
-                <p className="hint">{field.type}</p>
+                <p className="hint">Tip: {field.type} • ID: {field.fieldId}</p>
               </div>
               <span className={`flow-edit-badge ${field.editable ? 'editable' : 'readonly'}`}>
                 {field.editable ? 'Düzenlenebilir' : 'Salt okunur'}

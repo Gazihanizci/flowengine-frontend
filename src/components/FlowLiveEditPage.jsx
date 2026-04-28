@@ -6,7 +6,7 @@ import FloatingFieldEditor from './FloatingFieldEditor'
 import './FlowLiveEditPage.css'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },

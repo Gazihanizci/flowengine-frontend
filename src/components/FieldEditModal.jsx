@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import PermissionEditor from './PermissionEditor'
 import OptionEditor from './OptionEditor'
 
@@ -41,9 +41,11 @@ export default function FieldEditModal({ open, field, loading, onClose, onSave }
   const [permissions, setPermissions] = useState([])
   const [options, setOptions] = useState([])
   const [validationError, setValidationError] = useState('')
+  const lastLoadedFieldIdRef = useRef(null)
 
   useEffect(() => {
-    if (!field) return
+    if (!open || !field) return
+    if (lastLoadedFieldIdRef.current === field.fieldId) return
 
     setLabel(field.label || '')
     setPlaceholder(field.placeholder || '')
@@ -51,7 +53,13 @@ export default function FieldEditModal({ open, field, loading, onClose, onSave }
     setPermissions(normalizePermissions(field.permissions))
     setOptions(normalizeOptions(field.options))
     setValidationError('')
-  }, [field])
+    lastLoadedFieldIdRef.current = field.fieldId
+  }, [open, field])
+
+  useEffect(() => {
+    if (open) return
+    lastLoadedFieldIdRef.current = null
+  }, [open])
 
   const duplicatePermission = useMemo(() => hasDuplicatePermission(permissions), [permissions])
 

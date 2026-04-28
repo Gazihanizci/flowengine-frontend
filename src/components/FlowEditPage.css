@@ -1,12 +1,44 @@
 .flow-edit-page {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+  position: relative;
+}
+
+.flow-edit-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(30, 136, 229, 0.14), transparent 42%),
+    radial-gradient(circle at 84% 22%, rgba(43, 201, 173, 0.12), transparent 40%),
+    linear-gradient(165deg, rgba(245, 249, 255, 0.8), rgba(255, 255, 255, 0.35));
+}
+
+.flow-edit-title {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.flow-edit-subtitle {
+  margin: 4px 0 14px;
+}
+
+.flow-edit-main-panel,
+.flow-edit-error-panel {
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+}
+
+.flow-edit-error-panel {
+  border-left: 4px solid #d43f3f;
 }
 
 .flow-edit-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 16px;
+  gap: 18px;
   align-items: start;
 }
 
@@ -16,35 +48,69 @@
 
 .flow-edit-step-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .flow-edit-step-item {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #f7faff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafdff, #f2f7ff);
   color: var(--text);
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 13px;
   cursor: pointer;
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flow-edit-step-item:hover {
+  transform: translateY(-1px);
+  border-color: #9bbef0;
+  box-shadow: 0 10px 22px rgba(24, 76, 145, 0.12);
+}
+
+.flow-edit-step-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.flow-edit-step-item strong {
+  line-height: 1.2;
+}
+
+.flow-edit-step-chip {
+  border: 1px solid #c7d9f2;
+  background: #edf5ff;
+  color: #285a97;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 800;
+  padding: 2px 9px;
+}
+
+.flow-edit-step-meta {
+  color: #54719a;
+  font-size: 0.82rem;
 }
 
 .flow-edit-step-item.selected {
-  border-color: #2563eb;
-  background: #eaf1ff;
+  border-color: #2f6ecd;
+  background: linear-gradient(180deg, #eef5ff, #e0ebff);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
 }
 
 .flow-edit-right {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .flow-edit-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .flow-edit-grid > .checkbox,
@@ -54,40 +120,52 @@
 
 .flow-edit-field-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .flow-edit-field-card {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #f7faff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafdff, #f2f7ff);
   color: var(--text);
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flow-edit-field-card:hover {
+  transform: translateY(-1px);
+  border-color: #a5c4ef;
+  box-shadow: 0 10px 22px rgba(24, 76, 145, 0.1);
+}
+
+.flow-edit-field-copy strong {
+  line-height: 1.2;
 }
 
 .flow-edit-badge {
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .flow-edit-badge.editable {
-  color: #0f8d4b;
-  background: #e5f8ee;
-  border: 1px solid #b7e9cb;
+  color: #0c7a43;
+  background: #e3f7ed;
+  border: 1px solid #a6e1c0;
 }
 
 .flow-edit-badge.readonly {
-  color: #4b5c76;
-  background: #edf2fb;
-  border: 1px solid #d3def0;
+  color: #3f5d84;
+  background: #eaf2fd;
+  border: 1px solid #c8daf5;
 }
 
 .flow-edit-modal-overlay {
@@ -120,10 +198,11 @@
 
 .flow-edit-subsection {
   border: 1px dashed var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 12px;
   display: grid;
   gap: 10px;
+  background: linear-gradient(180deg, rgba(245, 250, 255, 0.75), rgba(255, 255, 255, 0.85));
 }
 
 .flow-edit-subsection h3 {
@@ -139,12 +218,13 @@
 .flow-edit-permission-row,
 .flow-edit-option-row {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)) 110px;
   gap: 8px;
   align-items: end;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .flow-edit-toast-wrap {
@@ -157,7 +237,7 @@
 }
 
 .flow-edit-toast {
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: #ffffff;
   color: var(--text);
@@ -209,6 +289,10 @@
     grid-template-columns: 1fr;
   }
 
+  .flow-edit-step-item-head {
+    gap: 8px;
+  }
+
   .flow-edit-grid {
     grid-template-columns: 1fr;
   }
@@ -217,4 +301,53 @@
   .flow-edit-option-row {
     grid-template-columns: 1fr;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-edit-step-item,
+  .flow-edit-field-card,
+  .flow-edit-spinner {
+    transition: none;
+    animation: none;
+  }
+}
+
+:root[data-theme='dark'] .flow-edit-page::before {
+  background:
+    radial-gradient(circle at 10% 14%, rgba(55, 116, 199, 0.22), transparent 40%),
+    radial-gradient(circle at 88% 18%, rgba(30, 151, 130, 0.2), transparent 38%),
+    linear-gradient(168deg, rgba(10, 17, 32, 0.78), rgba(8, 14, 28, 0.45));
+}
+
+:root[data-theme='dark'] .flow-edit-step-item,
+:root[data-theme='dark'] .flow-edit-field-card {
+  background: linear-gradient(180deg, #132340, #10213b);
+  border-color: #2f466d;
+}
+
+:root[data-theme='dark'] .flow-edit-step-item.selected {
+  border-color: #5e8fdb;
+  background: linear-gradient(180deg, #1a2f51, #162947);
+}
+
+:root[data-theme='dark'] .flow-edit-step-meta {
+  color: #9cb3d3;
+}
+
+:root[data-theme='dark'] .flow-edit-step-chip {
+  background: #1f365c;
+  border-color: #38598a;
+  color: #b9cff2;
+}
+
+:root[data-theme='dark'] .flow-edit-badge.readonly {
+  background: #1b3456;
+  border-color: #335886;
+  color: #b9ceee;
+}
+
+:root[data-theme='dark'] .flow-edit-badge.editable {
+  background: #163d32;
+  border-color: #2d705d;
+  color: #9fdec7;
 }
