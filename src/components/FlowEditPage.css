@@ -31,6 +31,23 @@
   border-radius: 18px;
 }
 
+.flow-edit-create-panel h2 {
+  margin: 0 0 12px;
+}
+
+.flow-edit-create-panel h3 {
+  margin: 4px 0 2px;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  color: #3f5d84;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+.flow-edit-builder-switch {
+  margin: 0 0 12px;
+}
+
 .flow-edit-error-panel {
   border-left: 4px solid #d43f3f;
 }
@@ -111,6 +128,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.flow-edit-create-panel .flow-edit-grid {
+  gap: 12px;
+}
+
+.flow-edit-create-panel .flow-edit-grid > h3 {
+  grid-column: 1 / -1;
 }
 
 .flow-edit-grid > .checkbox,
@@ -227,6 +252,65 @@
   background: rgba(255, 255, 255, 0.92);
 }
 
+.flow-edit-create-panel .flow-edit-permission-row,
+.flow-edit-create-panel .flow-edit-option-row {
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, rgba(248, 252, 255, 0.95), rgba(241, 248, 255, 0.92));
+}
+
+.flow-edit-field-builder {
+  background: linear-gradient(112deg, #13284a 0%, #1e3a67 52%, #1f3f77 100%);
+  border: 1px solid #3f6ca7;
+  box-shadow: 0 20px 38px rgba(6, 16, 34, 0.34);
+}
+
+.flow-edit-field-builder h2 {
+  color: #e5efff;
+}
+
+.flow-edit-field-builder .hint,
+.flow-edit-field-builder label {
+  color: #d7e3f7;
+}
+
+.flow-edit-field-builder-form .input {
+  background: #0c2243;
+  border-color: #40689f;
+  color: #eff5ff;
+}
+
+.flow-edit-field-builder-form .input::placeholder {
+  color: #9fb8db;
+}
+
+.flow-edit-field-builder-form .input:focus {
+  border-color: #6ea4f0;
+  box-shadow: 0 0 0 3px rgba(91, 144, 224, 0.18);
+}
+
+.flow-edit-builder-title {
+  color: #d8e6fd;
+  border-top-color: rgba(171, 199, 240, 0.28);
+}
+
+.flow-edit-field-builder .flow-edit-permission-row,
+.flow-edit-field-builder .flow-edit-option-row {
+  background: rgba(18, 44, 80, 0.9);
+  border-color: #4b74ac;
+}
+
+.flow-edit-builder-submit {
+  border: 1px solid #4e8fff;
+  background: linear-gradient(180deg, #4e8fff, #3d78e0);
+  color: #f4f8ff;
+  font-weight: 800;
+}
+
+.flow-edit-builder-submit:hover {
+  border-color: #6aa5ff;
+  background: linear-gradient(180deg, #5a98ff, #447fe7);
+}
+
 .flow-edit-toast-wrap {
   position: fixed;
   top: 20px;
@@ -323,6 +407,21 @@
 :root[data-theme='dark'] .flow-edit-field-card {
   background: linear-gradient(180deg, #132340, #10213b);
   border-color: #2f466d;
+}
+
+:root[data-theme='dark'] .flow-edit-create-panel h3 {
+  color: #9cb3d3;
+}
+
+:root[data-theme='dark'] .flow-edit-create-panel .flow-edit-permission-row,
+:root[data-theme='dark'] .flow-edit-create-panel .flow-edit-option-row {
+  background: linear-gradient(180deg, rgba(22, 38, 64, 0.88), rgba(18, 33, 56, 0.86));
+  border-color: #35507a;
+}
+
+:root[data-theme='dark'] .flow-edit-field-builder {
+  background: linear-gradient(112deg, #10213c 0%, #16305a 54%, #1a3a6e 100%);
+  border-color: #385c8d;
 }
 
 :root[data-theme='dark'] .flow-edit-step-item.selected {

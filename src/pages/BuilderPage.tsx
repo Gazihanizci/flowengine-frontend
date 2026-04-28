@@ -125,7 +125,9 @@ export default function BuilderPage() {
   const navigate = useNavigate()
   const { stepId } = useParams<{ stepId: string }>()
   const flowName = useFlowStore((state) => state.flowName)
+  const setFlowName = useFlowStore((state) => state.setFlowName)
   const aciklama = useFlowStore((state) => state.aciklama)
+  const setAciklama = useFlowStore((state) => state.setAciklama)
   const starterRoleIds = useFlowStore((state) => state.starterRoleIds)
   const starterUserIds = useFlowStore((state) => state.starterUserIds)
   const steps = useFlowStore((state) => state.steps)
@@ -414,6 +416,31 @@ export default function BuilderPage() {
           <span>Alan Sayısı</span>
           <strong>{fields.length}</strong>
         </div>
+      </div>
+
+      <div className="step-name-editor">
+        <label>
+          <span>Akış Adı</span>
+          <input
+            className="input"
+            value={flowName}
+            onChange={(event) => setFlowName(event.target.value)}
+            placeholder="Akış adını girin"
+          />
+        </label>
+      </div>
+
+      <div className="step-name-editor">
+        <label>
+          <span>Açıklama</span>
+          <textarea
+            className="input"
+            rows={3}
+            value={aciklama ?? ''}
+            onChange={(event) => setAciklama(event.target.value)}
+            placeholder="Akış açıklamasını girin"
+          />
+        </label>
       </div>
 
       <div className="step-name-editor">

@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import StepList from './StepList'
 import StepEditPanel from './StepEditPanel'
 import FieldList from './FieldList'
 import FieldEditModal from './FieldEditModal'
+import { useFlowStore } from '../store/flowStore'
 import './FlowEditPage.css'
 
 const api = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -158,6 +159,16 @@ function ToastList({ toasts }) {
 
 export default function FlowEditPage() {
   const { flowId } = useParams()
+  const navigate = useNavigate()
+  const setFlowName = useFlowStore((state) => state.setFlowName)
+  const setAciklama = useFlowStore((state) => state.setAciklama)
+  const setStarterRoleIds = useFlowStore((state) => state.setStarterRoleIds)
+  const setStarterUserIds = useFlowStore((state) => state.setStarterUserIds)
+  const initializeSteps = useFlowStore((state) => state.initializeSteps)
+  const updateStepNameInStore = useFlowStore((state) => state.updateStepName)
+  const updateStepRequiredApprovalCountInStore = useFlowStore((state) => state.updateStepRequiredApprovalCount)
+  const updateStepExternalFlowInStore = useFlowStore((state) => state.updateStepExternalFlow)
+  const updateStepFieldsInStore = useFlowStore((state) => state.updateStepFields)
 
   const [flow, setFlow] = useState(null)
   const [selectedStepId, setSelectedStepId] = useState(null)
@@ -172,6 +183,28 @@ export default function FlowEditPage() {
   const [stepQuery, setStepQuery] = useState('')
   const [fieldQuery, setFieldQuery] = useState('')
   const [editableOnly, setEditableOnly] = useState(false)
+  const [builderRedirected, setBuilderRedirected] = useState(false)
+  const [creatingStep, setCreatingStep] = useState(false)
+  const [creatingField, setCreatingField] = useState(false)
+  const [newStepForm, setNewStepForm] = useState({
+    stepName: '',
+    stepOrder: 1,
+    requiredApprovalCount: 0,
+    externalFlowEnabled: false,
+    externalFlowId: '',
+    waitForExternalFlowCompletion: false,
+    resumeParentAfterSubFlow: false,
+    cancelBehavior: 'PROPAGATE',
+  })
+  const [newFieldForm, setNewFieldForm] = useState({
+    stepId: '',
+    label: '',
+    placeholder: '',
+    required: false,
+    type: 'TEXT',
+    permissions: [{ tip: 'USER', refId: '', yetkiTipi: 'VIEW' }],
+    options: [{ label: '', value: '' }],
+  })
 
   const selectedStep = useMemo(
     () => flow?.steps.find((step) => step.stepId === selectedStepId) ?? null,
@@ -214,6 +247,11 @@ export default function FlowEditPage() {
     }
   }, [filteredSteps, selectedStepId])
 
+  useEffect(() => {
+    if (!selectedStepId) return
+    setNewFieldForm((prev) => ({ ...prev, stepId: String(selectedStepId) }))
+  }, [selectedStepId])
+
   function pushToast(type, message) {
     const id = Date.now() + Math.random()
     setToasts((prev) => [...prev, { id, type, message }])
@@ -252,6 +290,13 @@ export default function FlowEditPage() {
 
     loadFlowDetail()
   }, [flowId])
+
+  useEffect(() => {
+    if (loading || builderRedirected) return
+    if (!flow) return
+    openBuilderWithCurrentFlow()
+    setBuilderRedirected(true)
+  }, [loading, flow, builderRedirected])
 
   function patchStepInFlow(targetStepId, patch) {
     setFlow((prev) => {
@@ -396,6 +441,211 @@ export default function FlowEditPage() {
       setFieldSaving(false)
     }
   }
+
+  async function refreshFlowAfterCreate() {
+    if (!flowId) return
+    const { data } = await api.get(`/api/flows/${flowId}`)
+    const normalized = normalizeFlow(data, flowId)
+    setFlow(normalized)
+    setSelectedStepId((prev) => prev ?? normalized.steps[0]?.stepId ?? null)
+  }
+
+  async function createStep(targetFlowId) {
+    const numericFlowId = Number(targetFlowId)
+    if (!Number.isFinite(numericFlowId) || numericFlowId <= 0) {
+      pushToast('error', 'Geçerli flowId bulunamadı.')
+      return
+    }
+
+    const requestBody = {
+      stepName: String(newStepForm.stepName ?? '').trim(),
+      stepOrder: Number(newStepForm.stepOrder),
+      requiredApprovalCount: Number(newStepForm.requiredApprovalCount),
+      externalFlowEnabled: Boolean(newStepForm.externalFlowEnabled),
+      externalFlowId:
+        newStepForm.externalFlowId === '' || newStepForm.externalFlowId === null || newStepForm.externalFlowId === undefined
+          ? null
+          : Number(newStepForm.externalFlowId),
+      waitForExternalFlowCompletion: Boolean(newStepForm.waitForExternalFlowCompletion),
+      resumeParentAfterSubFlow: Boolean(newStepForm.resumeParentAfterSubFlow),
+      cancelBehavior: String(newStepForm.cancelBehavior ?? 'PROPAGATE'),
+    }
+
+    if (!requestBody.stepName) {
+      pushToast('error', 'Adım adı zorunlu.')
+      return
+    }
+
+    if (!Number.isFinite(requestBody.stepOrder) || !Number.isFinite(requestBody.requiredApprovalCount)) {
+      pushToast('error', 'Sayısal alanları kontrol edin.')
+      return
+    }
+
+    if (requestBody.externalFlowId !== null && !Number.isFinite(requestBody.externalFlowId)) {
+      pushToast('error', 'Harici Akış ID geçerli bir sayı olmalı.')
+      return
+    }
+
+    setCreatingStep(true)
+    try {
+      console.log(`POST /api/flows/edit/step/${numericFlowId}`, requestBody)
+      await api.post(`/api/flows/edit/step/${numericFlowId}`, requestBody)
+      setErrorDetail(null)
+      pushToast('success', 'Step oluşturuldu')
+      setNewStepForm({
+        stepName: '',
+        stepOrder: 1,
+        requiredApprovalCount: 0,
+        externalFlowEnabled: false,
+        externalFlowId: '',
+        waitForExternalFlowCompletion: false,
+        resumeParentAfterSubFlow: false,
+        cancelBehavior: 'PROPAGATE',
+      })
+      await refreshFlowAfterCreate()
+    } catch (error) {
+      setErrorDetail(buildErrorDetail(error, 'Step oluşturma'))
+      pushToast('error', parseErrorMessage(error))
+    } finally {
+      setCreatingStep(false)
+    }
+  }
+
+  async function createField(targetStepId) {
+    const numericStepId = Number(targetStepId)
+    if (!Number.isFinite(numericStepId) || numericStepId <= 0) {
+      pushToast('error', 'Geçerli stepId girin.')
+      return
+    }
+
+    const normalizedType = String(newFieldForm.type ?? 'TEXT')
+    const needsOptions = normalizedType === 'SELECT' || normalizedType === 'RADIO'
+    const normalizedPermissions = (Array.isArray(newFieldForm.permissions) ? newFieldForm.permissions : [])
+      .map((permission) => ({
+        tip: permission.tip === 'ROLE' ? 'ROLE' : 'USER',
+        refId: Number(permission.refId),
+        yetkiTipi: permission.yetkiTipi === 'EDIT' ? 'EDIT' : 'VIEW',
+      }))
+      .filter((permission) => Number.isFinite(permission.refId) && permission.refId > 0)
+
+    const normalizedOptions = needsOptions
+      ? (Array.isArray(newFieldForm.options) ? newFieldForm.options : [])
+          .map((option) => ({
+            label: String(option.label ?? '').trim(),
+            value: String(option.value ?? '').trim(),
+          }))
+          .filter((option) => option.label && option.value)
+      : []
+
+    if (!String(newFieldForm.label ?? '').trim()) {
+      pushToast('error', 'Alan etiketi zorunlu.')
+      return
+    }
+
+    if (needsOptions && normalizedOptions.length === 0) {
+      pushToast('error', 'SELECT/RADIO için en az bir option gerekli.')
+      return
+    }
+
+    const requestBody = {
+      label: String(newFieldForm.label ?? '').trim(),
+      placeholder: String(newFieldForm.placeholder ?? '').trim(),
+      required: Boolean(newFieldForm.required),
+      type: normalizedType,
+      permissions: normalizedPermissions,
+      options: normalizedOptions,
+    }
+
+    setCreatingField(true)
+    try {
+      console.log(`POST /api/flows/edit/field/${numericStepId}`, requestBody)
+      console.log('Field create baseURL:', api.defaults.baseURL || window.location.origin)
+      await api.post(`/api/flows/edit/field/${numericStepId}`, requestBody)
+      setErrorDetail(null)
+      pushToast('success', 'Field oluşturuldu')
+      setNewFieldForm((prev) => ({
+        ...prev,
+        label: '',
+        placeholder: '',
+        required: false,
+        type: 'TEXT',
+        permissions: [{ tip: 'USER', refId: '', yetkiTipi: 'VIEW' }],
+        options: [{ label: '', value: '' }],
+      }))
+      await refreshFlowAfterCreate()
+    } catch (error) {
+      setErrorDetail(buildErrorDetail(error, 'Field oluşturma'))
+      pushToast('error', parseErrorMessage(error))
+    } finally {
+      setCreatingField(false)
+    }
+  }
+
+  function toBuilderFieldType(type) {
+    if (type === 'SELECT') return 'COMBOBOX'
+    return type || 'TEXT'
+  }
+
+  function openBuilderWithCurrentFlow() {
+    if (!flow || !Array.isArray(flow.steps)) {
+      pushToast('error', 'Düzenlenecek adım bulunamadı.')
+      return
+    }
+
+    const sourceSteps = [...flow.steps].sort((a, b) => Number(a.stepOrder ?? 0) - Number(b.stepOrder ?? 0))
+    if (sourceSteps.length === 0) {
+      initializeSteps(1)
+      setFlowName(String(flow.flowName || ''))
+      setAciklama(String(flow.aciklama || ''))
+      navigate('/builder/1')
+      return
+    }
+    const selectedIndex = sourceSteps.findIndex((step) => step.stepId === selectedStepId)
+    const startStepId = selectedIndex >= 0 ? selectedIndex + 1 : 1
+
+    setFlowName(String(flow.flowName || ''))
+    setAciklama(String(flow.aciklama || ''))
+    setStarterRoleIds(
+      (Array.isArray(flow.baslatmaYetkileri) ? flow.baslatmaYetkileri : [])
+        .filter((item) => item?.tip === 'ROLE')
+        .map((item) => Number(item.refId))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    )
+    setStarterUserIds(
+      (Array.isArray(flow.baslatmaYetkileri) ? flow.baslatmaYetkileri : [])
+        .filter((item) => item?.tip === 'USER')
+        .map((item) => Number(item.refId))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    )
+    initializeSteps(sourceSteps.length)
+
+    sourceSteps.forEach((step, index) => {
+      const builderStepId = index + 1
+      updateStepNameInStore(builderStepId, String(step.stepName || `Adım ${builderStepId}`))
+      updateStepRequiredApprovalCountInStore(builderStepId, Number(step.requiredApprovalCount ?? 1))
+      updateStepExternalFlowInStore(builderStepId, {
+        externalFlowEnabled: Boolean(step.externalFlowEnabled),
+        externalFlowId: step.externalFlowId === null || step.externalFlowId === undefined ? null : Number(step.externalFlowId),
+        waitForExternalFlowCompletion: Boolean(step.waitForExternalFlowCompletion),
+        resumeParentAfterSubFlow: Boolean(step.resumeParentAfterSubFlow),
+        cancelBehavior: step.cancelBehavior === 'WAIT' ? 'WAIT' : 'PROPAGATE',
+      })
+
+      const builderFields = (Array.isArray(step.fields) ? step.fields : []).map((field, fieldIndex) => ({
+        id: `field-${builderStepId}-${field.fieldId || fieldIndex + 1}`,
+        type: toBuilderFieldType(field.type),
+        label: String(field.label || ''),
+        placeholder: String(field.placeholder || ''),
+        required: Boolean(field.required),
+        permissions: Array.isArray(field.permissions) ? field.permissions : [],
+        options: Array.isArray(field.options) ? field.options : [],
+      }))
+
+      updateStepFieldsInStore(builderStepId, builderFields)
+    })
+
+    navigate(`/builder/${startStepId}`)
+  }
   if (loading) {
     return (
       <div className="panel flow-edit-loading">
@@ -495,7 +745,271 @@ export default function FlowEditPage() {
         </section>
 
         <div className="flow-edit-right">
+          <section className="panel flow-edit-create-panel flow-edit-field-builder">
+            <h2>Adım Ekle</h2>
+            <form
+              className="flow-edit-grid flow-edit-field-builder-form"
+              onSubmit={async (event) => {
+                event.preventDefault()
+                await createStep(flow?.flowId ?? flowId)
+              }}
+            >
+              <label>
+                Adım Adı
+                <input
+                  className="input"
+                  value={newStepForm.stepName}
+                  onChange={(event) => setNewStepForm((prev) => ({ ...prev, stepName: event.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Adım Sırası
+                <input
+                  className="input"
+                  type="number"
+                  value={newStepForm.stepOrder}
+                  onChange={(event) => setNewStepForm((prev) => ({ ...prev, stepOrder: event.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Gerekli Onay Sayısı
+                <input
+                  className="input"
+                  type="number"
+                  value={newStepForm.requiredApprovalCount}
+                  onChange={(event) =>
+                    setNewStepForm((prev) => ({ ...prev, requiredApprovalCount: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Harici Akış ID (opsiyonel)
+                <input
+                  className="input"
+                  type="number"
+                  value={newStepForm.externalFlowId}
+                  onChange={(event) => setNewStepForm((prev) => ({ ...prev, externalFlowId: event.target.value }))}
+                />
+              </label>
+              <label>
+                İptal Davranışı
+                <select
+                  className="input"
+                  value={newStepForm.cancelBehavior}
+                  onChange={(event) => setNewStepForm((prev) => ({ ...prev, cancelBehavior: event.target.value }))}
+                >
+                  <option value="PROPAGATE">PROPAGATE</option>
+                  <option value="CANCEL">CANCEL</option>
+                  <option value="IGNORE">IGNORE</option>
+                </select>
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={newStepForm.externalFlowEnabled}
+                  onChange={(event) =>
+                    setNewStepForm((prev) => ({ ...prev, externalFlowEnabled: event.target.checked }))
+                  }
+                />
+                Harici Akış Etkin
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={newStepForm.waitForExternalFlowCompletion}
+                  onChange={(event) =>
+                    setNewStepForm((prev) => ({ ...prev, waitForExternalFlowCompletion: event.target.checked }))
+                  }
+                />
+                Harici Akışı Bekle
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={newStepForm.resumeParentAfterSubFlow}
+                  onChange={(event) =>
+                    setNewStepForm((prev) => ({ ...prev, resumeParentAfterSubFlow: event.target.checked }))
+                  }
+                />
+                Ana Akışa Dön
+              </label>
+              <button type="submit" className="button" disabled={creatingStep}>
+                {creatingStep ? 'Ekleniyor...' : 'Adım Ekle'}
+              </button>
+            </form>
+          </section>
+
           <StepEditPanel step={selectedStep} loading={stepSaving} onSave={updateStep} />
+          <section className="panel flow-edit-create-panel">
+            <h2>Alan Ekle</h2>
+            <div className="flow-edit-builder-switch">
+              <button type="button" className="button secondary" onClick={openBuilderWithCurrentFlow}>
+                Form Sayfasında Aç (Sürükle-Bırak)
+              </button>
+            </div>
+            <form
+              className="flow-edit-grid"
+              onSubmit={async (event) => {
+                event.preventDefault()
+                await createField(newFieldForm.stepId)
+              }}
+            >
+              <label>
+                Adım ID
+                <input
+                  className="input"
+                  type="number"
+                  value={newFieldForm.stepId}
+                  onChange={(event) => setNewFieldForm((prev) => ({ ...prev, stepId: event.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Etiket
+                <input
+                  className="input"
+                  value={newFieldForm.label}
+                  onChange={(event) => setNewFieldForm((prev) => ({ ...prev, label: event.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Yer Tutucu
+                <input
+                  className="input"
+                  value={newFieldForm.placeholder}
+                  onChange={(event) => setNewFieldForm((prev) => ({ ...prev, placeholder: event.target.value }))}
+                />
+              </label>
+              <label>
+                Tip
+                <select
+                  className="input"
+                  value={newFieldForm.type}
+                  onChange={(event) => setNewFieldForm((prev) => ({ ...prev, type: event.target.value }))}
+                >
+                  <option value="TEXT">TEXT</option>
+                  <option value="FILE">FILE</option>
+                  <option value="SELECT">SELECT</option>
+                  <option value="RADIO">RADIO</option>
+                  <option value="DATE">DATE</option>
+                </select>
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={newFieldForm.required}
+                  onChange={(event) => setNewFieldForm((prev) => ({ ...prev, required: event.target.checked }))}
+                />
+                Zorunlu
+              </label>
+
+              <h3 className="flow-edit-builder-title">Yetkiler</h3>
+              {newFieldForm.permissions.map((permission, index) => (
+                <div key={`permission-${index}`} className="flow-edit-permission-row">
+                  <label>
+                    Tip
+                    <select
+                      className="input"
+                      value={permission.tip}
+                      onChange={(event) =>
+                        setNewFieldForm((prev) => ({
+                          ...prev,
+                          permissions: prev.permissions.map((item, permissionIndex) =>
+                            permissionIndex === index ? { ...item, tip: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                    >
+                      <option value="USER">USER</option>
+                      <option value="ROLE">ROLE</option>
+                    </select>
+                  </label>
+                  <label>
+                    Ref ID
+                    <input
+                      className="input"
+                      type="number"
+                      value={permission.refId}
+                      onChange={(event) =>
+                        setNewFieldForm((prev) => ({
+                          ...prev,
+                          permissions: prev.permissions.map((item, permissionIndex) =>
+                            permissionIndex === index ? { ...item, refId: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Yetki Tipi
+                    <select
+                      className="input"
+                      value={permission.yetkiTipi}
+                      onChange={(event) =>
+                        setNewFieldForm((prev) => ({
+                          ...prev,
+                          permissions: prev.permissions.map((item, permissionIndex) =>
+                            permissionIndex === index ? { ...item, yetkiTipi: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                    >
+                      <option value="VIEW">VIEW</option>
+                      <option value="EDIT">EDIT</option>
+                    </select>
+                  </label>
+                </div>
+              ))}
+
+              {(newFieldForm.type === 'SELECT' || newFieldForm.type === 'RADIO') && (
+                <>
+                  <h3 className="flow-edit-builder-title">Seçenekler</h3>
+                  {newFieldForm.options.map((option, index) => (
+                    <div key={`option-${index}`} className="flow-edit-option-row">
+                      <label>
+                        Etiket
+                        <input
+                          className="input"
+                          value={option.label}
+                          onChange={(event) =>
+                            setNewFieldForm((prev) => ({
+                              ...prev,
+                              options: prev.options.map((item, optionIndex) =>
+                                optionIndex === index ? { ...item, label: event.target.value } : item,
+                              ),
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Değer
+                        <input
+                          className="input"
+                          value={option.value}
+                          onChange={(event) =>
+                            setNewFieldForm((prev) => ({
+                              ...prev,
+                              options: prev.options.map((item, optionIndex) =>
+                                optionIndex === index ? { ...item, value: event.target.value } : item,
+                              ),
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              <button type="submit" className="button flow-edit-builder-submit" disabled={creatingField}>
+                {creatingField ? 'Ekleniyor...' : 'Alan Ekle'}
+              </button>
+            </form>
+          </section>
           <section className="panel">
             <h2>Alan Filtreleri</h2>
             <div className="flow-edit-grid">
