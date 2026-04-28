@@ -230,6 +230,16 @@ export default function TaskDetailPage() {
   const isCurrentStepSelected =
     selectedTask && selectedStep && selectedStep.source === 'main' ? isSameStep(selectedStep, selectedTask) : false
   const mainSteps = useMemo(() => steps.filter((step) => step.source === 'main'), [steps])
+  const visibleMainSteps = useMemo(() => {
+    if (!selectedTask) return mainSteps
+
+    const currentIndex = mainSteps.findIndex((step) => isSameStep(step, selectedTask))
+    if (currentIndex >= 0) {
+      return mainSteps.filter((_, index) => index <= currentIndex)
+    }
+
+    return mainSteps.filter((step) => step.adimId <= selectedTask.adimId)
+  }, [mainSteps, selectedTask])
   const relatedSteps = useMemo(() => steps.filter((step) => step.source === 'related'), [steps])
 
   const loadTask = async () => {
@@ -510,7 +520,7 @@ export default function TaskDetailPage() {
         <aside className="task-steps-panel">
           <h2>Akış Adımları</h2>
           <div className="task-steps-list">
-            {mainSteps.map((step, index) => {
+            {visibleMainSteps.map((step, index) => {
               const isSelected = step.stepKey === selectedStepKey
               const canView = step.form.length > 0
               const isCurrent = isSameStep(step, selectedTask)

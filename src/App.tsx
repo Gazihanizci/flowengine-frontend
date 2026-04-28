@@ -16,6 +16,8 @@ import RoleManagementPage from './pages/RoleManagementPage'
 import FileUploadDemo from './pages/FileUploadDemo'
 import PdfReportsPage from './pages/PdfReportsPage'
 import HistoryPage from './pages/HistoryPage'
+import FlowEditPage from './components/FlowEditPage.jsx'
+import FlowLiveEditPage from './components/FlowLiveEditPage.jsx'
 import './App.css'
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -120,6 +122,22 @@ function App() {
             element={
               <RequireAdmin>
                 <CreateFlow />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/flow-edit/:flowId"
+            element={
+              <RequireAdmin>
+                <FlowEditPage />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/flow-live-edit/:flowId"
+            element={
+              <RequireAdmin>
+                <FlowLiveEditPage />
               </RequireAdmin>
             }
           />

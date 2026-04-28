@@ -1,0 +1,220 @@
+.flow-edit-page {
+  display: grid;
+  gap: 16px;
+}
+
+.flow-edit-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.flow-edit-step-list-panel h2 {
+  margin-top: 0;
+}
+
+.flow-edit-step-list {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-edit-step-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7faff;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+}
+
+.flow-edit-step-item.selected {
+  border-color: #2563eb;
+  background: #eaf1ff;
+}
+
+.flow-edit-right {
+  display: grid;
+  gap: 16px;
+}
+
+.flow-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.flow-edit-grid > .checkbox,
+.flow-edit-grid > button {
+  grid-column: 1 / -1;
+}
+
+.flow-edit-field-list {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-edit-field-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7faff;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.flow-edit-badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.flow-edit-badge.editable {
+  color: #0f8d4b;
+  background: #e5f8ee;
+  border: 1px solid #b7e9cb;
+}
+
+.flow-edit-badge.readonly {
+  color: #4b5c76;
+  background: #edf2fb;
+  border: 1px solid #d3def0;
+}
+
+.flow-edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 14, 30, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+  padding: 12px;
+}
+
+.flow-edit-modal {
+  width: min(980px, 100%);
+  max-height: min(90vh, 860px);
+  overflow: auto;
+}
+
+.flow-edit-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.flow-edit-modal-form {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-edit-subsection {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.flow-edit-subsection h3 {
+  margin: 0;
+}
+
+.flow-edit-permission-list,
+.flow-edit-option-list {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-edit-permission-row,
+.flow-edit-option-row {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 110px;
+  gap: 8px;
+  align-items: end;
+}
+
+.flow-edit-toast-wrap {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2200;
+  display: grid;
+  gap: 8px;
+}
+
+.flow-edit-toast {
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--text);
+  min-width: 260px;
+  max-width: 360px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+
+.flow-edit-toast.success {
+  border-color: #b7e9cb;
+  background: #e9f9f0;
+}
+
+.flow-edit-toast.error {
+  border-color: #f2c4c0;
+  background: #fff2f1;
+}
+
+.flow-edit-loading {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+}
+
+.flow-edit-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #bdd0f5;
+  border-top-color: #1f5eff;
+  border-radius: 999px;
+  animation: flowEditSpin 0.7s linear infinite;
+}
+
+.flow-edit-loading-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes flowEditSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 980px) {
+  .flow-edit-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-edit-permission-row,
+  .flow-edit-option-row {
+    grid-template-columns: 1fr;
+  }
+}
