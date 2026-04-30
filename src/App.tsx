@@ -16,6 +16,9 @@ import RoleManagementPage from './pages/RoleManagementPage'
 import FileUploadDemo from './pages/FileUploadDemo'
 import PdfReportsPage from './pages/PdfReportsPage'
 import HistoryPage from './pages/HistoryPage'
+import IssueListPage from './pages/IssueListPage'
+import CreateIssuePage from './pages/CreateIssuePage'
+import IssueDetailPage from './pages/IssueDetailPage'
 import FlowEditPage from './components/FlowEditPage.jsx'
 import FlowLiveEditPage from './components/FlowLiveEditPage.jsx'
 import './App.css'
@@ -97,6 +100,9 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<MyTasks />} />
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+          <Route path="/issues" element={<IssueListPage />} />
+          <Route path="/issues/create" element={<CreateIssuePage />} />
+          <Route path="/issues/:id" element={<IssueDetailPage />} />
           <Route path="/pdf-reports" element={<PdfReportsPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/file-upload-demo" element={<FileUploadDemo />} />

@@ -178,6 +178,10 @@ export default function AppLayout() {
             </NavLink>
           ) : null}
 
+          <NavLink to="/issues" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            Issue Yönetimi
+          </NavLink>
+
           <NavLink
             to="/notifications"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -223,18 +227,18 @@ export default function AppLayout() {
               to="/role-management"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Rol Yonetimi
+              Rol Yönetimi
             </NavLink>
           ) : null}
         </nav>
 
         <div className="sidebar-footer">
           <button type="button" className="theme-toggle" onClick={handleThemeToggle}>
-            Tema: {theme === 'dark' ? 'Koyu' : 'Acik'}
+            Tema: {theme === 'dark' ? 'Koyu' : 'Açık'}
           </button>
 
           <button className="button secondary logout-button" onClick={handleLogout}>
-            Cikis Yap
+            Çıkış Yap
           </button>
         </div>
       </aside>
