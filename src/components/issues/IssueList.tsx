@@ -11,10 +11,51 @@ function IssueList({ issues, mode }: IssueListProps) {
     return <p className="hint">Issue bulunamadi.</p>
   }
 
+  const columns = [
+    { key: 'OPEN', title: 'ACIK' },
+    { key: 'IN_PROGRESS', title: 'DEVAM EDIYOR' },
+    { key: 'RESOLVED', title: 'COZULDU' },
+    { key: 'CLOSED', title: 'KAPALI' },
+  ] as const
+
+  type GroupItem = {
+    key: string
+    title: string
+    items: Issue[]
+  }
+
+  const grouped: GroupItem[] = columns.map((column) => ({
+    ...column,
+    items: issues.filter((issue) => String(issue.status).toUpperCase() === column.key),
+  }))
+
+  const uncategorized = issues.filter(
+    (issue) => !columns.some((column) => column.key === String(issue.status).toUpperCase()),
+  )
+
+  if (uncategorized.length > 0) {
+    grouped.push({
+      key: 'OTHER',
+      title: 'DIGER',
+      items: uncategorized,
+    })
+  }
+
   return (
-    <div className={`issue-grid ${mode === 'my' ? 'my-mode' : ''}`}>
-      {issues.map((issue) => (
-        <IssueCard key={issue.id} issue={issue} />
+    <div className={`issue-board ${mode === 'my' ? 'my-mode' : ''}`}>
+      {grouped.map((group) => (
+        <section key={group.key} className="issue-column">
+          <header className="issue-column-head">
+            <strong>{group.title}</strong>
+            <span>{group.items.length}</span>
+          </header>
+          <div className="issue-column-body">
+            {group.items.length === 0 ? <p className="hint">Kart yok</p> : null}
+            {group.items.map((issue) => (
+              <IssueCard key={issue.id} issue={issue} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   )

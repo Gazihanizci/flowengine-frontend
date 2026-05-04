@@ -132,14 +132,14 @@ function IssueDetailPage() {
   }
 
   return (
-    <div className="content" style={{ display: 'grid', gap: 16 }}>
-      <section className="panel">
-        <div className="panel-header">
+    <div className="content issue-detail-page">
+      <section className="panel issue-hero-panel">
+        <div className="panel-header issue-hero-head">
           <h2>{issue.title}</h2>
-          <span>Issue #{issue.id}</span>
+          <span className="issue-hero-id">Issue #{issue.id}</span>
         </div>
-        <p>{issue.description ?? '-'}</p>
-        <div style={{ display: 'grid', gap: 10, maxWidth: 320 }}>
+        <p className="issue-hero-desc">{issue.description ?? '-'}</p>
+        <div className="issue-detail-controls">
           <label className="form-label">
             Durum
             <select
@@ -180,15 +180,15 @@ function IssueDetailPage() {
         onAddComment={handleAddComment}
       />
 
-      <section className="panel">
+      <section className="panel issue-history-panel">
         <div className="panel-header">
           <h2>Gecmis</h2>
         </div>
         {history.length === 0 && <p className="hint">Gecmis kaydi bulunamadi.</p>}
         {history.map((item, index) => (
-          <article key={item.id ?? index} className="card">
+          <article key={item.id ?? index} className="card issue-history-item">
             <strong>{item.action ?? item.field ?? 'Guncelleme'}</strong>
-            <p style={{ margin: '4px 0' }}>
+            <p className="issue-history-change">
               {item.oldValue ?? '-'} {'->'} {item.newValue ?? '-'}
             </p>
             <small className="hint">{item.changedAt ?? ''}</small>

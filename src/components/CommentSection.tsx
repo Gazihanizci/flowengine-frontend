@@ -31,7 +31,7 @@ function CommentSection({ comments, loading, error, onAddComment }: CommentSecti
   }
 
   return (
-    <section className="panel">
+    <section className="panel issue-comments-panel">
       <div className="panel-header">
         <h2>Yorumlar</h2>
       </div>
@@ -41,16 +41,16 @@ function CommentSection({ comments, loading, error, onAddComment }: CommentSecti
       {error ? <p className="error-text">{error}</p> : null}
       {submitError ? <p className="error-text">{submitError}</p> : null}
 
-      <div style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
+      <div className="issue-comment-list">
         {comments.map((item) => (
-          <article key={item.id} className="card">
-            <p style={{ margin: 0 }}>{item.message}</p>
+          <article key={item.id} className="card issue-comment-item">
+            <p className="issue-comment-message">{item.message}</p>
             <small className="hint">{item.createdAt}</small>
           </article>
         ))}
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="issue-comment-form">
         <label className="form-label">
           Yorum Ekle
           <textarea

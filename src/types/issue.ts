@@ -6,9 +6,10 @@ export interface Issue {
   id: number | string
   title: string
   description?: string
-  priority?: IssuePriority
-  status: IssueStatus
+  priority?: string
+  status: string
   assignedUserId?: number | string | null
+  assignedUserName?: string
   akisId?: number | string | null
   createdAt?: string
   updatedAt?: string
