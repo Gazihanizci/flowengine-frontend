@@ -113,6 +113,7 @@ function IssueForm({ onSubmit, submitting = false }: IssueFormProps) {
       description: description.trim(),
       priority,
       assignedUserId,
+      roleId: selectedRoleId || undefined,
       akisId,
     })
   }

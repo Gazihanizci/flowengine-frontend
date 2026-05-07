@@ -147,6 +147,7 @@ export default function AppLayout() {
   }
 
   const isTaskDetailPage = /^\/tasks\/[^/]+$/.test(location.pathname)
+  const isIssueRoute = location.pathname.startsWith('/issues')
 
   return (
     <div className="layout">
@@ -243,7 +244,7 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="content">
+      <main className={`content ${isIssueRoute ? 'content-full-bleed' : ''}`}>
         <Outlet />
       </main>
     </div>
