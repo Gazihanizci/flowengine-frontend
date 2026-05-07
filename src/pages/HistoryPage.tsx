@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { Search } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { fetchMyHistory, type HistoryItem } from '../services/historyApi'
 
 function parseHistoryDate(value: string): Date | null {
@@ -67,6 +68,15 @@ export default function HistoryPage() {
   useEffect(() => {
     loadHistory()
   }, [])
+
+  useEffect(() => {
+    if (!selectedItem) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [selectedItem])
 
   const actionOptions = useMemo(
     () => Array.from(new Set(history.map((item) => item.aksiyon))).sort((a, b) => a.localeCompare(b, 'tr')),
@@ -260,44 +270,47 @@ export default function HistoryPage() {
         </div>
       </section>
 
-      {selectedItem ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onClick={() => setSelectedItem(null)}>
-          <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.35)]" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Islem Detayi</p>
-                <h2 className="mt-2 text-xl font-semibold text-slate-900">#{selectedItem.surecId} - {selectedItem.akisAdi}</h2>
-                <p className="mt-1 text-sm text-slate-500">{selectedItem.tarih}</p>
+      {selectedItem && typeof document !== 'undefined'
+        ? createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onClick={() => setSelectedItem(null)}>
+            <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.35)]" onClick={(event) => event.stopPropagation()}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Islem Detayi</p>
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">#{selectedItem.surecId} - {selectedItem.akisAdi}</h2>
+                  <p className="mt-1 text-sm text-slate-500">{selectedItem.tarih}</p>
+                </div>
+                <button type="button" onClick={() => setSelectedItem(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50">Kapat</button>
               </div>
-              <button type="button" onClick={() => setSelectedItem(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50">Kapat</button>
-            </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Adim</p>
-                <p className="mt-1 text-sm font-semibold text-cyan-900">{selectedItem.adimAdi}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Adim</p>
+                  <p className="mt-1 text-sm font-semibold text-cyan-900">{selectedItem.adimAdi}</p>
+                </div>
+                <div className={`rounded-xl border p-3 ${selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('RED') ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Aksiyon</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{selectedItem.aksiyon}</p>
+                </div>
               </div>
-              <div className={`rounded-xl border p-3 ${selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('RED') ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Aksiyon</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{selectedItem.aksiyon}</p>
-              </div>
-            </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Form Icerigi</p>
-              {detailLines.length > 0 ? (
-                <ul className="space-y-2">
-                  {detailLines.map((line, idx) => (
-                    <li key={`${line}-${idx}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">{line}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-slate-500">Bu kayit icin form icerigi bulunamadi.</p>
-              )}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Form Icerigi</p>
+                {detailLines.length > 0 ? (
+                  <ul className="space-y-2">
+                    {detailLines.map((line, idx) => (
+                      <li key={`${line}-${idx}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">Bu kayit icin form icerigi bulunamadi.</p>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </div>,
+          document.body,
+        )
+        : null}
     </div>
   )
 }

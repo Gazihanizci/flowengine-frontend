@@ -1,12 +1,8 @@
-﻿import { Fragment, useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchFlowDetail, fetchFlows, startFlow } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
 import { useUserStore } from '../store/userStore'
-
-function resolveLinkedFlowId(step: FlowDetailResponse['steps'][number]) {
-  return step.externalFlowId ?? step.subFlowId ?? step.nextFlowId ?? null
-}
 
 function toErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message.trim()) {
@@ -26,8 +22,6 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [selectedFlowId, setSelectedFlowId] = useState<number | null>(null)
   const [flowDetail, setFlowDetail] = useState<FlowDetailResponse | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [detailError, setDetailError] = useState<string | null>(null)
   const [activeStepId, setActiveStepId] = useState<number | null>(null)
   const [flowStartLoading, setFlowStartLoading] = useState(false)
   const [flowStartError, setFlowStartError] = useState<string | null>(null)
@@ -72,49 +66,30 @@ export default function Dashboard() {
 
     const loadDetail = async () => {
       setFlowDetail(null)
-      setDetailError(null)
-      setDetailLoading(true)
-
       try {
         const data = await fetchFlowDetail(selectedFlowId)
         setFlowDetail(data)
         setActiveStepId(data.steps[0]?.stepId ?? null)
       } catch {
-        setDetailError('AkÄ±ÅŸ detayi alÄ±namadÄ±.')
-      } finally {
-        setDetailLoading(false)
+        // keep layout visible even if detail fetch fails
       }
     }
 
     loadDetail()
   }, [isAdmin, selectedFlowId])
 
-  const activeStep = useMemo(() => {
-    if (!flowDetail || activeStepId === null) return null
-    return flowDetail.steps.find((step) => step.stepId === activeStepId) ?? null
-  }, [flowDetail, activeStepId])
-
   const selectedFlow = useMemo(
     () => flows.find((flow) => flow.akisId === selectedFlowId) ?? null,
     [flows, selectedFlowId],
   )
+
   const totalFieldCount = useMemo(
     () => flowDetail?.steps.reduce((sum, step) => sum + step.fields.length, 0) ?? 0,
     [flowDetail],
   )
-  const selectedStepOrder = useMemo(() => {
-    if (!flowDetail || activeStepId === null) return null
-    const index = flowDetail.steps.findIndex((step) => step.stepId === activeStepId)
-    return index >= 0 ? index + 1 : null
-  }, [flowDetail, activeStepId])
-  const flowNameById = useMemo(() => {
-    const entries = flows.map((flow) => [flow.akisId, flow.akisAdi] as const)
-    return new Map<number, string>(entries)
-  }, [flows])
 
   const filteredFlows = useMemo(() => {
     const normalizedSearch = flowSearchTerm.trim().toLocaleLowerCase('tr-TR')
-
     return flows.filter((flow) => {
       const baseMatch =
         !normalizedSearch ||
@@ -123,39 +98,11 @@ export default function Dashboard() {
         (flow.aciklama ?? '').toLocaleLowerCase('tr-TR').includes(normalizedSearch)
 
       if (!baseMatch) return false
-
-      if (flowQuickFilter === 'SHORT') {
-        return flow.akisAdi.trim().length <= 12
-      }
-
-      if (flowQuickFilter === 'LONG') {
-        return flow.akisAdi.trim().length > 12
-      }
-
+      if (flowQuickFilter === 'SHORT') return flow.akisAdi.trim().length <= 12
+      if (flowQuickFilter === 'LONG') return flow.akisAdi.trim().length > 12
       return true
     })
   }, [flows, flowQuickFilter, flowSearchTerm])
-
-  const formatIds = (ids?: number[]) => {
-    if (!ids || ids.length === 0) return '-'
-    return ids.join(', ')
-  }
-
-  const getPermissionIds = (
-    field: FlowDetailResponse['steps'][number]['fields'][number],
-    tip: 'ROLE' | 'USER',
-  ) => {
-    if (tip === 'ROLE' && field.roleIds) return field.roleIds
-    if (tip === 'USER' && field.userIds) return field.userIds
-
-    return Array.from(
-      new Set(
-        (field.permissions ?? [])
-          .filter((permission) => permission.tip === tip)
-          .map((permission) => permission.refId),
-      ),
-    )
-  }
 
   const handleStartFlow = async () => {
     if (!selectedFlowId) return
@@ -279,295 +226,139 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <div className="dashboard-shell">
-        <div className="dashboard-top">
-          <div>
-            <h1>Akış Paneli</h1>
-            <p>Akışları yönetin, adımları ve form alanlarını inceleyin.</p>
-          </div>
-          <div className="header-actions">
-            <button
-              className="button secondary"
-              type="button"
-              onClick={handleStartFlow}
-              disabled={!selectedFlowId || flowStartLoading}
-            >
-              {flowStartLoading ? 'Başlatılıyor...' : 'Flow Başlat'}
-            </button>
-            <button
-              className="button primary"
-              type="button"
-              onClick={() => navigate('/create-flow')}
-            >
-              Yeni Akış Oluştur
-            </button>
-            <button
-              className="button secondary"
-              type="button"
-              onClick={() => {
-                if (selectedFlowId) {
-                  navigate(`/flow-edit/${selectedFlowId}`)
-                }
-              }}
-              disabled={!selectedFlowId}
-            >
-              Akış Düzenle
-            </button>
-          </div>
-        </div>
-        {flowStartError ? <p className="error-text">{flowStartError}</p> : null}
-        {flowStartSuccess ? <p className="success-text">{flowStartSuccess}</p> : null}
-
-        <section className="panel dashboard-spotlight">
-          <div className="dashboard-spotlight-main">
-            <p className="dashboard-spotlight-kicker">Seçili Akış</p>
-            <h2>{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h2>
-            <p>{selectedFlow?.aciklama || 'Seçili akış için açıklama bulunmuyor.'}</p>
-          </div>
-          <div className="dashboard-spotlight-meta">
+      <div className="dashboard-shell space-y-5">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <span>Akış ID</span>
-              <strong>{selectedFlow?.akisId ?? '-'}</strong>
+              <p className="text-sm font-medium text-slate-500">Operational Workspace</p>
+              <h1 className="text-5xl font-bold text-slate-900">Akış Paneli</h1>
+              <p className="mt-2 text-lg text-slate-600">Aktif iş akışlarını yönetin ve yeni operasyonel süreçler başlatın.</p>
             </div>
-            <div>
-              <span>Toplam Adım</span>
-              <strong>{flowDetail?.steps.length ?? 0}</strong>
-            </div>
-            <div>
-              <span>Toplam Alan</span>
-              <strong>{totalFieldCount}</strong>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                type="button"
+                onClick={() => selectedFlowId && navigate(`/flow-edit/${selectedFlowId}`)}
+                disabled={!selectedFlowId}
+              >
+                Akışı Düzenle
+              </button>
+              <button className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" type="button" onClick={() => navigate('/create-flow')}>
+                Yeni Akış Oluştur
+              </button>
             </div>
           </div>
         </section>
 
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <span>Toplam Akış</span>
-            <strong>{flows.length}</strong>
-          </div>
-          <div className="stat-card">
-            <span>Toplam Adım</span>
-            <strong>{flowDetail?.steps.length ?? 0}</strong>
-          </div>
-          <div className="stat-card">
-            <span>Toplam Alan</span>
-            <strong>{totalFieldCount}</strong>
-          </div>
-        </div>
+        {flowStartError ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{flowStartError}</p> : null}
+        {flowStartSuccess ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{flowStartSuccess}</p> : null}
 
-        <div className="dashboard-grid">
-          <section className="panel flow-list-panel">
-            <div className="panel-header">
-              <h2>Akislar</h2>
-              <span>{filteredFlows.length} / {flows.length} kayit</span>
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-slate-600">Filtrele:</span>
+              {(['ALL', 'SHORT', 'LONG'] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFlowQuickFilter(key)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium ${flowQuickFilter === key ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}
+                >
+                  {key === 'ALL' ? 'Tümü' : key === 'SHORT' ? 'Kısa' : 'Uzun'}
+                </button>
+              ))}
             </div>
-            <p className="panel-subtitle">Detaylarını incelemek istediginiz akış kaydını seçin.</p>
+            <input
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              type="search"
+              value={flowSearchTerm}
+              placeholder="Akış ara..."
+              onChange={(event) => setFlowSearchTerm(event.target.value)}
+            />
+          </div>
+        </section>
 
-            <div className="flow-list-toolbar">
-              <label className="flow-search">
-                <span>Akış Ara</span>
-                <input
-                  className="input"
-                  type="search"
-                  value={flowSearchTerm}
-                  placeholder="ID, akış adı veya açıklama..."
-                  onChange={(event) => setFlowSearchTerm(event.target.value)}
-                />
-              </label>
-              <div className="flow-filter-chips">
-                <button
-                  type="button"
-                  className={`flow-filter-chip ${flowQuickFilter === 'ALL' ? 'active' : ''}`}
-                  onClick={() => setFlowQuickFilter('ALL')}
-                >
-                  Tumu
-                </button>
-                <button
-                  type="button"
-                  className={`flow-filter-chip ${flowQuickFilter === 'SHORT' ? 'active' : ''}`}
-                  onClick={() => setFlowQuickFilter('SHORT')}
-                >
-                  Kisa Isim
-                </button>
-                <button
-                  type="button"
-                  className={`flow-filter-chip ${flowQuickFilter === 'LONG' ? 'active' : ''}`}
-                  onClick={() => setFlowQuickFilter('LONG')}
-                >
-                  Uzun Isim
-                </button>
-              </div>
+        <section className="grid gap-4 xl:grid-cols-[1.7fr_1.15fr]">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <h2 className="text-4xl font-semibold text-slate-900">Akış Listesi</h2>
+              <span className="text-sm font-semibold text-slate-600">{filteredFlows.length} Aktif Kayıt</span>
             </div>
+            <div className="max-h-[560px] space-y-2 overflow-y-auto p-3">
+              {loading ? <p className="px-2 py-3 text-sm text-slate-500">Yükleniyor...</p> : null}
+              {error ? <p className="px-2 py-3 text-sm text-rose-700">{error}</p> : null}
+              {!loading && !error && filteredFlows.map((flow) => (
+                <button
+                  key={flow.akisId}
+                  type="button"
+                  onClick={() => setSelectedFlowId(flow.akisId)}
+                  className={`w-full rounded-xl border p-4 text-left transition ${selectedFlowId === flow.akisId ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-3xl font-semibold text-slate-900">{flow.akisAdi}</p>
+                      <p className="mt-1 text-sm text-slate-600">{flow.aciklama || 'Açıklama bulunmuyor.'}</p>
+                    </div>
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${flow.akisAdi.length > 12 ? 'bg-slate-200 text-slate-700' : 'bg-blue-600 text-white'}`}>
+                      {flow.akisAdi.length > 12 ? 'Taslak' : 'Aktif'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {loading && <p className="hint">Yükleniyor...</p>}
-            {error && <p className="error-text">{error}</p>}
-
-            {!loading && !error && filteredFlows.length === 0 && (
-              <p className="hint">
-                {flows.length === 0 ? 'Henüz kayıtlı akış yok.' : 'Arama kriterine uygun akış bulunamadı.'}
-              </p>
-            )}
-
-            {!loading && !error && filteredFlows.length > 0 && (
-              <div className="flow-list-scroll">
-                <div className="flow-list-head">
-                  <span>ID</span>
-                  <span>Akış Adı</span>
-                  <span> Açıklama </span>
+          <div className="space-y-4">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Detaylı Görünüm</p>
+              <h3 className="mt-2 text-4xl font-semibold text-slate-900">{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h3>
+              <p className="mt-2 text-sm text-slate-600">{selectedFlow?.aciklama || 'Seçilen akışın açıklaması burada görünür.'}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-slate-100 p-3 text-center">
+                  <p className="text-xs font-semibold uppercase text-slate-500">Adım Sayısı</p>
+                  <p className="text-3xl font-bold text-blue-700">{flowDetail?.steps.length ?? 0}</p>
                 </div>
-                <div className="flow-list">
-                  {filteredFlows.map((flow) => (
-                    <button
-                      key={flow.akisId}
-                      className={`flow-row ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
-                      type="button"
-                      onClick={() => setSelectedFlowId(flow.akisId)}
-                    >
-                      <span>{flow.akisId}</span>
-                      <span>{flow.akisAdi}</span>
-                      <span>{flow.aciklama || '-'}</span>
+                <div className="rounded-xl bg-slate-100 p-3 text-center">
+                  <p className="text-xs font-semibold uppercase text-slate-500">Toplam Alan</p>
+                  <p className="text-3xl font-bold text-blue-700">{totalFieldCount}</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Süreç Adımları</p>
+                <div className="mt-2 space-y-2">
+                  {(flowDetail?.steps ?? []).slice(0, 4).map((step, index) => (
+                    <button key={step.stepId} type="button" onClick={() => setActiveStepId(step.stepId)} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm ${activeStepId === step.stepId ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold">{index + 1}</span>
+                      <span>{step.stepName}</span>
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-          </section>
+            </section>
 
-          <section className="panel flow-detail-panel">
-            <div className="panel-header">
-              <h2>Akış Detayları</h2>
-              <div className="panel-actions">
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() => {
-                    if (selectedFlowId) {
-                      navigate(`/preview/${selectedFlowId}`)
-                    }
-                  }}
-                  disabled={!selectedFlowId}
-                >
-                  Önizleme
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <button
+                className="w-full rounded-xl bg-blue-700 px-4 py-3 text-base font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                type="button"
+                onClick={handleStartFlow}
+                disabled={!selectedFlowId || flowStartLoading}
+              >
+                {flowStartLoading ? 'Akış Başlatılıyor...' : 'Akışı Başlat'}
+              </button>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" type="button" onClick={() => selectedFlowId && navigate(`/preview/${selectedFlowId}`)} disabled={!selectedFlowId}>
+                  Raporlar
                 </button>
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() => {
-                    if (selectedFlowId) {
-                      navigate(`/flow-edit/${selectedFlowId}`)
-                    }
-                  }}
-                  disabled={!selectedFlowId}
-                >
-                  Akış Düzenle
+                <button className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" type="button" onClick={() => selectedFlowId && navigate(`/flow-edit/${selectedFlowId}`)} disabled={!selectedFlowId}>
+                  Paylaş
                 </button>
               </div>
-              {flowDetail && (
-                <span className={`flow-status ${flowDetail.steps.length ? 'active' : 'passive'}`}>
-                  {flowDetail.steps.length ? 'Adımlar Var' : 'Adım Yok'}
-                </span>
-              )}
-            </div>
+            </section>
+          </div>
+        </section>
 
-            {detailLoading && <p className="hint">Detay yükleniyor...</p>}
-            {detailError && <p className="error-text">{detailError}</p>}
-
-            {!detailLoading && !detailError && flowDetail && (
-              <div className="flow-summary">
-                <div>
-                  <h3>{flowDetail.flowName}</h3>
-                  <p>{flowDetail.aciklama}</p>
-                </div>
-                <div className="summary-meta">
-                  <div>
-                    <span>Akış ID</span>
-                    <strong>{flowDetail.flowId}</strong>
-                  </div>
-                  <div>
-                    <span>Adım Sayısı</span>
-                    <strong>{flowDetail.steps.length}</strong>
-                  </div>
-                  <div>
-                    <span>Aktif Adım</span>
-                    <strong>{selectedStepOrder ?? '-'}</strong>
-                  </div>
-                  <div>
-                    <span>Alan Sayısı</span>
-                    <strong>{totalFieldCount}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {!detailLoading && !detailError && flowDetail && (
-              <div className="step-tabs">
-                {flowDetail.steps.map((step, index) => {
-                  const linkedFlowId =
-                    step.externalFlowEnabled === false ? null : resolveLinkedFlowId(step)
-                  const linkedFlowName = linkedFlowId ? flowNameById.get(linkedFlowId) : null
-                  const hasNextStep = index < flowDetail.steps.length - 1
-
-                  return (
-                    <Fragment key={step.stepId}>
-                      <button
-                        className={`step-tab ${activeStepId === step.stepId ? 'active' : ''}`}
-                        type="button"
-                        onClick={() => setActiveStepId(step.stepId)}
-                      >
-                        {step.stepName}
-                      </button>
-                      {hasNextStep && linkedFlowId ? (
-                        <button
-                          className="embedded-flow-pill"
-                          type="button"
-                          onClick={() => navigate(`/preview/${linkedFlowId}`)}
-                          title="Ara akış önizlemesini aç"
-                        >
-                          Ara Akış: {linkedFlowName ?? `#${linkedFlowId}`}
-                        </button>
-                      ) : null}
-                    </Fragment>
-                  )
-                })}
-              </div>
-            )}
-
-            <div className="flow-fields">
-              <h3>Form Alanları</h3>
-              {!detailLoading && !detailError && !activeStep && (
-                <p className="hint">Bir adım seçerek alanları görüntüleyin.</p>
-              )}
-
-              {!detailLoading && !detailError && activeStep && activeStep.fields.length === 0 && (
-                <p className="hint">Bu adım için alan bulunamadı.</p>
-              )}
-
-              {!detailLoading && !detailError && activeStep && activeStep.fields.length > 0 && (
-                <div className="fields-table">
-                  <div className="fields-row fields-head">
-                    <span>#</span>
-                    <span>Tür</span>
-                    <span>Etiket</span>
-                    <span>Zorunlu</span>
-                    <span>Yetkili Roller</span>
-                    <span>Yetkili Kullanıcılar</span>
-                  </div>
-                  {activeStep.fields.map((field) => (
-                    <div key={field.fieldId} className="fields-row">
-                      <span>{field.orderNo}</span>
-                      <span>{field.type}</span>
-                      <span>{field.label}</span>
-                      <span>{field.required ? 'Evet' : 'Hayir'}</span>
-                      <span>{formatIds(getPermissionIds(field, 'ROLE'))}</span>
-                      <span>{formatIds(getPermissionIds(field, 'USER'))}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   )
 }
+
