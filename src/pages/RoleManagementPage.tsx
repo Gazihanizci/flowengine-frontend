@@ -166,16 +166,16 @@ export default function RoleManagementPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="inline-flex rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Admin Workspace</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight">Rol Yönetimi Paneli</h1>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight">Rol Yönetimi Paneli</h1>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-2">
               <p className="text-xs uppercase tracking-wide text-slate-300">Toplam Kullanici</p>
-              <p className="text-3xl font-semibold">{usersCount}</p>
+              <p className="text-xl font-semibold">{usersCount}</p>
             </div>
             <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-2">
               <p className="text-xs uppercase tracking-wide text-slate-300">Atamalar</p>
-              <p className="text-3xl font-semibold">{totalRoleAssignments}</p>
+              <p className="text-xl font-semibold">{totalRoleAssignments}</p>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function RoleManagementPage() {
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-3xl font-semibold text-slate-900">Kullanici Listesi</h2>
+              <h2 className="text-xl font-semibold text-slate-900">Kullanici Listesi</h2>
               <button
                 type="button"
                 onClick={loadUsersRoles}
@@ -246,7 +246,7 @@ export default function RoleManagementPage() {
         </div>
 
         <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-4xl font-semibold text-slate-900">Rol Tanimlari</h3>
+          <h3 className="text-2xl font-semibold text-slate-900">Rol Tanimlari</h3>
           <p className="mt-1 text-sm text-slate-500">Sistemdeki aktif rol yetkileri</p>
 
           <div className="mt-4 space-y-4">
@@ -285,3 +285,4 @@ export default function RoleManagementPage() {
     </div>
   )
 }
+

@@ -229,7 +229,7 @@ function IssueListPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500">Operational Workspace</p>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">İş Akışı Yönetimi</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">İş Akışı Yönetimi</h1>
             <p className="mt-1 text-lg text-slate-600">Aktif issue taleplerini ve operasyonel akışları buradan yönetebilirsin.</p>
           </div>
           <button className="flex h-14 items-center justify-center gap-2 rounded-xl bg-blue-700 px-7 text-xl font-semibold text-white shadow-sm hover:bg-blue-800" onClick={() => setCreateOpen(true)}>
@@ -315,4 +315,5 @@ function IssueListPage() {
 }
 
 export default IssueListPage
+
 

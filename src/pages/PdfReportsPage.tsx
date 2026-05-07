@@ -166,8 +166,8 @@ export default function PdfReportsPage() {
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">PDF Rapor</p>
-        <h1 className="mt-2 text-5xl font-bold tracking-tight text-slate-900">Surec Listesinden PDF Indir</h1>
-        <p className="mt-4 max-w-5xl text-3xl leading-relaxed text-slate-600">
+        <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-900">Surec Listesinden PDF Indir</h1>
+        <p className="mt-4 max-w-5xl text-xl leading-relaxed text-slate-600">
           `/api/surecler` listesinden bir surec secilir, secilen kaydin `surecId` degeri ile
           <code> /api/pdf/generate/{'{surecId}'}</code> endpointine istek atilip PDF indirilir.
         </p>
@@ -176,19 +176,19 @@ export default function PdfReportsPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3"><span className="rounded-xl bg-blue-100 p-3 text-blue-700"><FileText className="h-5 w-5" /></span><p className="text-lg text-slate-600">Toplam Rapor</p></div>
-          <p className="mt-2 text-5xl font-bold text-slate-900">{stats.total}</p>
+          <p className="mt-2 text-xl font-bold text-slate-900">{stats.total}</p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3"><span className="rounded-xl bg-emerald-100 p-3 text-emerald-700"><Clock3 className="h-5 w-5" /></span><p className="text-lg text-slate-600">Bu Hafta Uretilen</p></div>
-          <p className="mt-2 text-5xl font-bold text-slate-900">{stats.thisWeek}</p>
+          <p className="mt-2 text-xl font-bold text-slate-900">{stats.thisWeek}</p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3"><span className="rounded-xl bg-amber-100 p-3 text-amber-700"><Database className="h-5 w-5" /></span><p className="text-lg text-slate-600">Kullanilan Alan</p></div>
-          <p className="mt-2 text-5xl font-bold text-slate-900">{stats.gb} GB</p>
+          <p className="mt-2 text-xl font-bold text-slate-900">{stats.gb} GB</p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3"><span className="rounded-xl bg-violet-100 p-3 text-violet-700"><Zap className="h-5 w-5" /></span><p className="text-lg text-slate-600">Aktif Akislar</p></div>
-          <p className="mt-2 text-5xl font-bold text-slate-900">{stats.uniqueFlows}</p>
+          <p className="mt-2 text-xl font-bold text-slate-900">{stats.uniqueFlows}</p>
         </article>
       </section>
 
@@ -286,13 +286,13 @@ export default function PdfReportsPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h3 className="text-3xl font-bold text-slate-900">Haftalik Performans</h3>
+          <h3 className="text-xl font-bold text-slate-900">Haftalik Performans</h3>
           <p className="mt-2 text-lg text-slate-600">Issue cozum sureleri bu hafta iyilesme gosterdi.</p>
           <div className="mt-5 h-3 w-full rounded-full bg-slate-200"><div className="h-full w-[72%] rounded-full bg-blue-600" /></div>
           <p className="mt-2 text-right text-xl font-semibold text-blue-700">%72</p>
         </article>
         <article className="rounded-2xl border border-blue-700 bg-blue-700 p-5 text-white shadow-sm">
-          <h3 className="text-3xl font-bold">Kritik Uyarilar</h3>
+          <h3 className="text-xl font-bold">Kritik Uyarilar</h3>
           <p className="mt-2 text-lg text-blue-100">SLA suresi dolmak uzere olan aktif issue bulunuyor.</p>
           <button type="button" className="mt-4 rounded-xl bg-white/20 px-4 py-2 text-sm font-semibold text-white">Hemen Incele</button>
         </article>
@@ -300,3 +300,4 @@ export default function PdfReportsPage() {
     </div>
   )
 }
+

@@ -122,14 +122,14 @@ export default function CreateFlow() {
       <div className="dashboard-shell space-y-5">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Is Akislari / Yeni Olustur</p>
-          <h1 className="mt-1 text-5xl font-bold text-slate-900">Akis Olustur</h1>
+          <h1 className="mt-1 text-xl font-bold text-slate-900">Akis Olustur</h1>
           <p className="mt-2 text-lg text-slate-600">Sureclerinizi otomatize etmek icin yeni bir operasyonel akis tasarlayin.</p>
         </section>
 
         <div className="grid gap-4 xl:grid-cols-[1.7fr_0.8fr]">
           <div className="space-y-4">
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-5xl font-semibold text-blue-700">Workflow Yapilandirmasi</h2>
+              <h2 className="text-xl font-semibold text-blue-700">Workflow Yapilandirmasi</h2>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label>
@@ -146,7 +146,7 @@ export default function CreateFlow() {
                   <span className="mb-1 block text-sm font-semibold uppercase tracking-wide text-slate-600">Adim Sayisi</span>
                   <div className="flex items-center justify-between rounded-xl border border-slate-300 px-3 py-2.5">
                     <button type="button" className="text-2xl font-bold text-blue-700" onClick={() => setStepCount((prev) => Math.max(1, prev - 1))}>-</button>
-                    <span className="text-4xl font-bold text-slate-900">{stepCount}</span>
+                    <span className="text-2xl font-bold text-slate-900">{stepCount}</span>
                     <button type="button" className="text-2xl font-bold text-blue-700" onClick={() => setStepCount((prev) => prev + 1)}>+</button>
                   </div>
                 </label>
@@ -166,7 +166,7 @@ export default function CreateFlow() {
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-5xl font-semibold text-blue-700">Flow Baslatma Yetkisi</h3>
+                <h3 className="text-xl font-semibold text-blue-700">Flow Baslatma Yetkisi</h3>
                 <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Guvenli Erisim</span>
               </div>
 
@@ -233,7 +233,7 @@ export default function CreateFlow() {
           <aside className="space-y-4">
             <section className="rounded-2xl bg-blue-700 p-5 text-white shadow-sm">
               <p className="inline-block rounded-md bg-white/20 px-2 py-1 text-xs font-semibold">Taslak Modu</p>
-              <h3 className="mt-3 text-5xl font-semibold">Akis On Izleme</h3>
+              <h3 className="mt-3 text-xl font-semibold">Akis On Izleme</h3>
               <p className="mt-2 text-base text-blue-100">Yapilandirilan adimlar burada sematik olarak gosterilir.</p>
               <p className="mt-6 text-center text-2xl font-bold">{stepCount} ADIMLI SUREC</p>
             </section>
@@ -241,7 +241,7 @@ export default function CreateFlow() {
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <img src="/flow-preview.png" alt="Flow preview" className="h-44 w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
               <div className="p-4">
-                <h4 className="text-4xl font-semibold text-slate-900">Sistem Entegrasyonu</h4>
+                <h4 className="text-2xl font-semibold text-slate-900">Sistem Entegrasyonu</h4>
                 <p className="mt-2 text-base text-slate-600">Bu akis olusturuldugunda ERP ve CRM sistemleriyle otomatik olarak senkronize edilecektir.</p>
               </div>
             </section>
@@ -249,11 +249,11 @@ export default function CreateFlow() {
             <div className="grid grid-cols-2 gap-3">
               <article className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Beklenen Sure</p>
-                <p className="mt-1 text-4xl font-bold text-blue-700">~24 Sa</p>
+                <p className="mt-1 text-2xl font-bold text-blue-700">~24 Sa</p>
               </article>
               <article className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kompleksite</p>
-                <p className="mt-1 text-4xl font-bold text-blue-700">Dusuk</p>
+                <p className="mt-1 text-2xl font-bold text-blue-700">Dusuk</p>
               </article>
             </div>
           </aside>
@@ -278,3 +278,4 @@ export default function CreateFlow() {
     </div>
   )
 }
+

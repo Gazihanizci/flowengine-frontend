@@ -384,19 +384,19 @@ export default function BuilderPage() {
   }
 
   return (
-    <div className="builder">
+    <div className="builder form-designer-page">
       <header className="builder-header">
         <div>
-          <span className="page-kicker">Akış Tasarımı</span>
-          <h1>{flowName || 'Yeni Akış'}</h1>
-          <p>Adım tasarımını tamamlayın.</p>
+          <span className="page-kicker">Is Akislari / Yeni Akis / Form Tasarimcisi</span>
+          <h1>Yeni Form Tasarimi</h1>
+          <p>Surukle-birak ile formunuzu olusturun.</p>
         </div>
         <div className="header-actions">
-          <button className="button secondary" type="button" onClick={() => navigate('/')}>
-            Panele Dön
+          <button className="button secondary" type="button" onClick={() => navigate(`/preview/${currentStepId}`)}>
+            Onizle
           </button>
           <button className="button primary" type="button" onClick={handleSave} disabled={saving}>
-            {saving ? 'Kaydediliyor...' : 'Kaydet'}
+            {saving ? 'Kaydediliyor...' : 'Kaydet ve Devam Et'}
           </button>
         </div>
       </header>

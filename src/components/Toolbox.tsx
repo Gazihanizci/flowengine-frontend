@@ -214,8 +214,8 @@ export default function Toolbox() {
 
   return (
     <aside className="panel toolbox-panel">
-      <h2>Arac Kutusu</h2>
-      <p className="panel-subtitle">Bilesenleri surukleyip birakin. Toplam: {filteredItems.length}</p>
+      <h2>Bilesen Kutuphanesi</h2>
+      <p className="panel-subtitle">Surukle ve birak ile formunuzu olusturun.</p>
       <input
         className="input toolbox-search"
         type="search"

@@ -120,7 +120,7 @@ export default function HistoryPage() {
   return (
     <div className="space-y-5">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-4xl font-semibold text-slate-900">Islem Gecmisi</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Islem Gecmisi</h1>
         <p className="mt-2 text-sm text-slate-600">Tum is akis sureclerini ve gecmis loglari buradan takip edebilirsiniz.</p>
       </section>
 
@@ -192,15 +192,15 @@ export default function HistoryPage() {
       <section className="grid gap-3 md:grid-cols-3">
         <article className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs font-semibold tracking-wide text-slate-500">TOPLAM ISLEM</p>
-          <p className="mt-1 text-3xl font-bold text-slate-900">{filteredHistory.length.toLocaleString('tr-TR')}</p>
+          <p className="mt-1 text-xl font-bold text-slate-900">{filteredHistory.length.toLocaleString('tr-TR')}</p>
         </article>
         <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-xs font-semibold tracking-wide text-emerald-700">ONAYLANAN</p>
-          <p className="mt-1 text-3xl font-bold text-emerald-700">{approvedCount.toLocaleString('tr-TR')}</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{approvedCount.toLocaleString('tr-TR')}</p>
         </article>
         <article className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
           <p className="text-xs font-semibold tracking-wide text-rose-700">REDDEDILEN</p>
-          <p className="mt-1 text-3xl font-bold text-rose-700">{rejectedCount.toLocaleString('tr-TR')}</p>
+          <p className="mt-1 text-xl font-bold text-rose-700">{rejectedCount.toLocaleString('tr-TR')}</p>
         </article>
       </section>
 
@@ -314,3 +314,4 @@ export default function HistoryPage() {
     </div>
   )
 }
+

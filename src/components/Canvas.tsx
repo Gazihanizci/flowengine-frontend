@@ -1,4 +1,4 @@
-import { useDroppable } from '@dnd-kit/core'
+﻿import { useDroppable } from '@dnd-kit/core'
 import type { FormField } from '../types/form'
 import FieldItem from './FieldItem'
 
@@ -22,13 +22,13 @@ export default function Canvas({
   return (
     <section className="panel canvas">
       <div className="canvas-header">
-        <h2>Çalışma Alanı</h2>
-        <p className="panel-subtitle">Alanlar sürükle ve bırakarak sıralayabilirsiniz.</p>
+        <h2>Yeni Form Tasarimi</h2>
+        <p className="panel-subtitle">Bilesenleri bu alana surukleyin.</p>
       </div>
       <div ref={setNodeRef} className={`canvas-drop ${isOver ? 'hovered' : ''}`}>
         {fields.length === 0 ? (
           <div className="empty">
-            <p>Henüz alan yok. Soldan sürükle ve bırakın.</p>
+            <p>Formunuzu olusturmaya baslayin. Sol paneldeki bilesenleri bu alana surukleyin.</p>
           </div>
         ) : (
           <div className="field-list">

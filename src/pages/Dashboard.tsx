@@ -231,7 +231,7 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-slate-500">Operational Workspace</p>
-              <h1 className="text-5xl font-bold text-slate-900">Akış Paneli</h1>
+              <h1 className="text-xl font-bold text-slate-900">Akış Paneli</h1>
               <p className="mt-2 text-lg text-slate-600">Aktif iş akışlarını yönetin ve yeni operasyonel süreçler başlatın.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -281,7 +281,7 @@ export default function Dashboard() {
         <section className="grid gap-4 xl:grid-cols-[1.7fr_1.15fr]">
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-              <h2 className="text-4xl font-semibold text-slate-900">Akış Listesi</h2>
+              <h2 className="text-2xl font-semibold text-slate-900">Akış Listesi</h2>
               <span className="text-sm font-semibold text-slate-600">{filteredFlows.length} Aktif Kayıt</span>
             </div>
             <div className="max-h-[560px] space-y-2 overflow-y-auto p-3">
@@ -296,7 +296,7 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-3xl font-semibold text-slate-900">{flow.akisAdi}</p>
+                      <p className="text-xl font-semibold text-slate-900">{flow.akisAdi}</p>
                       <p className="mt-1 text-sm text-slate-600">{flow.aciklama || 'Açıklama bulunmuyor.'}</p>
                     </div>
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${flow.akisAdi.length > 12 ? 'bg-slate-200 text-slate-700' : 'bg-blue-600 text-white'}`}>
@@ -311,16 +311,16 @@ export default function Dashboard() {
           <div className="space-y-4">
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Detaylı Görünüm</p>
-              <h3 className="mt-2 text-4xl font-semibold text-slate-900">{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h3>
+              <h3 className="mt-2 text-2xl font-semibold text-slate-900">{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h3>
               <p className="mt-2 text-sm text-slate-600">{selectedFlow?.aciklama || 'Seçilen akışın açıklaması burada görünür.'}</p>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="rounded-xl bg-slate-100 p-3 text-center">
                   <p className="text-xs font-semibold uppercase text-slate-500">Adım Sayısı</p>
-                  <p className="text-3xl font-bold text-blue-700">{flowDetail?.steps.length ?? 0}</p>
+                  <p className="text-xl font-bold text-blue-700">{flowDetail?.steps.length ?? 0}</p>
                 </div>
                 <div className="rounded-xl bg-slate-100 p-3 text-center">
                   <p className="text-xs font-semibold uppercase text-slate-500">Toplam Alan</p>
-                  <p className="text-3xl font-bold text-blue-700">{totalFieldCount}</p>
+                  <p className="text-xl font-bold text-blue-700">{totalFieldCount}</p>
                 </div>
               </div>
               <div className="mt-4">
@@ -361,4 +361,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
 
