@@ -11,7 +11,37 @@ import {
 
 type RequestActionState = 'idle' | 'approving' | 'rejecting' | 'approved' | 'rejected'
 
-type TimelineType = 'approved' | 'rejected' | 'pending' | 'info'
+type TimelineType = 'approved' | 'rejected' | 'pending' | 'processed' | 'info'
+
+const REQUEST_ACTION_STORAGE_KEY = 'notification_request_actions_v1'
+
+type StoredRequestAction = 'approved' | 'rejected'
+type StoredRequestActionMap = Record<string, StoredRequestAction>
+
+function loadStoredRequestActions(): StoredRequestActionMap {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(REQUEST_ACTION_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object') return {}
+    const entries = Object.entries(parsed as Record<string, unknown>)
+      .filter(([, value]) => value === 'approved' || value === 'rejected')
+      .map(([key, value]) => [key, value as StoredRequestAction])
+    return Object.fromEntries(entries)
+  } catch {
+    return {}
+  }
+}
+
+function saveStoredRequestActions(map: StoredRequestActionMap) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(REQUEST_ACTION_STORAGE_KEY, JSON.stringify(map))
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -40,7 +70,9 @@ function fromNow(value: string) {
 function getTimelineType(item: NotificationItem, state: RequestActionState): TimelineType {
   if (state === 'approved') return 'approved'
   if (state === 'rejected') return 'rejected'
-  if (item.tip === 'FLOW_REQUEST' || item.tip === 'SUBFLOW_REQUEST') return 'pending'
+  if (item.tip === 'FLOW_REQUEST' || item.tip === 'SUBFLOW_REQUEST') {
+    return item.okundu ? 'processed' : 'pending'
+  }
   return 'info'
 }
 
@@ -51,7 +83,9 @@ function timelineBadge(type: TimelineType) {
     case 'rejected':
       return { label: 'Reddedildi', cls: 'bg-rose-100 text-rose-700 ring-1 ring-rose-200' }
     case 'pending':
-      return { label: 'Onay Bekliyor', cls: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' }
+      return { label: 'Bekliyor', cls: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' }
+    case 'processed':
+      return { label: 'Islendi', cls: 'bg-sky-100 text-sky-700 ring-1 ring-sky-200' }
     default:
       return { label: 'Bilgi', cls: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200' }
   }
@@ -64,6 +98,7 @@ export default function NotificationPanel() {
   const [error, setError] = useState<string | null>(null)
   const [readingIds, setReadingIds] = useState<number[]>([])
   const [actionStateByNotificationId, setActionStateByNotificationId] = useState<Record<number, RequestActionState>>({})
+  const [storedRequestActionByRequestId, setStoredRequestActionByRequestId] = useState<StoredRequestActionMap>(() => loadStoredRequestActions())
 
   const unreadNotifications = useMemo(
     () => notifications.filter((notification) => !notification.okundu),
@@ -187,6 +222,18 @@ export default function NotificationPanel() {
         ...prev,
         [notification.bildirimId]: action === 'approve' ? 'approved' : 'rejected',
       }))
+
+      if (requestId) {
+        const key = String(requestId)
+        setStoredRequestActionByRequestId((prev) => {
+          const next: StoredRequestActionMap = {
+            ...prev,
+            [key]: action === 'approve' ? 'approved' : 'rejected',
+          }
+          saveStoredRequestActions(next)
+          return next
+        })
+      }
 
       await markAsReadAndSync(notification)
     } catch {
@@ -354,7 +401,19 @@ export default function NotificationPanel() {
 
           <div className="max-h-[840px] space-y-2 overflow-y-auto pr-1">
             {recentNotifications.map((notification) => {
-              const actionState = actionStateByNotificationId[notification.bildirimId] ?? 'idle'
+              const localActionState = actionStateByNotificationId[notification.bildirimId] ?? 'idle'
+              const storedAction =
+                notification.referansIstekId != null
+                  ? storedRequestActionByRequestId[String(notification.referansIstekId)]
+                  : undefined
+              const actionState: RequestActionState =
+                localActionState !== 'idle'
+                  ? localActionState
+                  : storedAction === 'approved'
+                    ? 'approved'
+                    : storedAction === 'rejected'
+                      ? 'rejected'
+                      : 'idle'
               const badge = timelineBadge(getTimelineType(notification, actionState))
               return (
                 <article
