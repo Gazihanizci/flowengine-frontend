@@ -44,13 +44,13 @@ const TOOLBOX_ITEMS: ToolboxItemDefinition[] = [
     type: 'TEXTAREA',
     label: 'Aciklama',
     description: 'Uzun metin ve notlar',
-    defaults: { label: 'Açıklama', placeholder: 'Detayları yazın' },
+    defaults: { label: 'Açıklama', placeholder: 'Detaylar yazın' },
   },
   {
     id: 'combobox',
     type: 'COMBOBOX',
     label: 'Acilir Liste',
-    description: 'Tek seçimli liste',
+    description: 'Tek seimli liste',
     defaults: {
       label: 'Açılır Liste',
       placeholder: 'Seçiniz',
@@ -215,12 +215,12 @@ export default function Toolbox() {
   return (
     <aside className="panel toolbox-panel">
       <h2>Bilesen Kutuphanesi</h2>
-      <p className="panel-subtitle">Surukle ve birak ile formunuzu olusturun.</p>
+      <p className="panel-subtitle">Sürükle ve bırak ile formunuzu oluşturun.</p>
       <input
         className="input toolbox-search"
         type="search"
         value={query}
-        placeholder="Arac ara..."
+        placeholder="Araç ara..."
         onChange={(event) => setQuery(event.target.value)}
       />
       <div className="toolbox-list">
@@ -236,10 +236,11 @@ export default function Toolbox() {
             />
           ))
         ) : (
-          <div className="empty-state">Aramaya uygun arac bulunamadi.</div>
+          <div className="empty-state">Aramaya uygun araç bulunamadı.</div>
         )}
       </div>
     </aside>
   )
 }
+
 

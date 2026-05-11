@@ -6,6 +6,7 @@ import {
   closestCenter,
   useSensor,
   useSensors,
+  type DragCancelEvent,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
@@ -46,6 +47,12 @@ type DragMeta = {
   from?: 'toolbox' | 'canvas'
   fieldType?: FieldType
   template?: Partial<FormField>
+}
+
+type ActiveDragState = {
+  id: string
+  from: 'toolbox' | 'canvas'
+  label: string
 }
 
 function createField(type: FieldType, id: string, template?: Partial<FormField>): FormField {
@@ -144,7 +151,7 @@ export default function BuilderPage() {
 
   const [fields, setFields] = useState<FormField[]>(currentStep?.fields ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [activeDrag, setActiveDrag] = useState<ActiveDragState | null>(null)
   const [saving, setSaving] = useState(false)
   const [availableFlows, setAvailableFlows] = useState<FlowListItem[]>([])
   const [loadingFlows, setLoadingFlows] = useState(false)
@@ -204,6 +211,8 @@ export default function BuilderPage() {
     }
   }
 
+  const findFieldIndexById = (id: string) => fields.findIndex((item) => item.id === id)
+
   const handleSelect = (id: string) => {
     setSelectedId(id)
   }
@@ -220,12 +229,27 @@ export default function BuilderPage() {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragId(String(event.active.id))
+    const activeMeta = event.active.data.current as DragMeta | undefined
+    const from = activeMeta?.from === 'canvas' ? 'canvas' : 'toolbox'
+    const label =
+      from === 'toolbox'
+        ? activeMeta?.template?.label ?? activeMeta?.fieldType ?? 'Yeni Alan'
+        : fields.find((item) => item.id === String(event.active.id))?.label ?? 'Taşınıyor'
+
+    setActiveDrag({
+      id: String(event.active.id),
+      from,
+      label: String(label),
+    })
+  }
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setActiveDrag(null)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    setActiveDragId(null)
+    setActiveDrag(null)
 
     if (!over) return
 
@@ -235,16 +259,26 @@ export default function BuilderPage() {
     const template = activeMeta?.template
 
     if (activeFrom === 'toolbox' && fieldType) {
-      if (over.id === 'canvas-drop') {
-        const newId = `field-${currentStepId}-${Date.now()}`
-        const newField = createField(fieldType, newId, template)
+      const overId = String(over.id)
+      const isCanvasTarget = overId === 'canvas-drop' || findFieldIndexById(overId) !== -1
+      if (!isCanvasTarget) return
+
+      const newId = `field-${currentStepId}-${Date.now()}`
+      const newField = createField(fieldType, newId, template)
+      const overIndex = findFieldIndexById(overId)
+
+      if (overIndex === -1) {
         updateFields([...fields, newField])
-        setSelectedId(newId)
+      } else {
+        const next = [...fields]
+        next.splice(overIndex, 0, newField)
+        updateFields(next)
       }
+      setSelectedId(newId)
       return
     }
 
-    if (activeFrom === 'canvas' && active.id !== over.id) {
+    if (activeFrom === 'canvas' && active.id !== over.id && String(over.id) !== 'canvas-drop') {
       const oldIndex = fields.findIndex((item) => item.id === String(active.id))
       const newIndex = fields.findIndex((item) => item.id === String(over.id))
       if (oldIndex === -1 || newIndex === -1) return
@@ -590,6 +624,7 @@ export default function BuilderPage() {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
         <div className="builder-grid">
@@ -616,10 +651,10 @@ export default function BuilderPage() {
             }
           />
         </div>
-        <DragOverlay>
-          {activeDragId ? (
+        <DragOverlay dropAnimation={null}>
+          {activeDrag ? (
             <div className="drag-overlay">
-              {activeDragId.startsWith('toolbox-') ? 'Yeni Alan' : 'Taşınıyor'}
+              {activeDrag.from === 'toolbox' ? `Yeni: ${activeDrag.label}` : activeDrag.label}
             </div>
           ) : null}
         </DragOverlay>

@@ -2450,6 +2450,12 @@ label {
   background: #1b2430;
   color: #fff;
   font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 10px 22px rgba(16, 24, 40, 0.24);
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .empty-state {
