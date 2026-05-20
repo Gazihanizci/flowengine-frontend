@@ -51,6 +51,8 @@ export default function Dashboard() {
   const [flowStartSuccess, setFlowStartSuccess] = useState<string | null>(null)
   const [flowSearchTerm, setFlowSearchTerm] = useState('')
   const [flowQuickFilter, setFlowQuickFilter] = useState<'ALL' | 'SHORT' | 'LONG'>('ALL')
+  const [userFlowSearch, setUserFlowSearch] = useState('')
+  const [userFlowSort, setUserFlowSort] = useState<'ALPHA_ASC' | 'ALPHA_DESC' | 'ID_ASC'>('ALPHA_ASC')
 
   // User specific lists
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
@@ -166,6 +168,51 @@ export default function Dashboard() {
     })
   }, [flows, flowQuickFilter, flowSearchTerm])
 
+  // Filter and sort flows based on user search and sorting preferences
+  const filteredAndSortedUserFlows = useMemo(() => {
+    const term = userFlowSearch.toLocaleLowerCase('tr-TR').trim()
+    
+    // 1. Filter
+    let result = flows
+    if (term) {
+      result = flows.filter(flow => 
+        flow.akisAdi.toLocaleLowerCase('tr-TR').includes(term) ||
+        String(flow.akisId).includes(term) ||
+        (flow.aciklama ?? '').toLocaleLowerCase('tr-TR').includes(term)
+      )
+    }
+    
+    // 2. Sort
+    return [...result].sort((a, b) => {
+      if (userFlowSort === 'ALPHA_ASC') {
+        return a.akisAdi.toLocaleLowerCase('tr-TR').localeCompare(b.akisAdi.toLocaleLowerCase('tr-TR'))
+      }
+      if (userFlowSort === 'ALPHA_DESC') {
+        return b.akisAdi.toLocaleLowerCase('tr-TR').localeCompare(a.akisAdi.toLocaleLowerCase('tr-TR'))
+      }
+      // ID_ASC
+      return a.akisId - b.akisId
+    })
+  }, [flows, userFlowSearch, userFlowSort])
+
+  const handleStartFlowById = async (akisId: number, akisName: string) => {
+    setSelectedFlowId(akisId)
+    setFlowStartLoading(true)
+    setFlowStartError(null)
+    setFlowStartSuccess(null)
+
+    try {
+      const response = await startFlow({ akisId })
+      setFlowStartSuccess(
+        response?.mesaj || `Akış başlatıldı: ${akisName || `#${akisId}`}`,
+      )
+    } catch (error) {
+      setFlowStartError(toErrorMessage(error, 'Akış başlatılamadı.'))
+    } finally {
+      setFlowStartLoading(false)
+    }
+  }
+
   const handleStartFlow = async () => {
     if (!selectedFlowId) return
 
@@ -235,11 +282,11 @@ export default function Dashboard() {
           </section>
 
           {/* User Quick Actions Grid */}
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <section className="grid gap-6 md:grid-cols-2">
             {/* Tasks Card */}
             <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 dark:border-slate-800 dark:bg-slate-900">
               <div className="absolute top-0 right-0 h-24 w-24 bg-blue-500/5 rounded-bl-full group-hover:scale-110 transition-transform duration-200" />
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-955/50 dark:text-blue-400">
                 <CheckSquare className="h-6 w-6" />
               </div>
               <h2 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Görevlerim</h2>
@@ -261,7 +308,7 @@ export default function Dashboard() {
             {/* Notifications Card */}
             <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 dark:border-slate-800 dark:bg-slate-900">
               <div className="absolute top-0 right-0 h-24 w-24 bg-indigo-500/5 rounded-bl-full group-hover:scale-110 transition-transform duration-200" />
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-955/50 dark:text-indigo-400">
                 <Bell className="h-6 w-6" />
               </div>
               <h2 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Bildirimler</h2>
@@ -279,53 +326,132 @@ export default function Dashboard() {
                 </button>
               </div>
             </article>
+          </section>
 
-            {/* Quick Flow Start Panel */}
-            <article className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/50 to-white p-6 shadow-sm dark:border-blue-900/30 dark:from-blue-950/10 dark:to-slate-900 lg:col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                <Play className="h-3.5 w-3.5 fill-blue-600 dark:fill-blue-400" />
-                <span>Hızlı Başlat</span>
-              </div>
-              <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Akış Başlat</h2>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Yetkiniz dahilindeki iş süreçlerini listeden seçerek anında başlatabilirsiniz.
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase" htmlFor="flow-select-user">
-                    İş Akışı Seçin
-                  </label>
-                  <select
-                    id="flow-select-user"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 transition dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"
-                    value={selectedFlowId ?? ''}
-                    onChange={(event) => setSelectedFlowId(Number(event.target.value))}
-                    disabled={loading || flows.length === 0}
-                  >
-                    {flows.length === 0 ? <option value="">Akış bulunamadı</option> : null}
-                    {flows.map((flow) => (
-                      <option key={flow.akisId} value={flow.akisId}>
-                        #{flow.akisId} - {flow.akisAdi}
-                      </option>
-                    ))}
-                  </select>
+          {/* Startable Flows Grid Section */}
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:backdrop-blur-md space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4 fill-blue-500 text-blue-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Yeni Süreç Başlat</span>
                 </div>
-
-                {error ? <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p> : null}
-                {flowStartError ? <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{flowStartError}</p> : null}
-                {flowStartSuccess ? <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{flowStartSuccess}</p> : null}
-
-                <button
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition disabled:opacity-50"
-                  type="button"
-                  onClick={handleStartFlow}
-                  disabled={!selectedFlowId || flowStartLoading || loading}
-                >
-                  {flowStartLoading ? 'Süreç Başlatılıyor...' : 'Süreci Başlat'}
-                </button>
+                <h2 className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">Başlatılabilir İş Akışları</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Yetkiniz dahilindeki iş süreçlerini arayıp sıralayarak anında başlatabilirsiniz.</p>
               </div>
-            </article>
+              <div className="flex items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/20 px-3 py-1.5 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-955/20 dark:text-blue-400">
+                <span>{filteredAndSortedUserFlows.length}</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Aktif Akış</span>
+              </div>
+            </div>
+
+            {/* Filter and Search Toolbar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs font-semibold outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                  type="search"
+                  value={userFlowSearch}
+                  placeholder="Akış adı veya açıklama ara..."
+                  onChange={(e) => setUserFlowSearch(e.target.value)}
+                />
+              </div>
+
+              {/* Sort controls */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sırala:</span>
+                <div className="flex gap-1">
+                  {(['ALPHA_ASC', 'ALPHA_DESC', 'ID_ASC'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setUserFlowSort(mode)}
+                      className={`rounded-full px-3 py-1.5 text-[10px] font-bold transition ${
+                        userFlowSort === mode
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
+                          : 'bg-white border border-slate-200 text-slate-655 hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-750 dark:text-slate-400 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {mode === 'ALPHA_ASC' ? 'A-Z' : mode === 'ALPHA_DESC' ? 'Z-A' : 'ID'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Error & Success States */}
+            {flowStartError ? (
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700 dark:border-rose-900/30 dark:bg-rose-955/20 dark:text-rose-400">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <p className="text-sm font-medium">{flowStartError}</p>
+              </div>
+            ) : null}
+            {flowStartSuccess ? (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-955/20 dark:text-emerald-400">
+                <CheckSquare className="h-5 w-5 shrink-0" />
+                <p className="text-sm font-medium">{flowStartSuccess}</p>
+              </div>
+            ) : null}
+
+            {/* Flows Grid */}
+            {filteredAndSortedUserFlows.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 py-12 text-center text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900/10">
+                Arama kriterine uygun iş akışı bulunamadı.
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredAndSortedUserFlows.map((flow) => {
+                  const isLaunchingThis = flowStartLoading && selectedFlowId === flow.akisId;
+                  return (
+                    <div
+                      key={flow.akisId}
+                      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 transition duration-200 hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/40"
+                    >
+                      <div>
+                        {/* Header ID */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                            #{flow.akisId}
+                          </span>
+                          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        </div>
+                        {/* Name & Desc */}
+                        <h3 className="text-sm font-extrabold text-slate-850 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                          {flow.akisAdi}
+                        </h3>
+                        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                          {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
+                        </p>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="mt-5">
+                        <button
+                          type="button"
+                          disabled={flowStartLoading}
+                          onClick={() => handleStartFlowById(flow.akisId, flow.akisAdi)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition disabled:opacity-50"
+                        >
+                          {isLaunchingThis ? (
+                            <>
+                              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              <span>Başlatılıyor...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3 w-3 fill-white" />
+                              <span>Süreci Başlat</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* Recent Activity Section */}

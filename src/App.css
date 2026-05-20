@@ -766,22 +766,6 @@ button,
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 16px 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.flow-card:hover {
-  border-color: rgba(15, 98, 254, 0.35);
-  box-shadow: 0 10px 18px rgba(16, 24, 40, 0.08);
-}
-
-.flow-card.selected {
-  border-color: var(--primary);
   box-shadow: 0 12px 24px rgba(15, 98, 254, 0.18);
 }
 
@@ -4916,33 +4900,47 @@ label {
   font-weight: 600;
 }
 
-/* Form Designer - reference style */
+/* Form Designer - premium compact style */
 .form-designer-page {
+  max-width: 1440px;
+  margin: 0 auto;
   min-height: calc(100vh - 80px);
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .form-designer-page .builder-header {
   border: 1px solid #dbe2ef;
-  border-radius: 18px;
-  background: #fff;
-  padding: 20px 22px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .form-designer-page .builder-header h1 {
-  font-size: 34px;
-  line-height: 1.05;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
   color: #0f172a;
 }
 
+.form-designer-page .builder-header p {
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  margin: 0 0 2px 0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .form-designer-page .builder-header .page-kicker {
-  font-size: 13px;
-  color: #64748b;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
 }
 
 .form-designer-page .builder-summary {
-  display: grid;
+  display: none;
 }
 
 .form-designer-page .step-name-editor,
@@ -4951,111 +4949,306 @@ label {
   display: block;
 }
 
-.form-designer-page .builder-grid {
-  grid-template-columns: 260px minmax(460px, 1fr) 300px;
-  gap: 0;
-  border: 1px solid #dbe2ef;
-  border-radius: 18px;
-  overflow: hidden;
-  background: #f8fafc;
-  min-height: calc(100vh - 260px);
+/* Individual Scrolling Grid Layout above 1100px width */
+@media (min-width: 1101px) {
+  .form-designer-page {
+    height: calc(100vh - 80px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-designer-page .builder-header {
+    flex-shrink: 0;
+  }
+
+  .form-designer-page .step-bar {
+    flex-shrink: 0;
+  }
+
+  .form-designer-page .builder-grid {
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr) 285px;
+    gap: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .form-designer-page .toolbox-panel {
+    border-right: 1px solid #e2e8f0;
+    padding: 12px;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .form-designer-page .toolbox-panel .toolbox-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none;
+    padding-right: 4px;
+  }
+
+  .form-designer-page .canvas {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    border-left: 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .form-designer-page .panel {
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+  }
+
+  .form-designer-page .panel .properties {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none;
+    padding: 4px 0 0 0;
+  }
 }
 
-.form-designer-page .toolbox-panel,
-.form-designer-page .canvas,
-.form-designer-page .properties {
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: #f8fafc;
+/* Fallback/Stretched Grid Layout below 1100px width */
+@media (max-width: 1100px) {
+  .form-designer-page .builder-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    margin-top: 12px;
+  }
+
+  .form-designer-page .toolbox-panel,
+  .form-designer-page .canvas,
+  .form-designer-page .panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-designer-page .toolbox-list {
+    max-height: 350px;
+    overflow-y: auto;
+  }
+
+  .form-designer-page .properties {
+    max-height: none;
+  }
+}
+
+/* Dark mode theme variables for Form Designer */
+:root[data-theme='dark'] .form-designer-page .builder-header,
+:root[data-theme='dark'] .form-designer-page .builder-grid {
+  border-color: #1e293b;
+}
+
+:root[data-theme='dark'] .form-designer-page .builder-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+:root[data-theme='dark'] .form-designer-page .builder-grid {
+  background: #0f172a;
+}
+
+:root[data-theme='dark'] .form-designer-page .toolbox-panel,
+:root[data-theme='dark'] .form-designer-page .panel {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+:root[data-theme='dark'] .form-designer-page .canvas {
+  background-color: #0b0f19;
+  border-color: #1e293b;
 }
 
 .form-designer-page .toolbox-panel {
-  border-right: 1px solid #dbe2ef;
-  padding: 20px;
+  border-right: 1px solid #e2e8f0;
+  padding: 14px;
 }
 
 .form-designer-page .toolbox-panel h2 {
-  font-size: 24px;
+  font-size: 13px;
   color: #0f172a;
 }
 
 .form-designer-page .toolbox-list {
-  max-height: calc(100vh - 360px);
+  max-height: calc(100vh - 480px);
   overflow-y: auto;
 }
 
 .form-designer-page .toolbox-item {
-  border-radius: 14px;
-  border-color: #cbd5e1;
+  border-radius: 10px;
+  border-color: #e2e8f0;
   background: #fff;
 }
 
 .form-designer-page .canvas {
-  border-right: 1px solid #dbe2ef;
-  padding: 20px;
+  border-right: 1px solid #e2e8f0;
+  padding: 14px;
 }
 
 .form-designer-page .canvas-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .form-designer-page .canvas-header h2 {
-  font-size: 24px;
+  font-size: 13px;
   color: #0f172a;
 }
 
 .form-designer-page .canvas-drop {
-  min-height: calc(100vh - 340px);
+  min-height: calc(100vh - 440px);
   border: 2px dashed #cbd5e1;
-  border-radius: 16px;
-  background: #fff;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle, #cbd5e1 0.8px, transparent 0.8px) 0 0 / 20px 20px,
+    #fff;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.form-designer-page .canvas-drop.hovered {
+  border-color: #60a5fa;
+  background-color: #eff6ff;
 }
 
 .form-designer-page .canvas-drop .empty {
-  min-height: 260px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #334155;
-  font-size: 18px;
-  line-height: 1.35;
-  padding: 24px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 20px;
 }
 
-.form-designer-page .panel:has(.properties) {
-  background: #f8fafc;
-}
+
 
 .form-designer-page .properties {
-  padding: 20px;
-  max-height: calc(100vh - 260px);
+  padding: 12px;
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
+}
+
+.form-designer-page .properties label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.form-designer-page .properties label span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.form-designer-page .properties .input,
+.form-designer-page .properties select,
+.form-designer-page .properties textarea {
+  width: 100%;
+  padding: 7px 11px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-designer-page .properties .input:focus,
+.form-designer-page .properties select:focus,
+.form-designer-page .properties textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.form-designer-page .properties .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.form-designer-page .properties .checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
 }
 
 .form-designer-page .step-navigation {
   position: sticky;
   bottom: 0;
   z-index: 20;
-  margin-top: 12px;
-  border: 1px solid #dbe2ef;
-  border-radius: 16px;
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   background: #fff;
-  padding: 12px;
+  padding: 10px 14px;
 }
 
 .form-designer-page .step-navigation .button.secondary {
-  min-width: 150px;
+  min-width: 130px;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 10px;
 }
 
 .form-designer-page .step-navigation .button.primary {
-  min-width: 220px;
-  background: #1450c8;
-  border-color: #1450c8;
+  min-width: 180px;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
 }
 
 /* Dashboard extra compact scale */
@@ -5136,24 +5329,8 @@ label {
   padding: 7px 8px;
 }
 
-@media (max-width: 1400px) {
+@media (min-width: 1101px) and (max-width: 1400px) {
   .form-designer-page .builder-grid {
-    grid-template-columns: 240px minmax(420px, 1fr) 280px;
-  }
-}
-
-@media (max-width: 1100px) {
-  .form-designer-page .builder-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-designer-page .toolbox-panel,
-  .form-designer-page .canvas {
-    border-right: 0;
-    border-bottom: 1px solid #dbe2ef;
-  }
-
-  .form-designer-page .canvas-drop {
-    min-height: 320px;
+    grid-template-columns: 220px minmax(0, 1fr) 260px;
   }
 }

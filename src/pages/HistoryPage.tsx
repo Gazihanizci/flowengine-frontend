@@ -46,6 +46,7 @@ export default function HistoryPage() {
   const [startDateFilter, setStartDateFilter] = useState('')
   const [endDateFilter, setEndDateFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [showFilters, setShowFilters] = useState(false)
 
   const loadHistory = async () => {
     setLoading(true)
@@ -135,107 +136,130 @@ export default function HistoryPage() {
               Tüm iş akış süreçlerini, onay durumlarını, form detaylarını ve geçmiş logları filtreleyerek anlık olarak inceleyebilirsiniz.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Advanced Filtering Panel */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:backdrop-blur-md">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">Gelişmiş Filtreleme</p>
           <button
             type="button"
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition dark:text-blue-400 dark:hover:text-blue-300"
-            onClick={() => {
-              setFlowFilter('')
-              setActionFilter('')
-              setStepFilter('')
-              setSurecIdFilter('')
-              setContentFilter('')
-              setStartDateFilter('')
-              setEndDateFilter('')
-            }}
+            onClick={() => setShowFilters(!showFilters)}
+            className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 shrink-0 ${
+              showFilters 
+                ? 'bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/10'
+            }`}
           >
-            Filtreleri Temizle
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <label>
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">İşlem Adı</span>
-            <select 
-              value={actionFilter} 
-              onChange={(e) => setActionFilter(e.target.value)} 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905"
-            >
-              <option value="">Tüm işlemler</option>
-              {actionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </label>
-
-          <label>
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Adım Adı</span>
-            <input 
-              value={stepFilter} 
-              onChange={(e) => setStepFilter(e.target.value)} 
-              placeholder="örn: Finans Onayı" 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
-            />
-          </label>
-
-          <label>
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Process ID</span>
-            <input 
-              value={surecIdFilter} 
-              onChange={(e) => setSurecIdFilter(e.target.value)} 
-              placeholder="PRC-000" 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
-            />
-          </label>
-
-          <label>
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tarih Aralığı</span>
-            <input 
-              type="date" 
-              value={startDateFilter} 
-              onChange={(e) => setStartDateFilter(e.target.value)} 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
-            />
-          </label>
-
-          <label className="xl:col-span-2">
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Akış Adı</span>
-            <input 
-              value={flowFilter} 
-              onChange={(e) => setFlowFilter(e.target.value)} 
-              placeholder="Akış adında ara" 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
-            />
-          </label>
-
-          <label className="xl:col-span-2">
-            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Açıklama / Not</span>
-            <div className="relative">
-              <input 
-                value={contentFilter} 
-                onChange={(e) => setContentFilter(e.target.value)} 
-                placeholder="Not veya içerikte ara" 
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-3.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
-              />
-              <Search className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
-          </label>
-        </div>
-
-        <div className="mt-5 flex justify-end">
-          <button 
-            type="button" 
-            onClick={loadHistory} 
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-[0.98] transition"
-          >
-            <Search className="h-4 w-4" /> Kayıtları Sorgula
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`}>
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            {showFilters ? 'Filtreleri Gizle' : 'Gelişmiş Filtrele'}
           </button>
         </div>
       </section>
+
+      {/* Collapsible Advanced Filtering Panel Wrapper */}
+      <div 
+        className={`transition-all duration-300 ease-in-out ${
+          showFilters 
+            ? 'opacity-100 max-h-[500px] !mt-5' 
+            : 'opacity-0 max-h-0 !mt-0 overflow-hidden pointer-events-none'
+        }`}
+      >
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:backdrop-blur-md">
+          <div className="mb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-350">Gelişmiş Filtreleme</p>
+            <button
+              type="button"
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition dark:text-blue-400 dark:hover:text-blue-300"
+              onClick={() => {
+                setFlowFilter('')
+                setActionFilter('')
+                setStepFilter('')
+                setSurecIdFilter('')
+                setContentFilter('')
+                setStartDateFilter('')
+                setEndDateFilter('')
+              }}
+            >
+              Filtreleri Temizle
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">İşlem Adı</span>
+              <select 
+                value={actionFilter} 
+                onChange={(e) => setActionFilter(e.target.value)} 
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905"
+              >
+                <option value="">Tüm işlemler</option>
+                {actionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Adım Adı</span>
+              <input 
+                value={stepFilter} 
+                onChange={(e) => setStepFilter(e.target.value)} 
+                placeholder="örn: Finans Onayı" 
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Process ID</span>
+              <input 
+                value={surecIdFilter} 
+                onChange={(e) => setSurecIdFilter(e.target.value)} 
+                placeholder="PRC-000" 
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Akış Adı</span>
+              <input 
+                value={flowFilter} 
+                onChange={(e) => setFlowFilter(e.target.value)} 
+                placeholder="Akış adında ara" 
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Açıklama / Not</span>
+              <div className="relative">
+                <input 
+                  value={contentFilter} 
+                  onChange={(e) => setContentFilter(e.target.value)} 
+                  placeholder="Not veya içerikte ara" 
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-2.5 pr-8 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+                />
+                <Search className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Tarih</span>
+              <input 
+                type="date" 
+                value={startDateFilter} 
+                onChange={(e) => setStartDateFilter(e.target.value)} 
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+              />
+            </label>
+          </div>
+
+          <div className="mt-3 flex justify-end">
+            <button 
+              type="button" 
+              onClick={loadHistory} 
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/10 hover:shadow-md active:scale-[0.98] transition"
+            >
+              <Search className="h-3.5 w-3.5" /> Kayıtları Sorgula
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* Status Cards */}
       <section className="grid gap-4 md:grid-cols-3">

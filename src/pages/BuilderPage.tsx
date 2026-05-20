@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -16,8 +16,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { useNavigate, useParams } from 'react-router-dom'
+import {
+  PenTool,
+  Eye,
+  Save
+} from 'lucide-react'
 import type { FormField, FieldType } from '../types/form'
-import type { ExternalFlowCancelBehavior, FlowStep } from '../types/flow'
+import type { FlowStep, ExternalFlowCancelBehavior } from '../types/flow'
 import { useFlowStore } from '../store/flowStore'
 import { fetchFlows, saveFlow, type FlowListItem, type SaveFlowPayload } from '../services/flowApi'
 import Toolbox from '../components/Toolbox'
@@ -312,7 +317,7 @@ export default function BuilderPage() {
       ...starterUserIds.map((userId) => ({ tip: 'USER' as const, refId: userId })),
     ]
 
-    // Form bileşeni yetkileri (alan seviyesinde) field.permissions listesinden gelir.
+    // Form bileseni yetkileri (alan seviyesinde) field.permissions listesinden gelir.
     const stepPayload: SaveFlowPayload['steps'] = steps.map((step, stepIndex) => ({
       stepName: step.stepName,
       stepOrder: stepIndex + 1,
@@ -419,170 +424,42 @@ export default function BuilderPage() {
 
   return (
     <div className="builder form-designer-page">
-      <header className="builder-header">
-        <div>
-          <span className="page-kicker">Is Akislari / Yeni Akis / Form Tasarimcisi</span>
-          <h1>Yeni Form Tasarimi</h1>
-          <p>Surukle-birak ile formunuzu olusturun.</p>
-        </div>
-        <div className="header-actions">
-          <button className="button secondary" type="button" onClick={() => navigate(`/preview/${currentStepId}`)}>
-            Onizle
-          </button>
-          <button className="button primary" type="button" onClick={handleSave} disabled={saving}>
-            {saving ? 'Kaydediliyor...' : 'Kaydet ve Devam Et'}
-          </button>
+      {/* Compact Hero Header */}
+      <header className="builder-header relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-4 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-850/50">
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-400/5 blur-2xl" />
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500">
+              <PenTool className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">İş Akışları / Yeni Akış / Form Tasarımcısı</p>
+              <h1 className="text-lg font-extrabold text-slate-900 dark:text-white">Form Tasarımı</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition active:scale-95"
+              type="button"
+              onClick={() => navigate(`/preview/${currentStepId}`)}
+            >
+              <Eye className="h-3.5 w-3.5" /> Önizle
+            </button>
+            <button
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-bold shadow-sm shadow-blue-500/10 transition active:scale-95"
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save className="h-3.5 w-3.5" /> {saving ? 'Kaydediliyor...' : 'Kaydet ve Devam Et'}
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="builder-summary">
-        <div className="summary-card">
-          <span>Akış Adı</span>
-          <strong>{flowName || 'Yeni Akış'}</strong>
-        </div>
-        <div className="summary-card">
-          <span>Adım</span>
-          <strong>
-            {currentStepId} / {steps.length}
-          </strong>
-        </div>
-        <div className="summary-card">
-          <span>Alan Sayısı</span>
-          <strong>{fields.length}</strong>
-        </div>
-      </div>
-
-      <div className="step-name-editor">
-        <label>
-          <span>Akış Adı</span>
-          <input
-            className="input"
-            value={flowName}
-            onChange={(event) => setFlowName(event.target.value)}
-            placeholder="Akış adını girin"
-          />
-        </label>
-      </div>
-
-      <div className="step-name-editor">
-        <label>
-          <span>Açıklama</span>
-          <textarea
-            className="input"
-            rows={3}
-            value={aciklama ?? ''}
-            onChange={(event) => setAciklama(event.target.value)}
-            placeholder="Akış açıklamasını girin"
-          />
-        </label>
-      </div>
-
-      <div className="step-name-editor">
-        <label>
-          <span>Adım Adı</span>
-          <input
-            className="input"
-            value={currentStep.stepName}
-            onChange={(event) => updateStepName(currentStep.stepId, event.target.value)}
-            placeholder={`Adım ${currentStep.stepId}`}
-          />
-        </label>
-      </div>
-
-      <div className="step-link-editor">
-        <div className="step-link-top">
-          <div>
-            <h3>Adım Sonrası Dış Akış</h3>
-            <p>Bu adım tamamlandığında, sonraki adıma geçmeden önce seçilen akış çalışsın mı?</p>
-          </div>
-          <label className="step-link-toggle">
-            <input
-              type="checkbox"
-              checked={Boolean(currentStep.externalFlowEnabled)}
-              onChange={(event) =>
-                updateStepExternalFlow(currentStep.stepId, {
-                  externalFlowEnabled: event.target.checked,
-                })
-              }
-            />
-            <span>Dış akış başlat</span>
-          </label>
-        </div>
-
-        {currentStep.externalFlowEnabled ? (
-          <div className="step-link-controls">
-            <label>
-              <span>Başlatılacak Akış</span>
-              <select
-                className="input"
-                value={currentStep.externalFlowId ?? ''}
-                onChange={(event) =>
-                  updateStepExternalFlow(currentStep.stepId, {
-                    externalFlowEnabled: true,
-                    externalFlowId: event.target.value ? Number(event.target.value) : null,
-                  })
-                }
-                disabled={loadingFlows}
-              >
-                <option value="">
-                  {loadingFlows ? 'Akışlar yukleniyor...' : 'Akış secin'}
-                </option>
-                {availableFlows.map((flow) => (
-                  <option key={flow.akisId} value={flow.akisId}>
-                    {flow.akisAdi} (ID: {flow.akisId})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={Boolean(currentStep.waitForExternalFlowCompletion)}
-                onChange={(event) =>
-                  updateStepExternalFlow(currentStep.stepId, {
-                    waitForExternalFlowCompletion: event.target.checked,
-                  })
-                }
-              />
-              <span>Alt akış tamamlanmadan bekle</span>
-            </label>
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={Boolean(currentStep.resumeParentAfterSubFlow)}
-                onChange={(event) =>
-                  updateStepExternalFlow(currentStep.stepId, {
-                    resumeParentAfterSubFlow: event.target.checked,
-                  })
-                }
-              />
-              <span>Alt akıştan sonra ana akış devam etsin</span>
-            </label>
-            <label>
-              <span>İptal Davranışı</span>
-              <select
-                className="input"
-                value={currentStep.cancelBehavior ?? 'PROPAGATE'}
-                onChange={(event) =>
-                  updateStepExternalFlow(currentStep.stepId, {
-                    cancelBehavior: event.target.value as ExternalFlowCancelBehavior,
-                  })
-                }
-              >
-                <option value="PROPAGATE">Alt akış reddedilirse ana akış da iptal olsun</option>
-                <option value="WAIT">Ana akış beklemede kalsın</option>
-              </select>
-            </label>
-            {flowLoadError ? <p className="error-text">{flowLoadError}</p> : null}
-            <p className="hint">
-              Seçilen akış tamamlandığında sonra mevcut akışın bir sonraki adımına dönülür.
-            </p>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="step-bar">
-        <div className="step-list">
+      {/* Step Pill Bar (Very Compact) */}
+      <div className="step-bar mt-2.5">
+        <div className="step-list flex flex-wrap gap-1.5">
           {steps.map((step, index) => {
             const linkedFlowId =
               step.externalFlowEnabled && step.externalFlowId ? step.externalFlowId : null
@@ -592,15 +469,19 @@ export default function BuilderPage() {
             return (
               <Fragment key={step.stepId}>
                 <button
-                  className={`step-pill ${step.stepId === currentStepId ? 'active' : ''}`}
+                  className={`step-pill px-3.5 py-1 text-[11.5px] font-bold rounded-full transition ${
+                    step.stepId === currentStepId
+                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
+                      : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-300 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400'
+                  }`}
                   type="button"
                   onClick={() => navigate(`/builder/${step.stepId}`)}
                 >
-                  {step.stepName}
+                  {step.stepName || `Adım ${step.stepId}`}
                 </button>
                 {hasNextStep && linkedFlowId ? (
                   <button
-                    className="embedded-flow-pill"
+                    className="embedded-flow-pill px-2.5 py-1 text-[10.5px] font-bold rounded-full bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 hover:bg-amber-100 transition"
                     type="button"
                     onClick={() => navigate(`/preview/${linkedFlowId}`)}
                     title="Ara akış özetini aç"
@@ -612,14 +493,15 @@ export default function BuilderPage() {
             )
           })}
         </div>
-        <div className="step-progress">
+        <div className="step-progress mt-2 h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
           <div
-            className="step-progress-bar"
+            className="step-progress-bar h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-305"
             style={{ width: `${(currentStepId / steps.length) * 100}%` }}
           />
         </div>
       </div>
 
+      {/* DnD Grid */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -627,7 +509,7 @@ export default function BuilderPage() {
         onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
-        <div className="builder-grid">
+        <div className="builder-grid mt-3">
           <Toolbox />
           <SortableContext
             items={fields.map((field) => field.id)}
@@ -649,6 +531,21 @@ export default function BuilderPage() {
             onUpdateStepRequiredApprovalCount={(count) =>
               updateStepRequiredApprovalCount(currentStep.stepId, count)
             }
+            flowName={flowName}
+            setFlowName={setFlowName}
+            aciklama={aciklama ?? ''}
+            setAciklama={setAciklama}
+            stepName={currentStep.stepName}
+            onUpdateStepName={(val) => updateStepName(currentStep.stepId, val)}
+            externalFlowEnabled={Boolean(currentStep.externalFlowEnabled)}
+            externalFlowId={currentStep.externalFlowId ?? null}
+            waitForExternalFlowCompletion={Boolean(currentStep.waitForExternalFlowCompletion)}
+            resumeParentAfterSubFlow={Boolean(currentStep.resumeParentAfterSubFlow)}
+            cancelBehavior={currentStep.cancelBehavior ?? 'PROPAGATE'}
+            onUpdateStepExternalFlow={(updates) => updateStepExternalFlow(currentStep.stepId, updates)}
+            availableFlows={availableFlows}
+            loadingFlows={loadingFlows}
+            flowLoadError={flowLoadError}
           />
         </div>
         <DragOverlay dropAnimation={null}>
@@ -660,6 +557,110 @@ export default function BuilderPage() {
         </DragOverlay>
       </DndContext>
 
+      {/* Adım Sonrası Dış Akış */}
+      <div className="step-link-editor mt-3 border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 rounded-2xl">
+        <div className="step-link-top flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-850 dark:text-slate-200">Adım Sonrası Dış Akış</h3>
+            <p className="text-xs text-slate-450 dark:text-slate-400 mt-0.5">Bu adım tamamlandığında, sonraki adıma geçmeden önce seçilen akış çalışsın mı?</p>
+          </div>
+          <label className="step-link-toggle flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-650 dark:text-slate-350">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              checked={Boolean(currentStep.externalFlowEnabled)}
+              onChange={(event) =>
+                updateStepExternalFlow(currentStep.stepId, {
+                  externalFlowEnabled: event.target.checked,
+                })
+              }
+            />
+            <span>Dış akış başlat</span>
+          </label>
+        </div>
+
+        {currentStep.externalFlowEnabled ? (
+          <div className="step-link-controls mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Başlatılacak Dış Akış</span>
+                <select
+                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  value={currentStep.externalFlowId ?? ''}
+                  onChange={(event) =>
+                    updateStepExternalFlow(currentStep.stepId, {
+                      externalFlowEnabled: true,
+                      externalFlowId: event.target.value ? Number(event.target.value) : null,
+                    })
+                  }
+                  disabled={loadingFlows}
+                >
+                  <option value="">
+                    {loadingFlows ? 'Akışlar yükleniyor...' : 'Akış seçin'}
+                  </option>
+                  {availableFlows.map((flow) => (
+                    <option key={flow.akisId} value={flow.akisId}>
+                      {flow.akisAdi} (ID: {flow.akisId})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">İptal Davranışı</span>
+                <select
+                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  value={currentStep.cancelBehavior ?? 'PROPAGATE'}
+                  onChange={(event) =>
+                    updateStepExternalFlow(currentStep.stepId, {
+                      cancelBehavior: event.target.value as ExternalFlowCancelBehavior,
+                    })
+                  }
+                >
+                  <option value="PROPAGATE">Alt akış reddedilirse ana akış da iptal olsun</option>
+                  <option value="WAIT">Ana akış beklemede kalsın</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="space-y-3 flex flex-col justify-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  checked={Boolean(currentStep.waitForExternalFlowCompletion)}
+                  onChange={(event) =>
+                    updateStepExternalFlow(currentStep.stepId, {
+                      waitForExternalFlowCompletion: event.target.checked,
+                    })
+                  }
+                />
+                <span className="text-[12px] font-medium text-slate-650 dark:text-slate-400">Alt akış tamamlanmadan bekle</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  checked={Boolean(currentStep.resumeParentAfterSubFlow)}
+                  onChange={(event) =>
+                    updateStepExternalFlow(currentStep.stepId, {
+                      resumeParentAfterSubFlow: event.target.checked,
+                    })
+                  }
+                />
+                <span className="text-[12px] font-medium text-slate-655 dark:text-slate-400">Alt akıştan sonra ana akış devam etsin</span>
+              </label>
+
+              {flowLoadError && <p className="text-xs text-rose-500 font-bold">{flowLoadError}</p>}
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-relaxed">
+                * Seçilen akış tamamlandıktan sonra mevcut akışın bir sonraki adımına dönülür.
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       <StepNavigation
         currentStep={currentStepId}
         totalSteps={steps.length}
@@ -670,5 +671,3 @@ export default function BuilderPage() {
     </div>
   )
 }
-
-
