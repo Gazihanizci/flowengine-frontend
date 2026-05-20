@@ -1,4 +1,16 @@
 import { useMemo, useEffect, useState } from 'react'
+import {
+  Play,
+  GitBranch,
+  GitMerge,
+  Layers,
+  Search,
+  Box,
+  Users,
+  ChevronRight,
+  ChevronDown,
+  Activity
+} from 'lucide-react'
 import { fetchFlowMap, fetchFlows, type FlowListItem, type FlowMapResponse } from '../services/flowApi'
 
 type StepNode = FlowMapResponse['adimlar'][number] & {
@@ -228,48 +240,123 @@ export default function FlowMapPage() {
     const children = (graph.childrenById.get(nodeId) ?? []).filter((id) => visibleNodeIds.includes(id))
     const isOpen = openNodeIds.includes(nodeId)
 
+    // Type color theme settings
+    let cardBorderClass = 'border-l-amber-500 dark:border-l-amber-600 bg-amber-50/10 dark:bg-amber-950/5';
+    let iconColorClass = 'text-amber-500 dark:text-amber-400';
+    let iconBgClass = 'bg-amber-100/50 dark:bg-amber-950/30';
+    let StepIcon = Layers;
+
+    if (node.tip === 'TETIKLEYICI' || nodeId === graph.rootId) {
+      cardBorderClass = 'border-l-emerald-500 dark:border-l-emerald-600 bg-emerald-50/10 dark:bg-emerald-950/5';
+      iconColorClass = 'text-emerald-500 dark:text-emerald-400';
+      iconBgClass = 'bg-emerald-100/50 dark:bg-emerald-950/30';
+      StepIcon = Play;
+    } else if (node.evre.toLowerCase().includes('child') || node.tip === 'SUBFLOW') {
+      cardBorderClass = 'border-l-indigo-500 dark:border-l-indigo-600 bg-indigo-50/10 dark:bg-indigo-950/5';
+      iconColorClass = 'text-indigo-500 dark:text-indigo-400';
+      iconBgClass = 'bg-indigo-100/50 dark:bg-indigo-950/30';
+      StepIcon = GitBranch;
+    } else if (node.tip === 'KARAR') {
+      cardBorderClass = 'border-l-blue-500 dark:border-l-blue-600 bg-blue-50/10 dark:bg-blue-950/5';
+      iconColorClass = 'text-blue-500 dark:text-blue-400';
+      iconBgClass = 'bg-blue-100/50 dark:bg-blue-950/30';
+      StepIcon = GitMerge;
+    }
+
     return (
       <div key={nodeId} className="mind-node-wrapper">
-        <button
-          type="button"
-          className={`mind-node ${nodeId === graph.rootId ? 'root' : ''} ${isOpen ? 'open' : ''}`}
+        <div
           onClick={() => handleToggleNode(nodeId)}
+          className={`mind-node relative flex flex-col gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 ${cardBorderClass} shadow-sm select-none cursor-pointer`}
         >
-          <div className="mind-node-title-row">
-            <strong>{node.adimAdi}</strong>
-            <span>{isOpen ? '-' : '+'}</span>
-          </div>
-          <div className="mind-node-meta-row">
-            <span>{node.evre}</span>
-            <span>#{node.sira}</span>
-          </div>
-          <div className="mind-node-meta-row">
-            <span>Tip: {node.tip}</span>
-            <span>Bilesen: {node.bilesenler.length}</span>
-          </div>
-        </button>
-
-        {isOpen && node.bilesenler.length > 0 ? (
-          <div className="mind-components">
-            {node.bilesenler.map((component, index) => (
-              <div key={`${node.adimId}-${component.etiket}-${index}`} className="mind-component-chip">
-                <span className="tag">{component.tip}</span>
-                <span>{component.etiket}</span>
-                <small>
-                  {component.yetkiliIsimleri.length > 0
-                    ? component.yetkiliIsimleri.join(', ')
-                    : 'Yetkili yok'}
-                </small>
+          {/* Header Row */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${iconBgClass} ${iconColorClass}`}>
+                <StepIcon className="h-4 w-4" />
               </div>
-            ))}
-          </div>
-        ) : null}
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1">{node.adimAdi}</h4>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{node.tip}</span>
+              </div>
+            </div>
 
-        {children.length > 0 && isOpen ? (
+            <div
+              className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 transition shadow-sm shrink-0"
+            >
+              {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </div>
+          </div>
+
+          {/* Badges Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+              {node.evre}
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+              Adım #{node.sira}
+            </span>
+            {node.bilesenler.length > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                {node.bilesenler.length} Bileşen
+              </span>
+            )}
+          </div>
+
+          {/* Components nested list */}
+          {isOpen && node.bilesenler.length > 0 && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5 w-full cursor-default"
+            >
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Adım Bileşenleri</p>
+              <div className="space-y-2">
+                {node.bilesenler.map((comp, idx) => (
+                  <div
+                    key={`${node.adimId}-${comp.etiket}-${idx}`}
+                    className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-800 dark:bg-slate-900/50 hover:bg-slate-100/30 dark:hover:bg-slate-950/20 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-355">{comp.etiket}</span>
+                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100/50 dark:bg-blue-950/50 text-blue-750 dark:text-blue-400 shrink-0">
+                        {comp.tip}
+                      </span>
+                    </div>
+                    {comp.yetkiliIsimleri.length > 0 ? (
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                        {comp.yetkiliIsimleri.map((name, i) => {
+                          const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                          return (
+                            <div
+                              key={i}
+                              className="inline-flex items-center gap-1 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-slate-600 dark:text-slate-300 shadow-sm"
+                            >
+                              <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-[8px] text-white flex items-center justify-center uppercase font-extrabold shrink-0">
+                                {initials}
+                              </div>
+                              <span>{name}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                        <Users className="w-3 h-3" />
+                        <span>Yetkili atanmamış</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isOpen && children.length > 0 && (
           <div className="mind-children">
             {children.map((childId) => renderNode(childId))}
           </div>
-        ) : null}
+        )}
       </div>
     )
   }
@@ -277,52 +364,76 @@ export default function FlowMapPage() {
   return (
     <div className="dashboard flow-map-page">
       <div className="dashboard-shell">
-        <div className="dashboard-top">
-          <div>
-            <h1>Flow Tree</h1>
-            <p>İlk basta ANA adım görünür. Düğmelere bastıkça alt adımlar açılır.</p>
+        {/* Header Banner */}
+        <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-8 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-850/50">
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-400/10 blur-2xl" />
+          <div className="absolute -bottom-10 right-20 h-32 w-32 rounded-full bg-indigo-400/10 blur-2xl" />
+          <div className="relative flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500">
+                  <GitBranch className="h-5 w-5" />
+                </div>
+                <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Flow Treemap</h1>
+              </div>
+              <p className="text-sm font-semibold text-slate-550 dark:text-slate-450">
+                Akış süreçlerini adım adım ve ilişkileriyle görselleştirin. Düğümlere tıklayarak detayları genişletin.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
         <div className="flow-map-layout">
-          <aside className="panel flow-map-sidebar">
-            <div className="panel-header">
-              <h2>Akışlar</h2>
-              <span>
-                {filteredFlows.length} / {flows.length} kayıt
+          <aside className="panel flow-map-sidebar shadow-sm border border-slate-200 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 p-5">
+            <div className="panel-header mb-4">
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Akışlar</h2>
+              <span className="text-xs font-bold text-slate-450 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
+                {filteredFlows.length} / {flows.length}
               </span>
             </div>
 
-            <div className="flow-map-filter">
-              <label className="flow-map-search">
-                <span>Akış Ara</span>
+            <div className="flow-map-filter space-y-3">
+              <div className="relative">
                 <input
-                  className="input"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-3.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905"
                   type="search"
                   value={flowSearch}
-                  placeholder="ID, akış adı, açıklama..."
+                  placeholder="Akış ara (ad, ID)..."
                   onChange={(event) => setFlowSearch(event.target.value)}
                 />
-              </label>
+                <Search className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              </div>
 
-              <div className="flow-map-filter-chips">
+              <div className="flow-map-filter-chips flex gap-2">
                 <button
                   type="button"
-                  className={`flow-map-filter-chip ${flowQuickFilter === 'ALL' ? 'active' : ''}`}
+                  className={`flow-map-filter-chip border text-xs font-bold px-3 py-1.5 rounded-full transition ${
+                    flowQuickFilter === 'ALL'
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
+                      : 'bg-white border-slate-200 text-slate-500 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 hover:border-slate-300'
+                  }`}
                   onClick={() => setFlowQuickFilter('ALL')}
                 >
                   Tümü
                 </button>
                 <button
                   type="button"
-                  className={`flow-map-filter-chip ${flowQuickFilter === 'WITH_DESC' ? 'active' : ''}`}
+                  className={`flow-map-filter-chip border text-xs font-bold px-3 py-1.5 rounded-full transition ${
+                    flowQuickFilter === 'WITH_DESC'
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
+                      : 'bg-white border-slate-200 text-slate-500 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 hover:border-slate-300'
+                  }`}
                   onClick={() => setFlowQuickFilter('WITH_DESC')}
                 >
                   Açıklamalı
                 </button>
                 <button
                   type="button"
-                  className={`flow-map-filter-chip ${flowQuickFilter === 'NO_DESC' ? 'active' : ''}`}
+                  className={`flow-map-filter-chip border text-xs font-bold px-3 py-1.5 rounded-full transition ${
+                    flowQuickFilter === 'NO_DESC'
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
+                      : 'bg-white border-slate-200 text-slate-500 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 hover:border-slate-300'
+                  }`}
                   onClick={() => setFlowQuickFilter('NO_DESC')}
                 >
                   Açıklamasız
@@ -332,7 +443,7 @@ export default function FlowMapPage() {
               {(flowSearch || flowQuickFilter !== 'ALL') && (
                 <button
                   type="button"
-                  className="button secondary flow-map-clear"
+                  className="w-full text-xs font-bold py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-650 transition dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-750"
                   onClick={() => {
                     setFlowSearch('')
                     setFlowQuickFilter('ALL')
@@ -343,55 +454,88 @@ export default function FlowMapPage() {
               )}
             </div>
 
-            {loadingFlows ? <p className="hint">Akislar yukleniyor...</p> : null}
-            {error ? <p className="error-text">{error}</p> : null}
+            {loadingFlows ? <p className="hint text-xs font-semibold text-slate-450 mt-4">Akışlar yükleniyor...</p> : null}
+            {error ? <p className="error-text text-xs font-bold text-red-500 mt-4">{error}</p> : null}
 
-            {!loadingFlows && flows.length === 0 ? <p className="hint">Kayıtlı akış bulunamadı.</p> : null}
+            {!loadingFlows && flows.length === 0 ? <p className="hint text-xs font-semibold text-slate-450 mt-4">Kayıtlı akış bulunamadı.</p> : null}
             {!loadingFlows && flows.length > 0 && filteredFlows.length === 0 ? (
-              <p className="hint">Filtreye uygun akış bulunamadı.</p>
+              <p className="hint text-xs font-semibold text-slate-450 mt-4">Filtreye uygun akış bulunamadı.</p>
             ) : null}
 
-            <div className="flow-map-list">
-              {filteredFlows.map((flow) => (
-                <button
-                  key={flow.akisId}
-                  type="button"
-                  className={`flow-map-item ${selectedFlowId === flow.akisId ? 'selected' : ''}`}
-                  onClick={() => setSelectedFlowId(flow.akisId)}
-                >
-                  <strong>{flow.akisAdi}</strong>
-                  <span>ID: {flow.akisId}</span>
-                </button>
-              ))}
+            <div className="flow-map-list custom-scrollbar mt-4 space-y-2">
+              {filteredFlows.map((flow) => {
+                const isSelected = selectedFlowId === flow.akisId;
+                return (
+                  <button
+                    key={flow.akisId}
+                    type="button"
+                    className={`w-full text-left p-3 rounded-2xl border transition-all duration-150 ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50/45 dark:border-blue-400 dark:bg-blue-950/20'
+                        : 'border-slate-200 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700/80'
+                    }`}
+                    onClick={() => setSelectedFlowId(flow.akisId)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="text-sm font-bold truncate text-slate-800 dark:text-slate-100">{flow.akisAdi}</strong>
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                        ID: {flow.akisId}
+                      </span>
+                    </div>
+                    {flow.aciklama && (
+                      <p className="text-xs text-slate-450 dark:text-slate-505 truncate mt-1">{flow.aciklama}</p>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </aside>
 
-          <section className="panel flow-map-main">
-            {loadingMap ? <p className="hint">Flow map yükleniyor...</p> : null}
+          <section className="flow-map-main flex-1 space-y-4">
+            {loadingMap ? <p className="hint text-sm font-semibold text-slate-450">Flow map yükleniyor...</p> : null}
 
             {!loadingMap && !flowMap ? (
-              <p className="hint">Görselleştirmek için bir akış seçin.</p>
+              <p className="hint text-sm font-semibold text-slate-450 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                Görselleştirmek için bir akış seçin.
+              </p>
             ) : null}
 
             {!loadingMap && flowMap ? (
               <>
-                <div className="flow-map-summary">
-                  <div className="summary-card">
-                    <span>Akış</span>
-                    <strong>{flowMap.akisAdi}</strong>
+                <div className="flow-map-summary grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 border-l-4 border-l-indigo-500 flex items-center gap-4 transition hover:shadow-md">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                      <Activity className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Seçilen Akış</p>
+                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">{flowMap.akisAdi}</h4>
+                    </div>
                   </div>
-                  <div className="summary-card">
-                    <span>Toplam Adım</span>
-                    <strong>{totalStepCount}</strong>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 border-l-4 border-l-emerald-500 flex items-center gap-4 transition hover:shadow-md">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Toplam Adım</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">{totalStepCount}</h4>
+                    </div>
                   </div>
-                  <div className="summary-card">
-                    <span>Toplam Bileşen</span>
-                    <strong>{totalComponentCount}</strong>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 border-l-4 border-l-blue-500 flex items-center gap-4 transition hover:shadow-md">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
+                      <Box className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Toplam Bileşen</p>
+                      <h4 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">{totalComponentCount}</h4>
+                    </div>
                   </div>
                 </div>
 
                 <div className="mind-tree-canvas">
-                  {graph.rootId ? renderNode(graph.rootId) : <p className="hint">Kök adım bulunamadı.</p>}
+                  {graph.rootId ? renderNode(graph.rootId) : <p className="hint text-xs font-semibold text-slate-450">Kök adım bulunamadı.</p>}
                 </div>
               </>
             ) : null}

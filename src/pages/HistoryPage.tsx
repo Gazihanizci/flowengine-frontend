@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { Search } from 'lucide-react'
 import { createPortal } from 'react-dom'
@@ -119,17 +119,32 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">Islem Gecmisi</h1>
-        <p className="mt-2 text-sm text-slate-600">Tum is akis sureclerini ve gecmis loglari buradan takip edebilirsiniz.</p>
+      {/* Header Banner */}
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-8 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-850/50">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/5" />
+        <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/5" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Log & Geçmiş İzleme</p>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">İşlem Geçmişi</h1>
+            <p className="text-slate-600 dark:text-slate-350 max-w-3xl text-sm leading-relaxed">
+              Tüm iş akış süreçlerini, onay durumlarını, form detaylarını ve geçmiş logları filtreleyerek anlık olarak inceleyebilirsiniz.
+            </p>
+          </div>
+        </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">Gelismis Filtreleme</p>
+      {/* Advanced Filtering Panel */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:backdrop-blur-md">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">Gelişmiş Filtreleme</p>
           <button
             type="button"
-            className="text-xs font-semibold text-blue-600"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition dark:text-blue-400 dark:hover:text-blue-300"
             onClick={() => {
               setFlowFilter('')
               setActionFilter('')
@@ -144,80 +159,115 @@ export default function HistoryPage() {
           </button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label>
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Islem Adi</span>
-            <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-              <option value="">Tum islemler</option>
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">İşlem Adı</span>
+            <select 
+              value={actionFilter} 
+              onChange={(e) => setActionFilter(e.target.value)} 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905"
+            >
+              <option value="">Tüm işlemler</option>
               {actionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
 
           <label>
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Adim Adi</span>
-            <input value={stepFilter} onChange={(e) => setStepFilter(e.target.value)} placeholder="orn: Finans Onayi" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Adım Adı</span>
+            <input 
+              value={stepFilter} 
+              onChange={(e) => setStepFilter(e.target.value)} 
+              placeholder="örn: Finans Onayı" 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+            />
           </label>
 
           <label>
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Process ID</span>
-            <input value={surecIdFilter} onChange={(e) => setSurecIdFilter(e.target.value)} placeholder="PRC-00000" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Process ID</span>
+            <input 
+              value={surecIdFilter} 
+              onChange={(e) => setSurecIdFilter(e.target.value)} 
+              placeholder="PRC-000" 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+            />
           </label>
 
           <label>
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tarih Araligi</span>
-            <input type="date" value={startDateFilter} onChange={(e) => setStartDateFilter(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tarih Aralığı</span>
+            <input 
+              type="date" 
+              value={startDateFilter} 
+              onChange={(e) => setStartDateFilter(e.target.value)} 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+            />
           </label>
 
           <label className="xl:col-span-2">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Akis adi</span>
-            <input value={flowFilter} onChange={(e) => setFlowFilter(e.target.value)} placeholder="Akis adinda ara" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Akış Adı</span>
+            <input 
+              value={flowFilter} 
+              onChange={(e) => setFlowFilter(e.target.value)} 
+              placeholder="Akış adında ara" 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+            />
           </label>
 
           <label className="xl:col-span-2">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Aciklama / Not</span>
+            <span className="mb-2 block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Açıklama / Not</span>
             <div className="relative">
-              <input value={contentFilter} onChange={(e) => setContentFilter(e.target.value)} placeholder="Not veya icerikte ara" className="w-full rounded-xl border border-slate-300 py-2 pl-3 pr-9 text-sm" />
-              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input 
+                value={contentFilter} 
+                onChange={(e) => setContentFilter(e.target.value)} 
+                placeholder="Not veya içerikte ara" 
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-3.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-905" 
+              />
+              <Search className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </label>
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <button type="button" onClick={loadHistory} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
-            <Search className="h-4 w-4" /> Kayitlari Sorgula
+        <div className="mt-5 flex justify-end">
+          <button 
+            type="button" 
+            onClick={loadHistory} 
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-[0.98] transition"
+          >
+            <Search className="h-4 w-4" /> Kayıtları Sorgula
           </button>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold tracking-wide text-slate-500">TOPLAM ISLEM</p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{filteredHistory.length.toLocaleString('tr-TR')}</p>
+      {/* Status Cards */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-200 hover:shadow-md border-l-4 border-l-blue-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">TOPLAM İŞLEM</p>
+          <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">{filteredHistory.length.toLocaleString('tr-TR')}</p>
         </article>
-        <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-xs font-semibold tracking-wide text-emerald-700">ONAYLANAN</p>
-          <p className="mt-1 text-xl font-bold text-emerald-700">{approvedCount.toLocaleString('tr-TR')}</p>
+        <article className="rounded-2xl border border-slate-200 bg-emerald-50/20 p-5 shadow-sm dark:border-slate-800 dark:bg-emerald-950/10 transition-all duration-200 hover:shadow-md border-l-4 border-l-emerald-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-455">ONAYLANAN</p>
+          <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{approvedCount.toLocaleString('tr-TR')}</p>
         </article>
-        <article className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-          <p className="text-xs font-semibold tracking-wide text-rose-700">REDDEDILEN</p>
-          <p className="mt-1 text-xl font-bold text-rose-700">{rejectedCount.toLocaleString('tr-TR')}</p>
+        <article className="rounded-2xl border border-slate-200 bg-rose-50/20 p-5 shadow-sm dark:border-slate-800 dark:bg-rose-950/10 transition-all duration-200 hover:shadow-md border-l-4 border-l-rose-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-455">REDDEDİLEN</p>
+          <p className="mt-2 text-3xl font-black text-rose-700 dark:text-rose-400">{rejectedCount.toLocaleString('tr-TR')}</p>
         </article>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">Kayitlar</h2>
-          <span className="text-xs text-slate-500">Siralama: En Yeni Once</span>
+      {/* Records List Section */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Kayıtlar</h2>
+          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Sıralama: En Yeni Önce</span>
         </div>
 
-        {error ? <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p> : null}
+        {error ? <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50/50 p-4 text-xs font-semibold text-rose-650 dark:text-rose-400">{error}</p> : null}
 
         {loading ? (
-          <p className="text-sm text-slate-500">Yukleniyor...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Yükleniyor...</p>
         ) : pageItems.length === 0 ? (
-          <p className="text-sm text-slate-500">Kayit bulunamadi.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Kayıt bulunamadı.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {pageItems.map((item, index) => {
               const rejected = item.aksiyon.toLocaleUpperCase('tr-TR').includes('RED')
               return (
@@ -225,30 +275,36 @@ export default function HistoryPage() {
                   key={`${item.surecId}-${item.tarih}-${item.aksiyon}-${index}`}
                   type="button"
                   onClick={() => setSelectedItem(item)}
-                  className="w-full rounded-xl border border-slate-200 bg-white text-left transition hover:border-slate-300"
+                  className="w-full rounded-2xl border border-slate-200 bg-white text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-blue-400/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700/80"
                 >
-                  <div className="grid gap-3 p-3 md:grid-cols-[1.25fr_1.8fr_220px]">
-                    <div className="border-slate-200 md:border-r md:pr-3">
-                      <p className="text-xs font-semibold text-blue-700">PRC-{item.surecId}</p>
-                      <p className="mt-1 text-xl font-semibold text-slate-900">{item.akisAdi}</p>
-                      <p className="mt-1 text-xs text-slate-500">Tip: Ofis Ekipmani</p>
+                  <div className="grid gap-4 p-4 md:grid-cols-[1.4fr_1.8fr_220px] items-center">
+                    <div className="border-slate-100 dark:border-slate-800 md:border-r md:pr-4">
+                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400">PRC-{item.surecId}</p>
+                      <p className="mt-1 text-base font-extrabold text-slate-800 dark:text-slate-100 leading-snug">{item.akisAdi}</p>
+                      <p className="mt-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500">Tip: Ofis Ekipmanı</p>
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aktif Adim</p>
-                      <p className="text-sm font-semibold text-slate-900">{item.adimAdi}</p>
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Aciklama / Not</p>
-                      <p className="text-sm text-slate-700 line-clamp-2">{item.formIcerik || item.aciklama || '-'}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Aktif Adım</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">{item.adimAdi}</p>
+                      <p className="mt-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Açıklama / Not</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">{item.formIcerik || item.aciklama || '-'}</p>
                     </div>
 
-                    <div className="flex items-start justify-end gap-3">
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${rejected ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {rejected ? 'Reddedildi' : 'Onaylandi'}
+                    <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 border-t border-slate-50 md:border-t-0 pt-3 md:pt-0">
+                      <div className="flex flex-col md:items-end gap-1.5">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold border ${
+                          rejected 
+                            ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/40' 
+                            : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/40'
+                        }`}>
+                          {rejected ? 'Reddedildi' : 'Onaylandı'}
                         </span>
-                        <p className="text-right text-xs text-slate-600">{item.tarih}</p>
+                        <p className="text-xs font-semibold text-slate-450 dark:text-slate-500 mt-0.5">{item.tarih}</p>
                       </div>
-                      <span className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600">Detay</span>
+                      <span className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-655 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-350 dark:hover:bg-slate-750 transition">
+                        Detay
+                      </span>
                     </div>
                   </div>
                 </button>
@@ -257,53 +313,83 @@ export default function HistoryPage() {
           </div>
         )}
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 text-xs text-slate-500">
+        {/* Pagination Controls */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs font-bold text-slate-400 dark:text-slate-505">
           <p>
-            Toplam {filteredHistory.length.toLocaleString('tr-TR')} kayittan {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredHistory.length)} arasi gosteriliyor
+            Toplam {filteredHistory.length.toLocaleString('tr-TR')} kayıttan {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredHistory.length)} arası gösteriliyor
           </p>
           <div className="flex items-center gap-1">
-            <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-md border border-slate-300 px-2 py-1 disabled:opacity-40">{'<'}</button>
-            <span className="rounded-md bg-blue-600 px-2 py-1 font-semibold text-white">{page}</span>
-            <span>/ {totalPages}</span>
-            <button disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="rounded-md border border-slate-300 px-2 py-1 disabled:opacity-40">{'>'}</button>
+            <button 
+              disabled={page <= 1} 
+              onClick={() => setPage((p) => Math.max(1, p - 1))} 
+              className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2.5 disabled:opacity-40 dark:border-slate-800 dark:bg-slate-905 dark:hover:bg-slate-850 transition"
+            >
+              {'<'}
+            </button>
+            <span className="rounded-xl bg-blue-600 px-4 py-2.5 font-bold text-white shadow-sm shadow-blue-500/10">
+              {page}
+            </span>
+            <span className="px-2">/ {totalPages}</span>
+            <button 
+              disabled={page >= totalPages} 
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))} 
+              className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2.5 disabled:opacity-40 dark:border-slate-800 dark:bg-slate-905 dark:hover:bg-slate-850 transition"
+            >
+              {'>'}
+            </button>
           </div>
         </div>
       </section>
 
       {selectedItem && typeof document !== 'undefined'
         ? createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onClick={() => setSelectedItem(null)}>
-            <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.35)]" onClick={(event) => event.stopPropagation()}>
-              <div className="flex items-start justify-between gap-3">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" onClick={() => setSelectedItem(null)}>
+            <div className="w-full max-w-2xl rounded-3xl border border-slate-150 bg-white p-6 shadow-2xl dark:border-slate-850 dark:bg-slate-900" onClick={(event) => event.stopPropagation()}>
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Islem Detayi</p>
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">#{selectedItem.surecId} - {selectedItem.akisAdi}</h2>
-                  <p className="mt-1 text-sm text-slate-500">{selectedItem.tarih}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-505">İşlem Detayı</p>
+                  <h2 className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">#{selectedItem.surecId} - {selectedItem.akisAdi}</h2>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{selectedItem.tarih}</p>
                 </div>
-                <button type="button" onClick={() => setSelectedItem(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50">Kapat</button>
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedItem(null)} 
+                  className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition"
+                >
+                  Kapat
+                </button>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Adim</p>
-                  <p className="mt-1 text-sm font-semibold text-cyan-900">{selectedItem.adimAdi}</p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-cyan-100 bg-cyan-50/50 p-4 dark:border-cyan-950/30 dark:bg-cyan-950/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">Adım</p>
+                  <p className="mt-1 text-sm font-extrabold text-cyan-900 dark:text-cyan-200">{selectedItem.adimAdi}</p>
                 </div>
-                <div className={`rounded-xl border p-3 ${selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('RED') ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Aksiyon</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{selectedItem.aksiyon}</p>
+                <div className={`rounded-xl border p-4 ${
+                  selectedItem.aksiyon.toLocaleUpperCase('tr-TR').includes('RED') 
+                    ? 'border-rose-100 bg-rose-50/50 dark:border-rose-950/30 dark:bg-rose-950/10' 
+                    : 'border-emerald-100 bg-emerald-50/50 dark:border-emerald-950/30 dark:bg-emerald-950/10'
+                }`}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-405">Aksiyon</p>
+                  <p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-slate-200">{selectedItem.aksiyon}</p>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Form Icerigi</p>
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Form İçeriği</p>
                 {detailLines.length > 0 ? (
                   <ul className="space-y-2">
                     {detailLines.map((line, idx) => (
-                      <li key={`${line}-${idx}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">{line}</li>
+                      <li 
+                        key={`${line}-${idx}`} 
+                        className="rounded-xl border border-slate-150 bg-white px-4 py-3 text-xs font-medium text-slate-700 dark:border-slate-800/80 dark:bg-slate-905 dark:text-slate-300 shadow-sm"
+                      >
+                        {line}
+                      </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-slate-500">Bu kayit icin form icerigi bulunamadi.</p>
+                  <p className="text-xs font-medium text-slate-450 dark:text-slate-500">Bu kayıt için form içeriği bulunamadı.</p>
                 )}
               </div>
             </div>

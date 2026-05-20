@@ -4,6 +4,21 @@ import { fetchMe, type MeResponseItem } from '../services/userApi'
 import { fetchUnreadNotificationCount } from '../services/notificationApi'
 import { fetchMyTasks } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
+import { 
+  LayoutDashboard, 
+  CheckSquare, 
+  AlertCircle, 
+  Bell, 
+  FileText, 
+  History, 
+  Network, 
+  PlusCircle, 
+  ShieldAlert, 
+  Sun, 
+  Moon, 
+  LogOut, 
+  Workflow 
+} from 'lucide-react'
 
 type ThemeMode = 'light' | 'dark'
 
@@ -152,11 +167,20 @@ export default function AppLayout() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="sidebar-brand">İş Akışı</div>
+        <div className="sidebar-brand flex items-center gap-2.5 px-3 py-4 text-xl font-bold tracking-tight text-white border-b border-white/10 mb-2">
+          <Workflow className="h-6 w-6 text-blue-400" />
+          <span>İş Akışı</span>
+        </div>
+
         {user ? (
-          <div className="user-card">
-            <span className="user-role">{user.rolAdi}</span>
-            <strong>{user.adSoyad}</strong>
+          <div className="user-card flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner mb-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 font-bold text-white shadow-md shadow-blue-500/20 text-xs">
+              {user.adSoyad.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="block text-[9px] font-bold tracking-widest text-blue-300/80 uppercase leading-none mb-1">{user.rolAdi}</span>
+              <strong className="block truncate text-xs font-semibold text-slate-100">{user.adSoyad}</strong>
+            </div>
           </div>
         ) : null}
 
@@ -166,7 +190,10 @@ export default function AppLayout() {
             end
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            Gösterge Paneli
+            <span className="flex items-center gap-3">
+              <LayoutDashboard className="h-4.5 w-4.5 opacity-90" />
+              <span>Gösterge Paneli</span>
+            </span>
           </NavLink>
 
           {!isTaskDetailPage ? (
@@ -174,20 +201,29 @@ export default function AppLayout() {
               to="/tasks"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              <span>Görev Formları</span>
+              <span className="flex items-center gap-3">
+                <CheckSquare className="h-4.5 w-4.5 opacity-90" />
+                <span>Görev Formları</span>
+              </span>
               {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
             </NavLink>
           ) : null}
 
           <NavLink to="/issues" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            Issue Yönetimi
+            <span className="flex items-center gap-3">
+              <AlertCircle className="h-4.5 w-4.5 opacity-90" />
+              <span>Issue Yönetimi</span>
+            </span>
           </NavLink>
 
           <NavLink
             to="/notifications"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            <span>Bildirimler</span>
+            <span className="flex items-center gap-3">
+              <Bell className="h-4.5 w-4.5 opacity-90" />
+              <span>Bildirimler</span>
+            </span>
             {notificationCount > 0 ? <span className="nav-badge">{notificationCount}</span> : null}
           </NavLink>
 
@@ -195,14 +231,20 @@ export default function AppLayout() {
             to="/pdf-reports"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            PDF Raporları
+            <span className="flex items-center gap-3">
+              <FileText className="h-4.5 w-4.5 opacity-90" />
+              <span>PDF Raporları</span>
+            </span>
           </NavLink>
 
           <NavLink
             to="/history"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            İşlem Geçmişi
+            <span className="flex items-center gap-3">
+              <History className="h-4.5 w-4.5 opacity-90" />
+              <span>İşlem Geçmişi</span>
+            </span>
           </NavLink>
 
           {user?.rolId === 4 ? (
@@ -210,7 +252,10 @@ export default function AppLayout() {
               to="/flow-map"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Flow Treemap
+              <span className="flex items-center gap-3">
+                <Network className="h-4.5 w-4.5 opacity-90" />
+                <span>Flow Treemap</span>
+              </span>
             </NavLink>
           ) : null}
 
@@ -219,7 +264,10 @@ export default function AppLayout() {
               to="/create-flow"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Akış Olustur
+              <span className="flex items-center gap-3">
+                <PlusCircle className="h-4.5 w-4.5 opacity-90" />
+                <span>Akış Oluştur</span>
+              </span>
             </NavLink>
           ) : null}
 
@@ -228,18 +276,39 @@ export default function AppLayout() {
               to="/role-management"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              Rol Yönetimi
+              <span className="flex items-center gap-3">
+                <ShieldAlert className="h-4.5 w-4.5 opacity-90" />
+                <span>Rol Yönetimi</span>
+              </span>
             </NavLink>
           ) : null}
         </nav>
 
-        <div className="sidebar-footer">
-          <button type="button" className="theme-toggle" onClick={handleThemeToggle}>
-            Tema: {theme === 'dark' ? 'Koyu' : 'Açık'}
+        <div className="sidebar-footer mt-auto flex flex-col gap-2">
+          <button 
+            type="button" 
+            className="theme-toggle flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-semibold rounded-xl transition duration-150" 
+            onClick={handleThemeToggle}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="h-4 w-4 text-amber-400" />
+                <span>Açık Tema</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-4 w-4 text-slate-300" />
+                <span>Koyu Tema</span>
+              </>
+            )}
           </button>
 
-          <button className="button secondary logout-button" onClick={handleLogout}>
-            Çıkış Yap
+          <button 
+            className="logout-button flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-semibold rounded-xl transition duration-150" 
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Çıkış Yap</span>
           </button>
         </div>
       </aside>

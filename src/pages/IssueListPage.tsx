@@ -1,6 +1,6 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, Plus } from 'lucide-react'
+import { AlertCircle, Plus, Layers, Activity, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import { fetchFlows } from '../services/flowApi'
 import { fetchUserRoles, fetchUsers } from '../services/userApi'
 import {
@@ -222,35 +222,62 @@ function IssueListPage() {
   }, [selectedIssueFromList, selectedIssueQuery.data])
 
   return (
-    <div className="issue-page min-h-screen space-y-4 overflow-x-hidden bg-transparent px-3 pb-4 pt-4 md:px-4 md:pt-5 text-slate-900">
-      {toast ? <div className="fixed right-6 top-6 z-[60] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">{toast}</div> : null}
+    <div className="issue-page min-h-screen space-y-6 overflow-x-hidden bg-transparent px-3 pb-4 pt-4 md:px-4 md:pt-5 text-slate-900 dark:text-slate-100">
+      {toast ? (
+        <div className="fixed right-6 top-6 z-[60] rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-955/90 dark:border-emerald-900/50 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-400 shadow-lg">
+          {toast}
+        </div>
+      ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-500">Operational Workspace</p>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">İş Akışı Yönetimi</h1>
-            <p className="mt-1 text-lg text-slate-600">Aktif issue taleplerini ve operasyonel akışları buradan yönetebilirsin.</p>
+      {/* Header Banner */}
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-8 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-850/50">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/5" />
+        <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/5" />
+        
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Operational Workspace</p>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">İş Akışı Yönetimi</h1>
+            <p className="text-slate-600 dark:text-slate-300 max-w-2xl text-sm leading-relaxed">
+              Aktif issue taleplerini ve operasyonel akışları buradan yönetebilirsin.
+            </p>
           </div>
-          <button className="flex h-14 items-center justify-center gap-2 rounded-xl bg-blue-700 px-7 text-xl font-semibold text-white shadow-sm hover:bg-blue-800" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-5 w-5" /> Yeni Issue
+          <button
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/15 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition self-start sm:self-center shrink-0"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Yeni Issue</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         {[
-          ['Toplam', summary.total],
-          ['Devam Eden', summary.inProgress],
-          ['Onay Bekleyen', summary.waitingApproval],
-          ['Tamamlanan', summary.done],
-          ['Reddedilen', summary.rejected],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="text-xl font-semibold">{value}</p>
-          </div>
-        ))}
+          { label: 'Toplam', value: summary.total, icon: Layers, border: 'border-l-4 border-l-blue-500', text: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Devam Eden', value: summary.inProgress, icon: Activity, border: 'border-l-4 border-l-sky-500', text: 'text-sky-600 dark:text-sky-400' },
+          { label: 'Onay Bekleyen', value: summary.waitingApproval, icon: Clock, border: 'border-l-4 border-l-amber-500', text: 'text-amber-600 dark:text-amber-400' },
+          { label: 'Tamamlanan', value: summary.done, icon: CheckCircle2, border: 'border-l-4 border-l-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
+          { label: 'Reddedilen', value: summary.rejected, icon: XCircle, border: 'border-l-4 border-l-rose-500', text: 'text-rose-600 dark:text-rose-400' },
+        ].map((item) => {
+          const Icon = item.icon
+          return (
+            <div 
+              key={item.label} 
+              className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${item.border}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{item.label}</span>
+                <Icon className={`h-4 w-4 shrink-0 ${item.text}`} />
+              </div>
+              <p className="mt-2 text-2xl font-black text-slate-800 dark:text-slate-100">{item.value}</p>
+            </div>
+          )
+        })}
       </div>
 
       <IssueFilters filters={filters} users={usersQuery.data ?? []} onChange={setFilters} onReset={() => setFilters(initialFilters)} />

@@ -1,4 +1,4 @@
-﻿export const STATUS_OPTIONS = [
+export const STATUS_OPTIONS = [
   'TODO',
   'IN_PROGRESS',
   'REVIEW',
@@ -59,16 +59,16 @@ export const STATUS_ID_FALLBACKS: Record<string, number[]> = {
 export const PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
 
 export const STATUS_COLOR_CLASS: Record<string, string> = {
-  TODO: 'bg-slate-100 text-slate-700 border-slate-300',
-  IN_PROGRESS: 'bg-sky-100 text-sky-700 border-sky-300',
-  REVIEW: 'bg-amber-100 text-amber-700 border-amber-300',
-  DONE: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  REJECTED: 'bg-rose-100 text-rose-700 border-rose-300',
+  TODO: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700',
+  IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/40',
+  REVIEW: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/40',
+  DONE: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40',
+  REJECTED: 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40',
 }
 
 export const PRIORITY_COLOR_CLASS: Record<string, string> = {
-  LOW: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  MEDIUM: 'bg-amber-50 text-amber-700 border-amber-200',
-  HIGH: 'bg-orange-50 text-orange-700 border-orange-200',
-  CRITICAL: 'bg-rose-50 text-rose-700 border-rose-200',
+  LOW: 'bg-emerald-50/50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/40',
+  MEDIUM: 'bg-amber-50/50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40',
+  HIGH: 'bg-orange-50/50 text-orange-700 border-orange-100 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/40',
+  CRITICAL: 'bg-rose-50/50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/40',
 }
