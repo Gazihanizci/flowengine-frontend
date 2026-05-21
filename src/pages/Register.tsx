@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { register } from '../services/authApi'
+import { User, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -10,6 +11,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -35,6 +37,11 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      {/* Ambient Animated Blobs */}
+      <div className="auth-blob auth-blob-1"></div>
+      <div className="auth-blob auth-blob-2"></div>
+      <div className="auth-blob auth-blob-3"></div>
+
       <div className="auth-shell">
         <section className="auth-hero">
           <span className="auth-kicker">İş Akışı Platformu</span>
@@ -65,45 +72,69 @@ export default function Register() {
             <p>Yeni hesap oluşturmak için bilgilerini gir.</p>
           </div>
           <form className="auth-form" onSubmit={handleSubmit}>
-            <label>
+            <label className="auth-label">
               Ad Soyad
-              <input
-                className="input auth-input"
-                type="text"
-                placeholder="Ad Soyad"
-                value={adSoyad}
-                onChange={(event) => setAdSoyad(event.target.value)}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <User className="auth-input-icon-left" />
+                <input
+                  className="input auth-input"
+                  type="text"
+                  placeholder="Ad Soyad"
+                  value={adSoyad}
+                  onChange={(event) => setAdSoyad(event.target.value)}
+                  required
+                />
+              </div>
             </label>
-            <label>
+            <label className="auth-label">
               E-posta
-              <input
-                className="input auth-input"
-                type="email"
-                placeholder="ornek@firma.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <Mail className="auth-input-icon-left" />
+                <input
+                  className="input auth-input"
+                  type="email"
+                  placeholder="ornek@firma.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
             </label>
-            <label>
+            <label className="auth-label">
               Şifre
-              <input
-                className="input auth-input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <Lock className="auth-input-icon-left" />
+                <input
+                  className="input auth-input"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-input-icon-right"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
             </label>
             {error ? <p className="error-text auth-alert">{error}</p> : null}
             {success ? (
               <p className="success-text auth-alert">{success}</p>
             ) : null}
             <button className="button auth-submit" type="submit" disabled={isLoading}>
-              {isLoading ? 'Kayıt yapılıyor...' : 'Kayıt ol'}
+              {isLoading ? (
+                'Kayıt yapılıyor...'
+              ) : (
+                <>
+                  <UserPlus size={18} />
+                  Kayıt ol
+                </>
+              )}
             </button>
           </form>
           <div className="auth-footer">

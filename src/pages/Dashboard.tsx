@@ -14,6 +14,7 @@ import {
   Settings, 
   Layers, 
   ChevronRight, 
+  ChevronLeft,
   Activity, 
   Sparkles, 
   Filter, 
@@ -24,7 +25,9 @@ import {
   Compass, 
   AlertTriangle, 
   Info,
-  Clock
+  Clock,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 
 function toErrorMessage(error: unknown, fallback: string) {
@@ -53,6 +56,15 @@ export default function Dashboard() {
   const [flowQuickFilter, setFlowQuickFilter] = useState<'ALL' | 'SHORT' | 'LONG'>('ALL')
   const [userFlowSearch, setUserFlowSearch] = useState('')
   const [userFlowSort, setUserFlowSort] = useState<'ALPHA_ASC' | 'ALPHA_DESC' | 'ID_ASC'>('ALPHA_ASC')
+  const [userFlowViewMode, setUserFlowViewMode] = useState<'GRID' | 'LIST'>('GRID')
+  const [userFlowLayoutMode, setUserFlowLayoutMode] = useState<'PAGINATED' | 'SCROLL'>('PAGINATED')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(6)
+
+  // Reset page to 1 when search, sort, viewMode, or layoutMode changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [userFlowSearch, userFlowSort, userFlowViewMode, userFlowLayoutMode])
 
   // User specific lists
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
@@ -96,10 +108,12 @@ export default function Dashboard() {
     if (isAdmin) return
 
     let mounted = true
-    const loadUserData = async () => {
+    const loadUserData = async (isInitial = false) => {
       try {
-        setTasksLoading(true)
-        setNotificationsLoading(true)
+        if (isInitial) {
+          setTasksLoading(true)
+          setNotificationsLoading(true)
+        }
         const [tasksData, notificationsData] = await Promise.all([
           fetchMyTasks().catch(() => [] as WorkflowTask[]),
           fetchNotifications().catch(() => [] as NotificationItem[])
@@ -111,17 +125,24 @@ export default function Dashboard() {
       } catch {
         // fail silently
       } finally {
-        if (mounted) {
+        if (mounted && isInitial) {
           setTasksLoading(false)
           setNotificationsLoading(false)
         }
       }
     }
 
-    loadUserData()
+    // Initial load with loader
+    loadUserData(true)
+
+    // Background polling every 5 seconds
+    const intervalId = setInterval(() => {
+      loadUserData(false)
+    }, 5000)
 
     return () => {
       mounted = false
+      clearInterval(intervalId)
     }
   }, [isAdmin])
 
@@ -194,6 +215,18 @@ export default function Dashboard() {
       return a.akisId - b.akisId
     })
   }, [flows, userFlowSearch, userFlowSort])
+
+  const paginatedUserFlows = useMemo(() => {
+    if (userFlowLayoutMode === 'SCROLL') {
+      return filteredAndSortedUserFlows
+    }
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return filteredAndSortedUserFlows.slice(startIndex, startIndex + itemsPerPage)
+  }, [filteredAndSortedUserFlows, currentPage, itemsPerPage, userFlowLayoutMode])
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredAndSortedUserFlows.length / itemsPerPage)
+  }, [filteredAndSortedUserFlows, itemsPerPage])
 
   const handleStartFlowById = async (akisId: number, akisName: string) => {
     setSelectedFlowId(akisId)
@@ -346,37 +379,121 @@ export default function Dashboard() {
             </div>
 
             {/* Filter and Search Toolbar */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
-              {/* Search */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs font-semibold outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                  type="search"
-                  value={userFlowSearch}
-                  placeholder="Akış adı veya açıklama ara..."
-                  onChange={(e) => setUserFlowSearch(e.target.value)}
-                />
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+              {/* Left group: Search and Sort */}
+              <div className="flex flex-col gap-3 md:flex-row md:items-center flex-1 max-w-4xl">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs font-semibold outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                    type="search"
+                    value={userFlowSearch}
+                    placeholder="Akış adı veya açıklama ara..."
+                    onChange={(e) => setUserFlowSearch(e.target.value)}
+                  />
+                </div>
+
+                {/* Sort controls */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sırala:</span>
+                  <div className="flex gap-1">
+                    {(['ALPHA_ASC', 'ALPHA_DESC', 'ID_ASC'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setUserFlowSort(mode)}
+                        className={`rounded-full px-3 py-1.5 text-[10px] font-bold transition ${
+                          userFlowSort === mode
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
+                            : 'bg-white border border-slate-200 text-slate-655 hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-750 dark:text-slate-400 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        {mode === 'ALPHA_ASC' ? 'A-Z' : mode === 'ALPHA_DESC' ? 'Z-A' : 'ID'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* Sort controls */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sırala:</span>
-                <div className="flex gap-1">
-                  {(['ALPHA_ASC', 'ALPHA_DESC', 'ID_ASC'] as const).map((mode) => (
+              {/* Right group: Layout Preferences */}
+              <div className="flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3 xl:border-none xl:pt-0">
+                {/* Layout Mode (Paginated vs Scroll) */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Düzen:</span>
+                  <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-750 dark:bg-slate-950">
                     <button
-                      key={mode}
                       type="button"
-                      onClick={() => setUserFlowSort(mode)}
-                      className={`rounded-full px-3 py-1.5 text-[10px] font-bold transition ${
-                        userFlowSort === mode
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
-                          : 'bg-white border border-slate-200 text-slate-655 hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-750 dark:text-slate-400 dark:hover:bg-slate-800'
+                      onClick={() => setUserFlowLayoutMode('PAGINATED')}
+                      className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition ${
+                        userFlowLayoutMode === 'PAGINATED'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                       }`}
                     >
-                      {mode === 'ALPHA_ASC' ? 'A-Z' : mode === 'ALPHA_DESC' ? 'Z-A' : 'ID'}
+                      Sayfalı
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setUserFlowLayoutMode('SCROLL')}
+                      className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition ${
+                        userFlowLayoutMode === 'SCROLL'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      Kaydırılabilir
+                    </button>
+                  </div>
+                </div>
+
+                {/* Page Size Selector (Visible only if Paginated) */}
+                {userFlowLayoutMode === 'PAGINATED' && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Limit:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 outline-none transition focus:border-blue-500 dark:border-slate-750 dark:bg-slate-950 dark:text-slate-250"
+                    >
+                      {[6, 12, 24].map((size) => (
+                        <option key={size} value={size}>
+                          {size} Adet
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* View Mode (Grid vs List) */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Görünüm:</span>
+                  <div className="flex gap-1 bg-slate-100 dark:bg-slate-900 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setUserFlowViewMode('GRID')}
+                      title="Izgara Görünümü"
+                      className={`rounded-md p-1.5 transition ${
+                        userFlowViewMode === 'GRID'
+                          ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-400'
+                          : 'text-slate-400 hover:text-slate-650 dark:hover:text-slate-350'
+                      }`}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserFlowViewMode('LIST')}
+                      title="Liste Görünümü"
+                      className={`rounded-md p-1.5 transition ${
+                        userFlowViewMode === 'LIST'
+                          ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-400'
+                          : 'text-slate-400 hover:text-slate-650 dark:hover:text-slate-350'
+                      }`}
+                    >
+                      <List className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -395,61 +512,203 @@ export default function Dashboard() {
               </div>
             ) : null}
 
-            {/* Flows Grid */}
+            {/* Flows Rendering */}
             {filteredAndSortedUserFlows.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 py-12 text-center text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900/10">
                 Arama kriterine uygun iş akışı bulunamadı.
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredAndSortedUserFlows.map((flow) => {
-                  const isLaunchingThis = flowStartLoading && selectedFlowId === flow.akisId;
-                  return (
-                    <div
-                      key={flow.akisId}
-                      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 transition duration-200 hover:border-blue-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/40"
-                    >
-                      <div>
-                        {/* Header ID */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                            #{flow.akisId}
-                          </span>
-                          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        </div>
-                        {/* Name & Desc */}
-                        <h3 className="text-sm font-extrabold text-slate-850 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                          {flow.akisAdi}
-                        </h3>
-                        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                          {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
-                        </p>
-                      </div>
-
-                      {/* Action Button */}
-                      <div className="mt-5">
-                        <button
-                          type="button"
-                          disabled={flowStartLoading}
-                          onClick={() => handleStartFlowById(flow.akisId, flow.akisAdi)}
-                          className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition disabled:opacity-50"
+              <div className={userFlowLayoutMode === 'SCROLL' ? "max-h-[500px] overflow-y-auto pr-1.5 custom-scrollbar" : ""}>
+                {userFlowViewMode === 'GRID' ? (
+                  /* Grid Layout */
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {paginatedUserFlows.map((flow) => {
+                      const isLaunchingThis = flowStartLoading && selectedFlowId === flow.akisId;
+                      return (
+                        <div
+                          key={flow.akisId}
+                          className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/80 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950/40 dark:hover:bg-slate-950/70"
                         >
-                          {isLaunchingThis ? (
-                            <>
-                              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                              <span>Başlatılıyor...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Play className="h-3 w-3 fill-white" />
-                              <span>Süreci Başlat</span>
-                            </>
-                          )}
+                          <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none" />
+                          
+                          <div>
+                            {/* Header ID */}
+                            <div className="flex items-center justify-between mb-3.5">
+                              <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                                #{flow.akisId}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Aktif</span>
+                              </span>
+                            </div>
+                            {/* Name & Desc */}
+                            <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                              {flow.akisAdi}
+                            </h3>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                              {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
+                            </p>
+                          </div>
+
+                          {/* Action Button */}
+                          <div className="mt-5">
+                            <button
+                              type="button"
+                              disabled={flowStartLoading}
+                              onClick={() => handleStartFlowById(flow.akisId, flow.akisAdi)}
+                              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition disabled:opacity-50"
+                            >
+                              {isLaunchingThis ? (
+                                <>
+                                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                  <span>Başlatılıyor...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-3 w-3 fill-white" />
+                                  <span>Süreci Başlat</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* List Layout */
+                  <div className="space-y-3">
+                    {paginatedUserFlows.map((flow) => {
+                      const isLaunchingThis = flowStartLoading && selectedFlowId === flow.akisId;
+                      return (
+                        <div
+                          key={flow.akisId}
+                          className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-blue-500/80 hover:shadow-sm dark:border-slate-800 dark:bg-slate-950/40 dark:hover:bg-slate-950/70"
+                        >
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 shrink-0 mt-0.5">
+                              #{flow.akisId}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                  {flow.akisAdi}
+                                </h3>
+                                <span className="inline-flex items-center gap-1 rounded bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                                  <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                                  Aktif
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <div className="shrink-0">
+                            <button
+                              type="button"
+                              disabled={flowStartLoading}
+                              onClick={() => handleStartFlowById(flow.akisId, flow.akisAdi)}
+                              className="w-full md:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition disabled:opacity-50"
+                            >
+                              {isLaunchingThis ? (
+                                <>
+                                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                  <span>Başlatılıyor...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-3 w-3 fill-white" />
+                                  <span>Süreci Başlat</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {userFlowLayoutMode === 'PAGINATED' && totalPages > 1 && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-2">
+                {/* Count info */}
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 text-center sm:text-left">
+                  Toplam <span className="text-slate-700 dark:text-slate-200 font-bold">{filteredAndSortedUserFlows.length}</span> akıştan{' '}
+                  <span className="text-slate-700 dark:text-slate-200 font-bold">
+                    {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedUserFlows.length)}
+                  </span>
+                  -
+                  <span className="text-slate-700 dark:text-slate-200 font-bold">
+                    {Math.min(currentPage * itemsPerPage, filteredAndSortedUserFlows.length)}
+                  </span>{' '}
+                  arası gösteriliyor.
+                </div>
+
+                {/* Page Navigation */}
+                <div className="flex items-center justify-center gap-1">
+                  {/* Prev Button */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white dark:border-slate-750 dark:bg-slate-950 dark:text-slate-350 dark:hover:bg-slate-800 transition"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    const isFirstOrLast = page === 1 || page === totalPages;
+                    const isNearCurrent = Math.abs(page - currentPage) <= 1;
+                    
+                    if (isFirstOrLast || isNearCurrent) {
+                      return (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${
+                            currentPage === page
+                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
+                              : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-950 dark:text-slate-350 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          {page}
                         </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    }
+                    
+                    if (
+                      (page === 2 && currentPage > 3) ||
+                      (page === totalPages - 1 && currentPage < totalPages - 2)
+                    ) {
+                      return (
+                        <span key={page} className="px-1 text-xs text-slate-400 dark:text-slate-500 font-bold select-none">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return null;
+                  })}
+
+                  {/* Next Button */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white dark:border-slate-750 dark:bg-slate-950 dark:text-slate-350 dark:hover:bg-slate-800 transition"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           </section>

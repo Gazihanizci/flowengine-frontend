@@ -17,7 +17,8 @@ import {
   Sun, 
   Moon, 
   LogOut, 
-  Workflow 
+  Workflow,
+  ChevronDown
 } from 'lucide-react'
 
 type ThemeMode = 'light' | 'dark'
@@ -44,6 +45,42 @@ export default function AppLayout() {
   const setUser = useUserStore((state) => state.setUser)
   const setLoaded = useUserStore((state) => state.setLoaded)
   const clearUser = useUserStore((state) => state.clearUser)
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const getPageTitle = () => {
+    const path = location.pathname
+    if (path === '/') return 'Gösterge Paneli'
+    if (path === '/tasks') return 'Görev Formları'
+    if (path.startsWith('/tasks/')) return 'Görev Detayı'
+    if (path === '/issues') return 'Issue Yönetimi'
+    if (path === '/issues/create') return 'Yeni Issue Oluştur'
+    if (path.startsWith('/issues/')) return 'Issue Detayı'
+    if (path === '/pdf-reports') return 'PDF Raporları'
+    if (path === '/history') return 'İşlem Geçmişi'
+    if (path === '/notifications') return 'Bildirimler'
+    if (path === '/flow-map') return 'Flow Treemap'
+    if (path === '/create-flow') return 'Akış Oluştur'
+    if (path.startsWith('/preview/')) return 'Akış Önizleme'
+    if (path.startsWith('/flow-edit/')) return 'Akış Düzenle'
+    if (path.startsWith('/flow-live-edit/')) return 'Akış Canlı Düzenle'
+    if (path === '/role-management') return 'Rol Yönetimi'
+    if (path.startsWith('/builder/')) return 'Akış Tasarımcısı'
+    return 'İş Akışı'
+  }
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -161,7 +198,6 @@ export default function AppLayout() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }
 
-  const isTaskDetailPage = /^\/tasks\/[^/]+$/.test(location.pathname)
   const isIssueRoute = location.pathname.startsWith('/issues')
 
   return (
@@ -171,18 +207,6 @@ export default function AppLayout() {
           <Workflow className="h-6 w-6 text-blue-400" />
           <span>İş Akışı</span>
         </div>
-
-        {user ? (
-          <div className="user-card flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner mb-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 font-bold text-white shadow-md shadow-blue-500/20 text-xs">
-              {user.adSoyad.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="block text-[9px] font-bold tracking-widest text-blue-300/80 uppercase leading-none mb-1">{user.rolAdi}</span>
-              <strong className="block truncate text-xs font-semibold text-slate-100">{user.adSoyad}</strong>
-            </div>
-          </div>
-        ) : null}
 
         <nav className="sidebar-nav">
           <NavLink
@@ -196,35 +220,11 @@ export default function AppLayout() {
             </span>
           </NavLink>
 
-          {!isTaskDetailPage ? (
-            <NavLink
-              to="/tasks"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              <span className="flex items-center gap-3">
-                <CheckSquare className="h-4.5 w-4.5 opacity-90" />
-                <span>Görev Formları</span>
-              </span>
-              {taskCount > 0 ? <span className="nav-badge">{taskCount}</span> : null}
-            </NavLink>
-          ) : null}
-
           <NavLink to="/issues" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="flex items-center gap-3">
               <AlertCircle className="h-4.5 w-4.5 opacity-90" />
               <span>Issue Yönetimi</span>
             </span>
-          </NavLink>
-
-          <NavLink
-            to="/notifications"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-          >
-            <span className="flex items-center gap-3">
-              <Bell className="h-4.5 w-4.5 opacity-90" />
-              <span>Bildirimler</span>
-            </span>
-            {notificationCount > 0 ? <span className="nav-badge">{notificationCount}</span> : null}
           </NavLink>
 
           <NavLink
@@ -283,39 +283,101 @@ export default function AppLayout() {
             </NavLink>
           ) : null}
         </nav>
-
-        <div className="sidebar-footer mt-auto flex flex-col gap-2">
-          <button 
-            type="button" 
-            className="theme-toggle flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-semibold rounded-xl transition duration-150" 
-            onClick={handleThemeToggle}
-          >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="h-4 w-4 text-amber-400" />
-                <span>Açık Tema</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-4 w-4 text-slate-300" />
-                <span>Koyu Tema</span>
-              </>
-            )}
-          </button>
-
-          <button 
-            className="logout-button flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-semibold rounded-xl transition duration-150" 
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Çıkış Yap</span>
-          </button>
-        </div>
       </aside>
 
-      <main className={`content ${isIssueRoute ? 'content-full-bleed' : ''}`}>
-        <Outlet />
-      </main>
+      <div className="main-container">
+        <header className="topbar">
+          <div className="topbar-title">
+            {getPageTitle()}
+          </div>
+          
+          <div className="topbar-actions">
+            <NavLink
+              to="/tasks"
+              className={({ isActive }) => `topbar-btn ${isActive ? 'active' : ''}`}
+              title="Görev Formları"
+            >
+              <CheckSquare className="h-5 w-5" />
+              {taskCount > 0 ? <span className="topbar-badge">{taskCount}</span> : null}
+            </NavLink>
+
+            <NavLink
+              to="/notifications"
+              className={({ isActive }) => `topbar-btn ${isActive ? 'active' : ''}`}
+              title="Bildirimler"
+            >
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 ? <span className="topbar-badge">{notificationCount}</span> : null}
+            </NavLink>
+
+            <div className="topbar-divider"></div>
+
+            {user ? (
+              <div className="profile-dropdown-wrapper" ref={dropdownRef}>
+                <button
+                  type="button"
+                  className={`profile-trigger ${isDropdownOpen ? 'active' : ''}`}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <div className="profile-avatar">
+                    {user.adSoyad.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  </div>
+                  <span className="profile-name hidden md:block">{user.adSoyad}</span>
+                  <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="profile-dropdown">
+                    <div className="dropdown-info">
+                      <span className="dropdown-info-name">{user.adSoyad}</span>
+                      <span className="dropdown-info-role">{user.rolAdi}</span>
+                    </div>
+
+                    <div className="dropdown-divider"></div>
+
+                    <button
+                      type="button"
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleThemeToggle()
+                        setIsDropdownOpen(false)
+                      }}
+                    >
+                      {theme === 'dark' ? (
+                        <>
+                          <Sun className="h-4 w-4 text-amber-500" />
+                          <span>Açık Tema</span>
+                        </>
+                      ) : (
+                        <>
+                          <Moon className="h-4 w-4 text-slate-500" />
+                          <span>Koyu Tema</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="dropdown-item danger"
+                      onClick={() => {
+                        handleLogout()
+                        setIsDropdownOpen(false)
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Çıkış Yap</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </header>
+
+        <main className={`content ${isIssueRoute ? 'content-full-bleed' : ''}`}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
