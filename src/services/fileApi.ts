@@ -99,6 +99,14 @@ export function downloadFileUrl(fileId: number | string) {
   return `/api/files/download/${fileId}`
 }
 
+export async function fetchFileBlobUrl(fileId: number | string): Promise<string> {
+  const { data } = await fileApi.get(`/files/download/${fileId}`, {
+    responseType: 'blob',
+  })
+  const pdfBlob = new Blob([data], { type: 'application/pdf' })
+  return URL.createObjectURL(pdfBlob)
+}
+
 export function viewPhotoUrl(photoId: number | string) {
   return `/api/fotograflar/view/${photoId}`
 }

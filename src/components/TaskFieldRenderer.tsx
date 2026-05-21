@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react'
 import type { ChangeEvent, ReactElement } from 'react'
 import FileInput from './FileInput'
 import FormField from './FormField'
-import { downloadFileUrl, isPhotoField, viewPhotoUrl } from '../services/fileApi'
+import { downloadFileUrl, isPhotoField, viewPhotoUrl, fetchFileBlobUrl } from '../services/fileApi'
 import type { TaskField, TaskFormValue } from '../types/task'
-import { ExternalLink, Download, FileText, Zap, Check, Image as ImageIcon } from 'lucide-react'
+import { ExternalLink, Download, FileText, Zap, Check, Image as ImageIcon, Eye, EyeOff } from 'lucide-react'
 
 interface TaskFieldRendererProps {
   field: TaskField
@@ -22,6 +23,186 @@ type RendererProps = {
   inputClassName: string
   onChange: (fieldId: number, value: TaskFormValue) => void
   onFileChange?: (fieldId: number, file: File | null) => void
+}
+
+interface FileFieldRendererProps {
+  field: TaskField
+  disabled: boolean
+  onFileChange?: (fieldId: number, file: File | null) => void
+  fileName?: string
+}
+
+function FileFieldRenderer({ field, disabled, onFileChange, fileName }: FileFieldRendererProps) {
+  const [showPreview, setShowPreview] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [loadingPdf, setLoadingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+
+  const isPdf = String(field.value ?? fileName ?? '').toLowerCase().endsWith('.pdf')
+
+  useEffect(() => {
+    let active = true
+    let currentUrl: string | null = null
+
+    if (showPreview && field.fileId && isPdf) {
+      setLoadingPdf(true)
+      setPdfError(null)
+      fetchFileBlobUrl(field.fileId)
+        .then((url) => {
+          if (active) {
+            setPdfUrl(url)
+            currentUrl = url
+          } else {
+            URL.revokeObjectURL(url)
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setPdfError('PDF önizlemesi yüklenemedi. Lütfen dosyayı indirmeyi deneyin.')
+          }
+        })
+        .finally(() => {
+          if (active) {
+            setLoadingPdf(false)
+          }
+        })
+    } else {
+      setPdfUrl(null)
+    }
+
+    return () => {
+      active = false
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl)
+      }
+    }
+  }, [showPreview, field.fileId, isPdf])
+
+  return (
+    <div className="mt-2 space-y-3">
+      {field.fileId ? (
+        isPhotoField(field) ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-850 dark:bg-slate-900/20">
+            <div className="relative group overflow-hidden max-w-sm rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800">
+              <img
+                src={viewPhotoUrl(field.fileId)}
+                alt={String(field.value ?? fileName ?? `Fotograf #${field.fileId}`)}
+                className="max-h-56 w-auto object-contain transition duration-200 group-hover:scale-[1.01]"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                <ImageIcon className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="mt-3.5 flex items-center gap-3">
+              <a
+                href={viewPhotoUrl(field.fileId)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Fotoğrafı Görüntüle
+              </a>
+              <a
+                href={viewPhotoUrl(field.fileId)}
+                download
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
+              >
+                <Download className="h-3.5 w-3.5" />
+                İndir
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/40 p-4 dark:border-slate-850 dark:bg-slate-900/10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {String(field.value ?? fileName ?? `Dosya #${field.fileId}`)}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Dosya ID: {field.fileId}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {isPdf && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-750 hover:bg-slate-50 shadow-sm transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
+                  >
+                    {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPreview ? 'Önizlemeyi Gizle' : 'Önizlemeyi Göster'}
+                  </button>
+                )}
+                <a
+                  href={downloadFileUrl(field.fileId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-750 hover:bg-slate-50 shadow-sm transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Dosyayı İndir
+                </a>
+              </div>
+            </div>
+
+            {isPdf && showPreview && (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 shadow-sm">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">PDF Önizleme</span>
+                  <button 
+                    type="button"
+                    onClick={() => setShowPreview(false)}
+                    className="text-xs font-bold text-slate-450 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200 transition"
+                  >
+                    Kapat
+                  </button>
+                </div>
+                {loadingPdf ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-slate-400">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+                    <span className="text-xs font-semibold">PDF Yükleniyor...</span>
+                  </div>
+                ) : pdfError ? (
+                  <div className="p-6 text-center text-xs font-semibold text-rose-500 dark:text-rose-400">
+                    {pdfError}
+                  </div>
+                ) : pdfUrl ? (
+                  <iframe
+                    src={pdfUrl}
+                    className="w-full h-[600px] border-0"
+                    title="PDF Önizleme"
+                  />
+                ) : (
+                  <div className="p-6 text-center text-xs font-semibold text-slate-400">
+                    Bekleniyor...
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      ) : (
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3.5 py-3 text-xs font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-900/10">
+          <FileText className="h-4 w-4 text-slate-350" />
+          Yüklenmiş herhangi bir dosya bulunmamaktadır.
+        </div>
+      )}
+      {!disabled ? (
+        <FileInput
+          disabled={disabled}
+          fileName={fileName}
+          accept={field.accept}
+          onFileChange={(file) => onFileChange?.(field.fieldId, file)}
+        />
+      ) : null}
+    </div>
+  )
 }
 
 type FieldRendererMap = Record<TaskField['type'], (props: RendererProps) => ReactElement>
@@ -181,80 +362,12 @@ const fieldRendererMap: FieldRendererMap = {
     )
   },
   FILE: ({ field, disabled, onFileChange, fileName }) => (
-    <div className="mt-2 space-y-3">
-      {field.fileId ? (
-        isPhotoField(field) ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-850 dark:bg-slate-900/20">
-            <div className="relative group overflow-hidden max-w-sm rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800">
-              <img
-                src={viewPhotoUrl(field.fileId)}
-                alt={String(field.value ?? fileName ?? `Fotograf #${field.fileId}`)}
-                className="max-h-56 w-auto object-contain transition duration-200 group-hover:scale-[1.01]"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                <ImageIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <div className="mt-3.5 flex items-center gap-3">
-              <a
-                href={viewPhotoUrl(field.fileId)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Fotoğrafı Görüntüle
-              </a>
-              <a
-                href={viewPhotoUrl(field.fileId)}
-                download
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
-              >
-                <Download className="h-3.5 w-3.5" />
-                İndir
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/40 p-4 dark:border-slate-850 dark:bg-slate-900/10">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {String(field.value ?? fileName ?? `Dosya #${field.fileId}`)}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Dosya ID: {field.fileId}</p>
-              </div>
-            </div>
-            <a
-              href={downloadFileUrl(field.fileId)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-750 hover:bg-slate-50 shadow-sm transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Dosyayı İndir
-            </a>
-          </div>
-        )
-      ) : (
-        <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3.5 py-3 text-xs font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-900/10">
-          <FileText className="h-4 w-4 text-slate-350" />
-          Yüklenmiş herhangi bir dosya bulunmamaktadır.
-        </div>
-      )}
-      {!disabled ? (
-        <FileInput
-          disabled={disabled}
-          fileName={fileName}
-          accept={field.accept}
-          onFileChange={(file) => onFileChange?.(field.fieldId, file)}
-        />
-      ) : null}
-    </div>
+    <FileFieldRenderer
+      field={field}
+      disabled={disabled}
+      onFileChange={onFileChange}
+      fileName={fileName}
+    />
   ),
   BUTTON: ({ field, value, disabled, onChange }) => (
     <div className="mt-2.5 space-y-2">

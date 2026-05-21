@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TaskList from '../components/TaskList'
 import { fetchMyTasks } from '../services/taskApi'
@@ -17,23 +17,63 @@ export default function MyTasks() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loadTasks = async () => {
-    setLoading(true)
-    setError(null)
+  const tasksRef = useRef<WorkflowTask[]>(tasks)
+  tasksRef.current = tasks
+
+  const loadTasks = async (isInitial = false) => {
+    if (isInitial) {
+      setLoading(true)
+      setError(null)
+    }
 
     try {
       const data = await fetchMyTasks()
       const taskList = Array.isArray(data) ? data.filter(isActionableTask) : []
-      setTasks(taskList)
+      
+      // Group tasks by surecId to deduplicate active steps belonging to same flow
+      const grouped: Record<number, WorkflowTask[]> = {}
+      for (const task of taskList) {
+        if (!grouped[task.surecId]) {
+          grouped[task.surecId] = []
+        }
+        grouped[task.surecId].push(task)
+      }
+
+      const deduplicated: WorkflowTask[] = []
+      for (const surecId in grouped) {
+        const processTasks = grouped[surecId]
+        if (processTasks.length === 1) {
+          deduplicated.push(processTasks[0])
+        } else {
+          // Keep the step that comes first (lowest adimId)
+          processTasks.sort((a, b) => a.adimId - b.adimId)
+          deduplicated.push(processTasks[0])
+        }
+      }
+
+      setTasks(deduplicated)
+      setError(null)
     } catch {
-      setError('Görev listesi alınamadı. Lütfen bağlantınızı kontrol edin.')
+      if (isInitial || tasksRef.current.length === 0) {
+        setError('Görev listesi alınamadı. Lütfen bağlantınızı kontrol edin.')
+      }
     } finally {
-      setLoading(false)
+      if (isInitial) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadTasks()
+    loadTasks(true)
+
+    const intervalId = window.setInterval(() => {
+      loadTasks(false)
+    }, 10000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
   }, [])
 
   const uniqueFlowCount = useMemo(() => {
@@ -97,7 +137,7 @@ export default function MyTasks() {
       </section>
 
       {/* Task List Section */}
-      <TaskList tasks={tasks} loading={loading} error={error} onSelectTask={handleOpenTask} onRetry={loadTasks} />
+      <TaskList tasks={tasks} loading={loading} error={error} onSelectTask={handleOpenTask} onRetry={() => loadTasks(true)} />
     </div>
   )
 }

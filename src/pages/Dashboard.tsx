@@ -17,7 +17,6 @@ import {
   ChevronLeft,
   Activity, 
   Sparkles, 
-  Filter, 
   CheckSquare, 
   Bell, 
   Share2, 
@@ -37,6 +36,20 @@ function toErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+function isActionableTask(task: WorkflowTask) {
+  const hasEditableField = Array.isArray(task.form) && task.form.some((field) => field.editable)
+  const hasAction = Array.isArray(task.actions) && task.actions.length > 0
+  return hasEditableField || hasAction
+}
+
+function getFlowInitials(name: string) {
+  if (!name) return 'AK'
+  const parts = name.split(' ').filter(Boolean)
+  if (parts.length === 0) return 'AK'
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
@@ -53,7 +66,8 @@ export default function Dashboard() {
   const [flowStartError, setFlowStartError] = useState<string | null>(null)
   const [flowStartSuccess, setFlowStartSuccess] = useState<string | null>(null)
   const [flowSearchTerm, setFlowSearchTerm] = useState('')
-  const [flowQuickFilter, setFlowQuickFilter] = useState<'ALL' | 'SHORT' | 'LONG'>('ALL')
+  const [adminFlowSort, setAdminFlowSort] = useState<'ID_DESC' | 'ID_ASC' | 'ALPHA_ASC' | 'ALPHA_DESC'>('ID_DESC')
+  const [adminFlowViewMode, setAdminFlowViewMode] = useState<'GRID' | 'LIST' | 'TABLE' | 'CAROUSEL'>('LIST')
   const [userFlowSearch, setUserFlowSearch] = useState('')
   const [userFlowSort, setUserFlowSort] = useState<'ALPHA_ASC' | 'ALPHA_DESC' | 'ID_ASC'>('ALPHA_ASC')
   const [userFlowViewMode, setUserFlowViewMode] = useState<'GRID' | 'LIST'>('GRID')
@@ -119,7 +133,30 @@ export default function Dashboard() {
           fetchNotifications().catch(() => [] as NotificationItem[])
         ])
         if (mounted) {
-          setTasks(Array.isArray(tasksData) ? tasksData : [])
+          const taskList = Array.isArray(tasksData) ? tasksData.filter(isActionableTask) : []
+          
+          // Group tasks by surecId to deduplicate active steps belonging to same flow
+          const grouped: Record<number, WorkflowTask[]> = {}
+          for (const task of taskList) {
+            if (!grouped[task.surecId]) {
+              grouped[task.surecId] = []
+            }
+            grouped[task.surecId].push(task)
+          }
+
+          const deduplicated: WorkflowTask[] = []
+          for (const surecId in grouped) {
+            const processTasks = grouped[surecId]
+            if (processTasks.length === 1) {
+              deduplicated.push(processTasks[0])
+            } else {
+              // Keep the step that comes first (lowest adimId)
+              processTasks.sort((a, b) => a.adimId - b.adimId)
+              deduplicated.push(processTasks[0])
+            }
+          }
+
+          setTasks(deduplicated)
           setNotifications(Array.isArray(notificationsData) ? notificationsData : [])
         }
       } catch {
@@ -175,19 +212,29 @@ export default function Dashboard() {
 
   const filteredFlows = useMemo(() => {
     const normalizedSearch = flowSearchTerm.trim().toLocaleLowerCase('tr-TR')
-    return flows.filter((flow) => {
-      const baseMatch =
+    const filtered = flows.filter((flow) => {
+      return (
         !normalizedSearch ||
         flow.akisAdi.toLocaleLowerCase('tr-TR').includes(normalizedSearch) ||
         String(flow.akisId).includes(normalizedSearch) ||
         (flow.aciklama ?? '').toLocaleLowerCase('tr-TR').includes(normalizedSearch)
-
-      if (!baseMatch) return false
-      if (flowQuickFilter === 'SHORT') return flow.akisAdi.trim().length <= 12
-      if (flowQuickFilter === 'LONG') return flow.akisAdi.trim().length > 12
-      return true
+      )
     })
-  }, [flows, flowQuickFilter, flowSearchTerm])
+
+    return [...filtered].sort((a, b) => {
+      if (adminFlowSort === 'ALPHA_ASC') {
+        return a.akisAdi.toLocaleLowerCase('tr-TR').localeCompare(b.akisAdi.toLocaleLowerCase('tr-TR'))
+      }
+      if (adminFlowSort === 'ALPHA_DESC') {
+        return b.akisAdi.toLocaleLowerCase('tr-TR').localeCompare(a.akisAdi.toLocaleLowerCase('tr-TR'))
+      }
+      if (adminFlowSort === 'ID_ASC') {
+        return a.akisId - b.akisId
+      }
+      // Default: ID_DESC
+      return b.akisId - a.akisId
+    })
+  }, [flows, flowSearchTerm, adminFlowSort])
 
   // Filter and sort flows based on user search and sorting preferences
   const filteredAndSortedUserFlows = useMemo(() => {
@@ -537,16 +584,17 @@ export default function Dashboard() {
                               <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
                                 #{flow.akisId}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Aktif</span>
-                              </span>
                             </div>
                             {/* Name & Desc */}
-                            <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                              {flow.akisAdi}
-                            </h3>
-                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
+                                {getFlowInitials(flow.akisAdi)}
+                              </div>
+                              <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                {flow.akisAdi}
+                              </h3>
+                            </div>
+                            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                               {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
                             </p>
                           </div>
@@ -586,20 +634,17 @@ export default function Dashboard() {
                           key={flow.akisId}
                           className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-blue-500/80 hover:shadow-sm dark:border-slate-800 dark:bg-slate-950/40 dark:hover:bg-slate-950/70"
                         >
-                          <div className="flex items-start gap-3 min-w-0 flex-1">
-                            <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 shrink-0 mt-0.5">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 shrink-0">
                               #{flow.akisId}
                             </span>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
+                              {getFlowInitials(flow.akisAdi)}
+                            </div>
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                                  {flow.akisAdi}
-                                </h3>
-                                <span className="inline-flex items-center gap-1 rounded bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                                  <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-                                  Aktif
-                                </span>
-                              </div>
+                              <h3 className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                {flow.akisAdi}
+                              </h3>
                               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
                                 {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
                               </p>
@@ -876,27 +921,23 @@ export default function Dashboard() {
 
         {/* Filter and Search Section */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:backdrop-blur-md">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-400" />
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Filtrele:</span>
-              <div className="flex gap-1.5 ml-2">
-                {(['ALL', 'SHORT', 'LONG'] as const).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setFlowQuickFilter(key)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                      flowQuickFilter === key 
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10' 
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {key === 'ALL' ? 'Tümü' : key === 'SHORT' ? 'Kısa Ad' : 'Uzun Ad'}
-                  </button>
-                ))}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Sırala:</span>
+                <select
+                  value={adminFlowSort}
+                  onChange={(e) => setAdminFlowSort(e.target.value as any)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-750 outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-900"
+                >
+                  <option value="ID_DESC">Akış ID (Yeniden Eskiye)</option>
+                  <option value="ID_ASC">Akış ID (Eskiden Yeniye)</option>
+                  <option value="ALPHA_ASC">Alfabetik (A-Z)</option>
+                  <option value="ALPHA_DESC">Alfabetik (Z-A)</option>
+                </select>
               </div>
             </div>
+
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -914,17 +955,38 @@ export default function Dashboard() {
         <section className="grid gap-6 xl:grid-cols-[1.6fr_1.1fr] items-start">
           {/* Flows List Panel */}
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800/80">
+            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800/80 gap-3">
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-blue-500" />
                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Akış Listesi</h2>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                  {filteredFlows.length} Aktif Kayıt
+                </span>
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                {filteredFlows.length} Aktif Kayıt
-              </span>
+              
+              {/* View Switcher */}
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 rounded-lg p-0.5">
+                {(['GRID', 'LIST', 'TABLE', 'CAROUSEL'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setAdminFlowViewMode(mode)}
+                    className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold transition ${
+                      adminFlowViewMode === mode
+                        ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-400'
+                        : 'text-slate-450 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {mode === 'GRID' && 'Izgara'}
+                    {mode === 'LIST' && 'Liste'}
+                    {mode === 'TABLE' && 'Tablo'}
+                    {mode === 'CAROUSEL' && 'Yana Kaydır'}
+                  </button>
+                ))}
+              </div>
             </div>
             
-            <div className="max-h-[580px] space-y-2.5 overflow-y-auto p-4">
+            <div className="p-1">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-405">
                   <Activity className="h-8 w-8 animate-spin text-blue-550" />
@@ -943,36 +1005,193 @@ export default function Dashboard() {
                   <p className="text-sm">Aranan kriterlere uygun akış bulunamadı.</p>
                 </div>
               ) : null}
-              {!loading && !error && filteredFlows.map((flow) => (
-                <button
-                  key={flow.akisId}
-                  type="button"
-                  onClick={() => setSelectedFlowId(flow.akisId)}
-                  className={`w-full rounded-xl border p-4 text-left transition duration-200 flex items-center justify-between gap-4 group ${
-                    selectedFlowId === flow.akisId 
-                      ? 'border-blue-500 bg-blue-50/40 shadow-sm dark:border-blue-500 dark:bg-blue-950/20' 
-                      : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2.5">
-                      <p className="truncate text-base font-bold text-slate-800 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400 transition">{flow.akisAdi}</p>
-                      <span className="shrink-0 text-[10px] font-bold text-slate-400">#{flow.akisId}</span>
+              
+              {!loading && !error && filteredFlows.length > 0 && (
+                <>
+                  {/* LIST view */}
+                  {adminFlowViewMode === 'LIST' && (
+                    <div className="space-y-2.5 max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                      {filteredFlows.map((flow) => (
+                        <button
+                          key={flow.akisId}
+                          type="button"
+                          onClick={() => setSelectedFlowId(flow.akisId)}
+                          className={`w-full rounded-xl border p-4 text-left transition duration-200 flex items-center justify-between gap-4 group ${
+                            selectedFlowId === flow.akisId 
+                              ? 'border-blue-500 bg-blue-50/40 shadow-sm dark:border-blue-500 dark:bg-blue-955/20' 
+                              : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1 flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
+                              {getFlowInitials(flow.akisAdi)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2.5">
+                                <p className="truncate text-base font-bold text-slate-800 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400 transition">{flow.akisAdi}</p>
+                                <span className="shrink-0 text-[10px] font-bold text-slate-400">#{flow.akisId}</span>
+                              </div>
+                              <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{flow.aciklama || 'Açıklama bulunmuyor.'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{flow.aciklama || 'Açıklama bulunmuyor.'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
-                      flow.akisAdi.length > 12 
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' 
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                    }`}>
-                      {flow.akisAdi.length > 12 ? 'Taslak' : 'Aktif'}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-                  </div>
-                </button>
-              ))}
+                  )}
+
+                  {/* GRID view */}
+                  {adminFlowViewMode === 'GRID' && (
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                      {filteredFlows.map((flow) => (
+                        <button
+                          key={flow.akisId}
+                          type="button"
+                          onClick={() => setSelectedFlowId(flow.akisId)}
+                          className={`rounded-2xl border p-4.5 text-left transition duration-200 flex flex-col justify-between gap-4 group relative ${
+                            selectedFlowId === flow.akisId 
+                              ? 'border-blue-500 bg-blue-50/40 shadow-sm dark:border-blue-500 dark:bg-blue-955/20' 
+                              : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                                #{flow.akisId}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
+                                {getFlowInitials(flow.akisAdi)}
+                              </div>
+                              <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                {flow.akisAdi}
+                              </h3>
+                            </div>
+                            <p className="mt-3.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                              {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* TABLE view */}
+                  {adminFlowViewMode === 'TABLE' && (
+                    <div className="max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                      <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/80">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 dark:bg-slate-900/40 text-slate-450 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                              <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider">ID</th>
+                              <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider">İkon</th>
+                              <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider">Akış Adı</th>
+                              <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider">Açıklama</th>
+                              <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider">Detay</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 bg-white dark:bg-slate-900/10">
+                            {filteredFlows.map((flow) => (
+                              <tr
+                                key={flow.akisId}
+                                onClick={() => setSelectedFlowId(flow.akisId)}
+                                className={`cursor-pointer transition duration-150 ${
+                                  selectedFlowId === flow.akisId
+                                    ? 'bg-blue-50/20 dark:bg-blue-955/10'
+                                    : 'hover:bg-slate-50/40 dark:hover:bg-slate-800/20'
+                                }`}
+                              >
+                                <td className="py-3.5 px-4 text-xs font-bold text-slate-500 dark:text-slate-400">#{flow.akisId}</td>
+                                <td className="py-3.5 px-4">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-655 text-[10px] font-black text-white shadow-sm dark:from-blue-600 dark:to-indigo-800 uppercase">
+                                    {getFlowInitials(flow.akisAdi)}
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4 text-sm font-extrabold text-slate-800 dark:text-slate-200 max-w-[150px] truncate">{flow.akisAdi}</td>
+                                <td className="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400 max-w-[200px] truncate">{flow.aciklama || '-'}</td>
+                                <td className="py-3.5 px-4 text-right">
+                                  <div className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 text-slate-400 hover:text-blue-500 hover:border-blue-500 transition">
+                                    <ChevronRight className="h-3.5 w-3.5" />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CAROUSEL view */}
+                  {adminFlowViewMode === 'CAROUSEL' && (
+                    <div className="p-4 space-y-4">
+                      <div className="relative group">
+                        <div 
+                          id="adminFlowCarousel"
+                          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory custom-scrollbar"
+                        >
+                          {filteredFlows.map((flow) => (
+                            <button
+                              key={flow.akisId}
+                              type="button"
+                              onClick={() => setSelectedFlowId(flow.akisId)}
+                              className={`w-[260px] shrink-0 snap-start rounded-2xl border p-5 text-left transition duration-200 flex flex-col justify-between min-h-[170px] group ${
+                                selectedFlowId === flow.akisId 
+                                  ? 'border-blue-500 bg-blue-50/40 shadow-md dark:border-blue-500 dark:bg-blue-955/20' 
+                                  : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                                    #{flow.akisId}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm dark:from-blue-600 dark:to-indigo-800 uppercase">
+                                    {getFlowInitials(flow.akisAdi)}
+                                  </div>
+                                  <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                    {flow.akisAdi}
+                                  </h3>
+                                </div>
+                                <p className="mt-3.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                  {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('adminFlowCarousel');
+                            if (el) el.scrollLeft -= 280;
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('adminFlowCarousel');
+                            if (el) el.scrollLeft += 280;
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 

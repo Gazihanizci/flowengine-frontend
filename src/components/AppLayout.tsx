@@ -4,6 +4,7 @@ import { fetchMe, type MeResponseItem } from '../services/userApi'
 import { fetchUnreadNotificationCount } from '../services/notificationApi'
 import { fetchMyTasks } from '../services/taskApi'
 import { useUserStore } from '../store/userStore'
+import type { WorkflowTask } from '../types/task'
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -22,6 +23,12 @@ import {
 } from 'lucide-react'
 
 type ThemeMode = 'light' | 'dark'
+
+function isActionableTask(task: WorkflowTask) {
+  const hasEditableField = Array.isArray(task.form) && task.form.some((field) => field.editable)
+  const hasAction = Array.isArray(task.actions) && task.actions.length > 0
+  return hasEditableField || hasAction
+}
 
 const THEME_KEY = 'ui_theme'
 
@@ -109,7 +116,7 @@ export default function AppLayout() {
   }, [clearUser, navigate, setLoaded, setUser])
 
   useEffect(() => {
-    if (!user || user.rolId === 4) {
+    if (!user) {
       setTaskCount(0)
       knownTaskIdsRef.current = null
       return
@@ -121,14 +128,36 @@ export default function AppLayout() {
       try {
         const tasks = await fetchMyTasks()
         if (!cancelled) {
-          const taskList = Array.isArray(tasks) ? tasks : []
-          setTaskCount(taskList.length)
+          const taskList = Array.isArray(tasks) ? tasks.filter(isActionableTask) : []
 
-          const currentIds = new Set(taskList.map((task) => task.taskId))
+          // Group tasks by surecId to deduplicate active steps belonging to same flow
+          const grouped: Record<number, WorkflowTask[]> = {}
+          for (const task of taskList) {
+            if (!grouped[task.surecId]) {
+              grouped[task.surecId] = []
+            }
+            grouped[task.surecId].push(task)
+          }
+
+          const deduplicated: WorkflowTask[] = []
+          for (const surecId in grouped) {
+            const processTasks = grouped[surecId]
+            if (processTasks.length === 1) {
+              deduplicated.push(processTasks[0])
+            } else {
+              // Keep the step that comes first (lowest adimId)
+              processTasks.sort((a, b) => a.adimId - b.adimId)
+              deduplicated.push(processTasks[0])
+            }
+          }
+
+          setTaskCount(deduplicated.length)
+
+          const currentIds = new Set(deduplicated.map((task) => task.taskId))
           const previousIds = knownTaskIdsRef.current
 
           if (previousIds) {
-            const newTasks = taskList.filter((task) => !previousIds.has(task.taskId))
+            const newTasks = deduplicated.filter((task) => !previousIds.has(task.taskId))
 
             if (newTasks.length > 0) {
               const newestTask = newTasks.sort((a, b) => b.taskId - a.taskId)[0]
@@ -149,7 +178,7 @@ export default function AppLayout() {
     }
 
     loadTasks()
-    const intervalId = window.setInterval(loadTasks, 30000)
+    const intervalId = window.setInterval(loadTasks, 10000)
 
     return () => {
       cancelled = true
@@ -180,7 +209,7 @@ export default function AppLayout() {
     }
 
     loadUnreadCount()
-    const intervalId = window.setInterval(loadUnreadCount, 30000)
+    const intervalId = window.setInterval(loadUnreadCount, 10000)
 
     return () => {
       cancelled = true
