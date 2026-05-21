@@ -19,7 +19,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   PenTool,
   Eye,
-  Save
+  Save,
+  Type,
+  AlignLeft,
+  ChevronDown,
+  Circle,
+  CheckSquare,
+  Calendar,
+  Hash,
+  Upload,
+  MousePointer,
+  GripVertical
 } from 'lucide-react'
 import type { FormField, FieldType } from '../types/form'
 import type { FlowStep, ExternalFlowCancelBehavior } from '../types/flow'
@@ -48,6 +58,42 @@ const typeDefaults: Record<FieldType, Partial<FormField>> = {
   BUTTON: { label: 'Buton' },
 }
 
+const TYPE_ICON_MAP: Record<FieldType, typeof Type> = {
+  TEXT: Type,
+  TEXTAREA: AlignLeft,
+  COMBOBOX: ChevronDown,
+  RADIO: Circle,
+  CHECKBOX: CheckSquare,
+  DATE: Calendar,
+  NUMBER: Hash,
+  FILE: Upload,
+  BUTTON: MousePointer,
+}
+
+const TYPE_COLOR_MAP: Record<FieldType, string> = {
+  TEXT: 'text-blue-500 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400',
+  TEXTAREA: 'text-violet-500 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400',
+  COMBOBOX: 'text-amber-500 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400',
+  RADIO: 'text-pink-500 bg-pink-50 dark:bg-pink-950/30 dark:text-pink-400',
+  CHECKBOX: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400',
+  DATE: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950/30 dark:text-cyan-400',
+  NUMBER: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400',
+  FILE: 'text-orange-500 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400',
+  BUTTON: 'text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400',
+}
+
+const TYPE_BORDER_MAP: Record<FieldType, string> = {
+  TEXT: 'border-l-4 border-l-blue-500 dark:border-l-blue-650',
+  TEXTAREA: 'border-l-4 border-l-violet-500 dark:border-l-violet-650',
+  COMBOBOX: 'border-l-4 border-l-amber-500 dark:border-l-amber-650',
+  RADIO: 'border-l-4 border-l-pink-500 dark:border-l-pink-650',
+  CHECKBOX: 'border-l-4 border-l-emerald-500 dark:border-l-emerald-650',
+  DATE: 'border-l-4 border-l-cyan-500 dark:border-l-cyan-650',
+  NUMBER: 'border-l-4 border-l-indigo-500 dark:border-l-indigo-650',
+  FILE: 'border-l-4 border-l-orange-500 dark:border-l-orange-650',
+  BUTTON: 'border-l-4 border-l-slate-500 dark:border-l-slate-650',
+}
+
 type DragMeta = {
   from?: 'toolbox' | 'canvas'
   fieldType?: FieldType
@@ -58,6 +104,7 @@ type ActiveDragState = {
   id: string
   from: 'toolbox' | 'canvas'
   label: string
+  fieldType?: FieldType
 }
 
 function createField(type: FieldType, id: string, template?: Partial<FormField>): FormField {
@@ -236,6 +283,9 @@ export default function BuilderPage() {
   const handleDragStart = (event: DragStartEvent) => {
     const activeMeta = event.active.data.current as DragMeta | undefined
     const from = activeMeta?.from === 'canvas' ? 'canvas' : 'toolbox'
+    const fieldType = from === 'toolbox'
+      ? activeMeta?.fieldType
+      : fields.find((item) => item.id === String(event.active.id))?.type
     const label =
       from === 'toolbox'
         ? activeMeta?.template?.label ?? activeMeta?.fieldType ?? 'Yeni Alan'
@@ -245,6 +295,7 @@ export default function BuilderPage() {
       id: String(event.active.id),
       from,
       label: String(label),
+      fieldType,
     })
   }
 
@@ -549,11 +600,36 @@ export default function BuilderPage() {
           />
         </div>
         <DragOverlay dropAnimation={null}>
-          {activeDrag ? (
-            <div className="drag-overlay">
-              {activeDrag.from === 'toolbox' ? `Yeni: ${activeDrag.label}` : activeDrag.label}
-            </div>
-          ) : null}
+          {activeDrag ? (() => {
+            const type = activeDrag.fieldType
+            const Icon = type ? (TYPE_ICON_MAP[type] ?? Type) : Type
+            const borderClass = type ? TYPE_BORDER_MAP[type] : 'border-l-4 border-l-blue-500'
+            const colorClass = type ? TYPE_COLOR_MAP[type] : 'text-blue-500 bg-blue-50'
+            
+            return (
+              <div 
+                className={`flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 bg-white/90 dark:border-slate-800 dark:bg-slate-900/90 shadow-2xl backdrop-blur-md select-none pointer-events-none scale-105 rotate-[2deg] cursor-grabbing transition-transform ${borderClass}`}
+                style={{ width: '320px' }}
+              >
+                <div className="flex h-7 w-5 items-center justify-center text-slate-350 shrink-0">
+                  <GripVertical className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-3">
+                  <div className={`flex h-6 w-6 items-center justify-center rounded-md shrink-0 ${colorClass}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate margin-0 leading-tight">
+                      {activeDrag.label}
+                    </h4>
+                    <span className="inline-block mt-0.5 text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      {type ?? 'BİLEŞEN'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })() : null}
         </DragOverlay>
       </DndContext>
 

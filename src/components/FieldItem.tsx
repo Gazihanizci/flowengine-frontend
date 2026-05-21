@@ -35,6 +35,18 @@ const TYPE_COLOR_MAP: Record<FieldType, string> = {
   BUTTON: 'text-slate-500 bg-slate-100/50 dark:bg-slate-800/50 dark:text-slate-400',
 }
 
+const TYPE_BORDER_MAP: Record<FieldType, string> = {
+  TEXT: 'border-l-4 border-l-blue-500 dark:border-l-blue-650',
+  TEXTAREA: 'border-l-4 border-l-violet-500 dark:border-l-violet-650',
+  COMBOBOX: 'border-l-4 border-l-amber-500 dark:border-l-amber-650',
+  RADIO: 'border-l-4 border-l-pink-500 dark:border-l-pink-650',
+  CHECKBOX: 'border-l-4 border-l-emerald-500 dark:border-l-emerald-650',
+  DATE: 'border-l-4 border-l-cyan-500 dark:border-l-cyan-650',
+  NUMBER: 'border-l-4 border-l-indigo-500 dark:border-l-indigo-650',
+  FILE: 'border-l-4 border-l-orange-500 dark:border-l-orange-650',
+  BUTTON: 'border-l-4 border-l-slate-500 dark:border-l-slate-650',
+}
+
 export default function FieldItem({
   field,
   selected,
@@ -58,7 +70,7 @@ export default function FieldItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`field-card group relative flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 cursor-default transition-all duration-200 hover:border-blue-200 dark:hover:border-slate-700 hover:shadow-sm ${selected ? 'selected border-blue-500 ring-2 ring-blue-500/10 dark:border-blue-600 dark:ring-blue-600/15' : ''} ${
+      className={`field-card group relative flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 cursor-default transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm ${TYPE_BORDER_MAP[field.type]} ${selected ? 'selected border-blue-500 dark:border-blue-500 shadow-md shadow-blue-500/10 dark:shadow-blue-500/5 bg-gradient-to-r from-blue-500/5 to-transparent dark:from-blue-955/5 dark:to-transparent ring-2 ring-blue-500/20' : ''} ${
         isDragging ? 'dragging opacity-40 scale-95' : ''
       }`}
       onClick={onSelect}

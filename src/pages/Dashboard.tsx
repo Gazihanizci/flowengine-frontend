@@ -26,7 +26,9 @@ import {
   Info,
   Clock,
   LayoutGrid,
-  List
+  List,
+  Table,
+  GalleryHorizontal
 } from 'lucide-react'
 
 function toErrorMessage(error: unknown, fallback: string) {
@@ -61,6 +63,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [selectedFlowId, setSelectedFlowId] = useState<number | null>(null)
   const [flowDetail, setFlowDetail] = useState<FlowDetailResponse | null>(null)
+  const [flowDetailLoading, setFlowDetailLoading] = useState(false)
   const [activeStepId, setActiveStepId] = useState<number | null>(null)
   const [flowStartLoading, setFlowStartLoading] = useState(false)
   const [flowStartError, setFlowStartError] = useState<string | null>(null)
@@ -187,13 +190,15 @@ export default function Dashboard() {
     if (!isAdmin || selectedFlowId === null) return
 
     const loadDetail = async () => {
-      setFlowDetail(null)
+      setFlowDetailLoading(true)
       try {
         const data = await fetchFlowDetail(selectedFlowId)
         setFlowDetail(data)
         setActiveStepId(data.steps[0]?.stepId ?? null)
       } catch {
         // keep layout visible even if detail fetch fails
+      } finally {
+        setFlowDetailLoading(false)
       }
     }
 
@@ -954,7 +959,7 @@ export default function Dashboard() {
         {/* List and Details Layout */}
         <section className="grid gap-6 xl:grid-cols-[1.6fr_1.1fr] items-start">
           {/* Flows List Panel */}
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 min-w-0 w-full overflow-hidden">
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800/80 gap-3">
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-blue-500" />
@@ -971,16 +976,22 @@ export default function Dashboard() {
                     key={mode}
                     type="button"
                     onClick={() => setAdminFlowViewMode(mode)}
-                    className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold transition ${
+                    className={`rounded-md p-1.5 transition flex items-center justify-center ${
                       adminFlowViewMode === mode
-                        ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-400'
+                        ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-455'
                         : 'text-slate-450 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                     }`}
+                    title={
+                      mode === 'GRID' ? 'Izgara' :
+                      mode === 'LIST' ? 'Liste' :
+                      mode === 'TABLE' ? 'Tablo' :
+                      'Yana Kaydır'
+                    }
                   >
-                    {mode === 'GRID' && 'Izgara'}
-                    {mode === 'LIST' && 'Liste'}
-                    {mode === 'TABLE' && 'Tablo'}
-                    {mode === 'CAROUSEL' && 'Yana Kaydır'}
+                    {mode === 'GRID' && <LayoutGrid className="h-4 w-4" />}
+                    {mode === 'LIST' && <List className="h-4 w-4" />}
+                    {mode === 'TABLE' && <Table className="h-4 w-4" />}
+                    {mode === 'CAROUSEL' && <GalleryHorizontal className="h-4 w-4" />}
                   </button>
                 ))}
               </div>
@@ -1016,13 +1027,16 @@ export default function Dashboard() {
                           key={flow.akisId}
                           type="button"
                           onClick={() => setSelectedFlowId(flow.akisId)}
-                          className={`w-full rounded-xl border p-4 text-left transition duration-200 flex items-center justify-between gap-4 group ${
+                          className={`w-full rounded-xl border p-4 text-left transition-all duration-300 ease-out flex items-center justify-between gap-4 group relative ${
                             selectedFlowId === flow.akisId 
-                              ? 'border-blue-500 bg-blue-50/40 shadow-sm dark:border-blue-500 dark:bg-blue-955/20' 
-                              : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                              ? 'border-blue-600 bg-gradient-to-r from-blue-50/30 to-indigo-50/10 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-md shadow-blue-500/5 scale-[1.01] ring-2 ring-blue-500/10' 
+                              : 'border-slate-100 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-750 hover:scale-[1.005]'
                           }`}
                         >
-                          <div className="min-w-0 flex-1 flex items-center gap-3">
+                          {selectedFlowId === flow.akisId && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 rounded-l-xl" />
+                          )}
+                          <div className="min-w-0 flex-1 flex items-center gap-3 pl-1">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
                               {getFlowInitials(flow.akisAdi)}
                             </div>
@@ -1050,17 +1064,25 @@ export default function Dashboard() {
                           key={flow.akisId}
                           type="button"
                           onClick={() => setSelectedFlowId(flow.akisId)}
-                          className={`rounded-2xl border p-4.5 text-left transition duration-200 flex flex-col justify-between gap-4 group relative ${
+                          className={`rounded-2xl border p-4.5 text-left transition-all duration-300 ease-out flex flex-col justify-between gap-4 group relative ${
                             selectedFlowId === flow.akisId 
-                              ? 'border-blue-500 bg-blue-50/40 shadow-sm dark:border-blue-500 dark:bg-blue-955/20' 
-                              : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                              ? 'border-blue-600 bg-gradient-to-br from-blue-50/40 to-indigo-50/15 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-lg shadow-blue-500/10 scale-[1.02] ring-2 ring-blue-500/20' 
+                              : 'border-slate-100 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-750 hover:scale-[1.01] hover:shadow-md'
                           }`}
                         >
-                          <div>
+                          {selectedFlowId === flow.akisId && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 rounded-l-2xl" />
+                          )}
+                          <div className="pl-1.5 w-full">
                             <div className="flex items-center justify-between mb-3">
                               <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
                                 #{flow.akisId}
                               </span>
+                              {selectedFlowId === flow.akisId && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-bold text-blue-600 dark:bg-blue-955 dark:text-blue-400 animate-pulse">
+                                  Aktif
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-3">
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
@@ -1098,13 +1120,17 @@ export default function Dashboard() {
                               <tr
                                 key={flow.akisId}
                                 onClick={() => setSelectedFlowId(flow.akisId)}
-                                className={`cursor-pointer transition duration-150 ${
+                                className={`cursor-pointer transition-all duration-300 ${
                                   selectedFlowId === flow.akisId
-                                    ? 'bg-blue-50/20 dark:bg-blue-955/10'
-                                    : 'hover:bg-slate-50/40 dark:hover:bg-slate-800/20'
+                                    ? 'bg-blue-50/30 dark:bg-blue-955/15 font-bold'
+                                    : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'
                                 }`}
                               >
-                                <td className="py-3.5 px-4 text-xs font-bold text-slate-500 dark:text-slate-400">#{flow.akisId}</td>
+                                <td className={`py-3.5 px-4 text-xs font-bold transition-all duration-200 ${
+                                  selectedFlowId === flow.akisId
+                                    ? 'border-l-4 border-l-blue-600 pl-3 text-blue-600 dark:text-blue-400'
+                                    : 'text-slate-500 dark:text-slate-400'
+                                }`}>#{flow.akisId}</td>
                                 <td className="py-3.5 px-4">
                                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-655 text-[10px] font-black text-white shadow-sm dark:from-blue-600 dark:to-indigo-800 uppercase">
                                     {getFlowInitials(flow.akisAdi)}
@@ -1131,24 +1157,32 @@ export default function Dashboard() {
                       <div className="relative group">
                         <div 
                           id="adminFlowCarousel"
-                          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory custom-scrollbar"
+                          className="flex gap-4 overflow-x-hidden scroll-smooth snap-x snap-mandatory"
                         >
                           {filteredFlows.map((flow) => (
                             <button
                               key={flow.akisId}
                               type="button"
                               onClick={() => setSelectedFlowId(flow.akisId)}
-                              className={`w-[260px] shrink-0 snap-start rounded-2xl border p-5 text-left transition duration-200 flex flex-col justify-between min-h-[170px] group ${
+                              className={`w-[260px] shrink-0 snap-start rounded-2xl border p-5 text-left transition-all duration-300 ease-out flex flex-col justify-between min-h-[170px] group relative ${
                                 selectedFlowId === flow.akisId 
-                                  ? 'border-blue-500 bg-blue-50/40 shadow-md dark:border-blue-500 dark:bg-blue-955/20' 
-                                  : 'border-slate-100 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                                  ? 'border-blue-600 bg-gradient-to-br from-blue-50/40 to-indigo-50/15 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-lg shadow-blue-500/10 scale-[1.02] ring-2 ring-blue-500/20' 
+                                  : 'border-slate-100 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-750 hover:scale-[1.01] hover:shadow-md'
                               }`}
                             >
-                              <div>
+                              {selectedFlowId === flow.akisId && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 rounded-l-2xl" />
+                              )}
+                              <div className="pl-1.5 w-full">
                                 <div className="flex items-center justify-between mb-3">
                                   <span className="rounded-lg bg-slate-100 dark:bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
                                     #{flow.akisId}
                                   </span>
+                                  {selectedFlowId === flow.akisId && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-bold text-blue-600 dark:bg-blue-955 dark:text-blue-400 animate-pulse">
+                                      Aktif
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm dark:from-blue-600 dark:to-indigo-800 uppercase">
@@ -1204,17 +1238,23 @@ export default function Dashboard() {
                 <Info className="h-3.5 w-3.5" />
                 <span>Detaylı Görünüm</span>
               </div>
-              <h3 className="mt-3 text-2xl font-extrabold text-slate-800 dark:text-white leading-tight">{selectedFlow?.akisAdi ?? 'Akış seçiniz'}</h3>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{selectedFlow?.aciklama || 'Seçilen akışın açıklaması burada görünür.'}</p>
-              
+              <h3 className="mt-3 text-2xl font-extrabold text-slate-800 dark:text-white leading-tight">{selectedFlow?.akisAdi}</h3>
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-center dark:border-slate-800 dark:bg-slate-800/40">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Adım Sayısı</p>
-                  <p className="mt-1 text-2xl font-black text-blue-600 dark:text-blue-400">{flowDetail?.steps.length ?? 0}</p>
+                  {flowDetailLoading ? (
+                    <div className="mx-auto mt-2 h-7 w-12 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                  ) : (
+                    <p className="mt-1 text-2xl font-black text-blue-600 dark:text-blue-400">{flowDetail?.steps.length ?? 0}</p>
+                  )}
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-center dark:border-slate-800 dark:bg-slate-800/40">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Toplam Alan</p>
-                  <p className="mt-1 text-2xl font-black text-blue-600 dark:text-blue-400">{totalFieldCount}</p>
+                  {flowDetailLoading ? (
+                    <div className="mx-auto mt-2 h-7 w-12 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                  ) : (
+                    <p className="mt-1 text-2xl font-black text-blue-600 dark:text-blue-400">{totalFieldCount}</p>
+                  )}
                 </div>
               </div>
 
@@ -1222,47 +1262,61 @@ export default function Dashboard() {
               <div className="mt-6">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-450 border-b border-slate-100 pb-2 dark:border-slate-800">Sürecin Adımları</p>
                 
-                <div className="mt-4 relative pl-6 border-l border-slate-200 dark:border-slate-800 space-y-4">
-                  {flowDetail?.steps && flowDetail.steps.length > 0 ? (
-                    flowDetail.steps.map((step, index) => {
-                      const isStepActive = activeStepId === step.stepId;
-                      return (
-                        <div key={step.stepId} className="relative group">
-                          {/* Circle dot node on the timeline line */}
-                          <span className={`absolute -left-[31px] top-0 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold transition-all duration-200 ${
-                            isStepActive 
-                              ? 'border-blue-500 bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-110' 
-                              : 'border-slate-200 bg-white text-slate-550 group-hover:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:group-hover:border-slate-600'
-                          }`}>
-                            {index + 1}
-                          </span>
-                          
-                          <button
-                            type="button"
-                            onClick={() => setActiveStepId(step.stepId)}
-                            className={`w-full text-left rounded-xl p-3 border transition duration-150 ${
-                              isStepActive 
-                                ? 'border-blue-200 bg-blue-50/30 text-blue-700 dark:border-blue-900/30 dark:bg-blue-950/10 dark:text-blue-400' 
-                                : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/40 dark:hover:text-slate-200'
-                            }`}
-                          >
-                            <p className="text-sm font-bold leading-tight">{step.stepName}</p>
-                            <div className="mt-1 flex items-center gap-2 text-[10px] opacity-75 font-medium">
-                              <span className="flex items-center gap-1"><Layers className="h-3 w-3" /> {step.fields.length} Alan</span>
-                              {step.requiredApprovalCount ? (
-                                <>
-                                  <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {step.requiredApprovalCount} Onay Gerekli</span>
-                                </>
-                              ) : null}
+                <div className="max-h-[320px] min-h-[240px] overflow-y-auto pr-1.5 custom-scrollbar mt-4">
+                  <div className={`relative pl-6 border-l border-slate-200 dark:border-slate-800 space-y-4 transition-all duration-300 ${flowDetailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {flowDetailLoading ? (
+                      <div className="space-y-4 animate-pulse">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="relative pl-6">
+                            <span className="absolute -left-[31px] top-0 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-slate-100 dark:border-slate-850 dark:bg-slate-900" />
+                            <div className="w-full rounded-xl p-3 border border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/40 space-y-2">
+                              <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+                              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
                             </div>
-                          </button>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">Bu akışa henüz bir adım eklenmemiş.</p>
-                  )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : flowDetail?.steps && flowDetail.steps.length > 0 ? (
+                      flowDetail.steps.map((step, index) => {
+                        const isStepActive = activeStepId === step.stepId;
+                        return (
+                          <div key={step.stepId} className="relative group">
+                            {/* Circle dot node on the timeline line */}
+                            <span className={`absolute -left-[31px] top-0 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold transition-all duration-200 ${
+                              isStepActive 
+                                ? 'border-blue-500 bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-110' 
+                                : 'border-slate-200 bg-white text-slate-550 group-hover:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:group-hover:border-slate-600'
+                            }`}>
+                              {index + 1}
+                            </span>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setActiveStepId(step.stepId)}
+                              className={`w-full text-left rounded-xl p-3 border transition duration-150 ${
+                                isStepActive 
+                                  ? 'border-blue-200 bg-blue-50/30 text-blue-700 dark:border-blue-900/30 dark:bg-blue-955/10 dark:text-blue-400' 
+                                  : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/40 dark:hover:text-slate-200'
+                              }`}
+                            >
+                              <p className="text-sm font-bold leading-tight">{step.stepName}</p>
+                              <div className="mt-1 flex items-center gap-2 text-[10px] opacity-75 font-medium">
+                                <span className="flex items-center gap-1"><Layers className="h-3 w-3" /> {step.fields.length} Alan</span>
+                                {step.requiredApprovalCount ? (
+                                  <>
+                                    <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {step.requiredApprovalCount} Onay Gerekli</span>
+                                  </>
+                                ) : null}
+                              </div>
+                            </button>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">Bu akışa henüz bir adım eklenmemiş.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>

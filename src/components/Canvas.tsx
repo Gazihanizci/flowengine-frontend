@@ -28,15 +28,15 @@ export default function Canvas({
           {fields.length} alan
         </span>
       </div>
-      <div ref={setNodeRef} className={`canvas-drop ${isOver ? 'hovered' : ''}`}>
+      <div ref={setNodeRef} className={`canvas-drop transition-all duration-300 ${isOver ? 'hovered border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/10 scale-[1.005]' : ''}`}>
         {fields.length === 0 ? (
-          <div className="empty flex flex-col items-center justify-center gap-3 py-16">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">
-              <MousePointerClick className="h-5 w-5" />
+          <div className="empty flex flex-col items-center justify-center gap-4 py-16 transition-all duration-200">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-100 dark:border-blue-900/30 animate-pulse">
+              <MousePointerClick className="h-6 w-6" />
             </div>
-            <div className="text-center space-y-1">
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Formunuzu oluşturmaya başlayın</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Sol paneldeki bileşenleri bu alana sürükleyin.</p>
+            <div className="text-center space-y-1.5 max-w-xs">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Form Tasarımına Başlayın</p>
+              <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed">Bileşen Kütüphanesi panelinden öğeleri bu alana sürükleyip bırakarak form yapınızı oluşturun.</p>
             </div>
           </div>
         ) : (
