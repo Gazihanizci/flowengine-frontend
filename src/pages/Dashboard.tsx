@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchFlowDetail, fetchFlows, startFlow } from '../services/flowApi'
 import type { FlowDetailResponse, FlowListItem } from '../services/flowApi'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '../store/userStore'
 import { fetchMyTasks } from '../services/taskApi'
 import type { WorkflowTask } from '../types/task'
@@ -1016,17 +1017,27 @@ export default function Dashboard() {
                   <p className="text-sm">Aranan kriterlere uygun akış bulunamadı.</p>
                 </div>
               ) : null}
-              
+
               {!loading && !error && filteredFlows.length > 0 && (
-                <>
+                <AnimatePresence mode="wait">
                   {/* LIST view */}
                   {adminFlowViewMode === 'LIST' && (
-                    <div className="space-y-2.5 max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                    <motion.div
+                      key="list"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.25 }}
+                      className="space-y-2.5 max-h-[580px] overflow-y-auto p-4 custom-scrollbar"
+                    >
                       {filteredFlows.map((flow) => (
-                        <button
+                        <motion.button
+                          layout
                           key={flow.akisId}
                           type="button"
                           onClick={() => setSelectedFlowId(flow.akisId)}
+                          whileHover={{ scale: 1.006, y: -1 }}
+                          whileTap={{ scale: 0.99 }}
                           className={`w-full rounded-xl border p-4 text-left transition-all duration-300 ease-out flex items-center justify-between gap-4 group relative ${
                             selectedFlowId === flow.akisId 
                               ? 'border-blue-600 bg-gradient-to-r from-blue-50/30 to-indigo-50/10 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-md shadow-blue-500/5 scale-[1.01] ring-2 ring-blue-500/10' 
@@ -1051,19 +1062,29 @@ export default function Dashboard() {
                           <div className="flex items-center gap-2 shrink-0">
                             <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition" />
                           </div>
-                        </button>
+                        </motion.button>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
 
                   {/* GRID view */}
                   {adminFlowViewMode === 'GRID' && (
-                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                    <motion.div
+                      key="grid"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.25 }}
+                      className="grid gap-4 grid-cols-1 sm:grid-cols-2 max-h-[580px] overflow-y-auto p-4 custom-scrollbar"
+                    >
                       {filteredFlows.map((flow) => (
-                        <button
+                        <motion.button
+                          layout
                           key={flow.akisId}
                           type="button"
                           onClick={() => setSelectedFlowId(flow.akisId)}
+                          whileHover={{ scale: 1.015, y: -2 }}
+                          whileTap={{ scale: 0.985 }}
                           className={`rounded-2xl border p-4.5 text-left transition-all duration-300 ease-out flex flex-col justify-between gap-4 group relative ${
                             selectedFlowId === flow.akisId 
                               ? 'border-blue-600 bg-gradient-to-br from-blue-50/40 to-indigo-50/15 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-lg shadow-blue-500/10 scale-[1.02] ring-2 ring-blue-500/20' 
@@ -1085,7 +1106,7 @@ export default function Dashboard() {
                               )}
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-655 text-xs font-bold text-white shadow-sm shadow-blue-500/10 dark:from-blue-600 dark:to-indigo-800 uppercase">
                                 {getFlowInitials(flow.akisAdi)}
                               </div>
                               <h3 className="text-sm font-extrabold text-slate-800 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
@@ -1096,14 +1117,21 @@ export default function Dashboard() {
                               {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
                             </p>
                           </div>
-                        </button>
+                        </motion.button>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
 
                   {/* TABLE view */}
                   {adminFlowViewMode === 'TABLE' && (
-                    <div className="max-h-[580px] overflow-y-auto p-4 custom-scrollbar">
+                    <motion.div
+                      key="table"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.25 }}
+                      className="max-h-[580px] overflow-y-auto p-4 custom-scrollbar"
+                    >
                       <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/80">
                         <table className="w-full text-left border-collapse">
                           <thead>
@@ -1148,22 +1176,32 @@ export default function Dashboard() {
                           </tbody>
                         </table>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
 
                   {/* CAROUSEL view */}
                   {adminFlowViewMode === 'CAROUSEL' && (
-                    <div className="p-4 space-y-4">
+                    <motion.div
+                      key="carousel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.25 }}
+                      className="p-4 space-y-4"
+                    >
                       <div className="relative group">
                         <div 
                           id="adminFlowCarousel"
                           className="flex gap-4 overflow-x-hidden scroll-smooth snap-x snap-mandatory"
                         >
                           {filteredFlows.map((flow) => (
-                            <button
+                            <motion.button
+                              layout
                               key={flow.akisId}
                               type="button"
                               onClick={() => setSelectedFlowId(flow.akisId)}
+                              whileHover={{ scale: 1.015, y: -2 }}
+                              whileTap={{ scale: 0.985 }}
                               className={`w-[260px] shrink-0 snap-start rounded-2xl border p-5 text-left transition-all duration-300 ease-out flex flex-col justify-between min-h-[170px] group relative ${
                                 selectedFlowId === flow.akisId 
                                   ? 'border-blue-600 bg-gradient-to-br from-blue-50/40 to-indigo-50/15 dark:from-blue-955/15 dark:to-indigo-955/5 shadow-lg shadow-blue-500/10 scale-[1.02] ring-2 ring-blue-500/20' 
@@ -1196,12 +1234,14 @@ export default function Dashboard() {
                                   {flow.aciklama || 'Bu iş süreci için açıklama girilmemiş.'}
                                 </p>
                               </div>
-                            </button>
+                            </motion.button>
                           ))}
                         </div>
                       </div>
                       <div className="flex justify-center gap-2">
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           type="button"
                           onClick={() => {
                             const el = document.getElementById('adminFlowCarousel');
@@ -1210,8 +1250,10 @@ export default function Dashboard() {
                           className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition"
                         >
                           <ChevronLeft className="h-4 w-4" />
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           type="button"
                           onClick={() => {
                             const el = document.getElementById('adminFlowCarousel');
@@ -1220,11 +1262,11 @@ export default function Dashboard() {
                           className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition"
                         >
                           <ChevronRight className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </>
+                </AnimatePresence>
               )}
             </div>
           </div>

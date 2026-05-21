@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { login } from '../services/authApi'
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -42,7 +43,12 @@ export default function Login() {
       <div className="auth-blob auth-blob-3"></div>
 
       <div className="auth-shell">
-        <section className="auth-hero">
+        <motion.section 
+          className="auth-hero"
+          initial={{ x: -60, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
           <span className="auth-kicker">İş Akışı Platformu</span>
           <h1>Akışlarını tek yerden yönet.</h1>
           <p>
@@ -63,9 +69,14 @@ export default function Login() {
               <span>Canlı destek</span>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="auth-card">
+        <motion.section 
+          className="auth-card"
+          initial={{ x: 60, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+        >
           <div className="auth-card-header">
             <h2>Giriş Yap</h2>
             <p>Hesabına erişmek için bilgilerini gir.</p>
@@ -118,7 +129,13 @@ export default function Login() {
             {success ? (
               <p className="success-text auth-alert">{success}</p>
             ) : null}
-            <button className="button auth-submit" type="submit" disabled={isLoading}>
+            <motion.button 
+              className="button auth-submit" 
+              type="submit" 
+              disabled={isLoading}
+              whileHover={{ scale: 1.02, boxShadow: '0 8px 20px rgba(37, 99, 235, 0.2)' }}
+              whileTap={{ scale: 0.98 }}
+            >
               {isLoading ? (
                 'Giriş yapılıyor...'
               ) : (
@@ -127,7 +144,7 @@ export default function Login() {
                   Giriş yap
                 </>
               )}
-            </button>
+            </motion.button>
           </form>
           <div className="auth-footer">
             <span>Henüz hesabın yok mu?</span>
@@ -135,7 +152,7 @@ export default function Login() {
               Kayıt ol
             </Link>
           </div>
-        </section>
+        </motion.section>
       </div>
     </div>
   )

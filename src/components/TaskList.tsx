@@ -1,6 +1,27 @@
 import { useMemo, useState } from 'react'
 import type { WorkflowTask } from '../types/task'
 import { Search, Clock, Layers, GitBranch, ChevronRight, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.04
+    }
+  }
+} as const
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 260, damping: 20 }
+  },
+  exit: { opacity: 0, scale: 0.96, transition: { duration: 0.15 } }
+}
 
 interface TaskListProps {
   tasks: WorkflowTask[]
@@ -147,46 +168,57 @@ export default function TaskList({ tasks, loading, error, onSelectTask, onRetry 
       ) : null}
 
       {/* Task List Grid */}
-      <div className="grid gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
-        {filteredTasks.map((task) => (
-          <button
-            key={task.taskId}
-            type="button"
-            onClick={() => onSelectTask(task)}
-            className="relative flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition duration-200 hover:border-blue-500 hover:shadow-md hover:-translate-y-[0.5px] active:scale-[0.99] dark:border-slate-850 dark:bg-slate-950 dark:hover:border-blue-900 group"
-          >
-            {/* Left strip */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b from-blue-500 to-blue-700 opacity-80"></div>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid gap-2.5 max-h-[60vh] overflow-y-auto pr-1"
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {filteredTasks.map((task) => (
+            <motion.button
+              variants={itemVariants}
+              layout
+              whileHover={{ scale: 1.015, y: -2 }}
+              whileTap={{ scale: 0.99 }}
+              key={task.taskId}
+              type="button"
+              onClick={() => onSelectTask(task)}
+              className="relative flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-colors duration-200 hover:border-blue-500 hover:shadow-md dark:border-slate-850 dark:bg-slate-950 dark:hover:border-blue-900 group"
+            >
+              {/* Left strip */}
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b from-blue-500 to-blue-700 opacity-80"></div>
 
-            <div className="pl-2.5 space-y-2.5 min-w-0">
-              <p className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                {toFlowName(task)}
-              </p>
-              
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/40 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-                  <Layers className="h-3 w-3 text-slate-400" />
-                  Süreç #{task.surecId}
-                </span>
+              <div className="pl-2.5 space-y-2.5 min-w-0">
+                <p className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                  {toFlowName(task)}
+                </p>
                 
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/40 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-                  <GitBranch className="h-3 w-3 text-slate-400" />
-                  Adım {task.adimId}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/40 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                    <Layers className="h-3 w-3 text-slate-400" />
+                    Süreç #{task.surecId}
+                  </span>
+                  
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/40 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                    <GitBranch className="h-3 w-3 text-slate-400" />
+                    Adım {task.adimId}
+                  </span>
 
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400">
-                  <Clock className="h-3 w-3 text-amber-500" />
-                  Yanıt Bekleniyor
-                </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400">
+                    <Clock className="h-3 w-3 text-amber-500" />
+                    Yanıt Bekleniyor
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition dark:bg-slate-900 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
-              <ChevronRight className="h-4 w-4" />
-            </div>
-          </button>
-        ))}
-      </div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition dark:bg-slate-900 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
+                <ChevronRight className="h-4 w-4" />
+              </div>
+            </motion.button>
+          ))}
+        </AnimatePresence>
+      </motion.div>
     </section>
   )
 }

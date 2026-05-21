@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import { fetchFlowMap, fetchFlows, type FlowListItem, type FlowMapResponse } from '../services/flowApi'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type StepNode = FlowMapResponse['adimlar'][number] & {
   phaseOrder: number
@@ -316,7 +317,10 @@ export default function FlowMapPage() {
 
     return (
       <div key={nodeId} className="mind-node-wrapper">
-        <div
+        <motion.div
+          layout
+          whileHover={{ scale: 1.01, y: -2 }}
+          whileTap={{ scale: 0.99 }}
           onClick={() => handleToggleNode(nodeId)}
           className={`mind-node relative flex flex-col gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 ${cardBorderClass} shadow-sm select-none cursor-pointer`}
         >
@@ -328,7 +332,7 @@ export default function FlowMapPage() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1">{node.adimAdi}</h4>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{node.tip}</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">{node.tip}</span>
               </div>
             </div>
 
@@ -355,59 +359,75 @@ export default function FlowMapPage() {
           </div>
 
           {/* Components nested list */}
-          {isOpen && node.bilesenler.length > 0 && (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="mt-2 space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5 w-full cursor-default"
-            >
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Adım Bileşenleri</p>
-              <div className="space-y-2">
-                {node.bilesenler.map((comp, idx) => (
-                  <div
-                    key={`${node.adimId}-${comp.etiket}-${idx}`}
-                    className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-800 dark:bg-slate-900/50 hover:bg-slate-100/30 dark:hover:bg-slate-950/20 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-355">{comp.etiket}</span>
-                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100/50 dark:bg-blue-950/50 text-blue-750 dark:text-blue-400 shrink-0">
-                        {comp.tip}
-                      </span>
-                    </div>
-                    {comp.yetkiliIsimleri.length > 0 ? (
-                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                        {comp.yetkiliIsimleri.map((name, i) => {
-                          const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-                          return (
-                            <div
-                              key={i}
-                              className="inline-flex items-center gap-1 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-slate-600 dark:text-slate-300 shadow-sm"
-                            >
-                              <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-[8px] text-white flex items-center justify-center uppercase font-extrabold shrink-0">
-                                {initials}
+          <AnimatePresence initial={false}>
+            {isOpen && node.bilesenler.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                style={{ overflow: 'hidden' }}
+                onClick={(e) => e.stopPropagation()}
+                className="mt-2 space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5 w-full cursor-default"
+              >
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Adım Bileşenleri</p>
+                <div className="space-y-2">
+                  {node.bilesenler.map((comp, idx) => (
+                    <div
+                      key={`${node.adimId}-${comp.etiket}-${idx}`}
+                      className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-800 dark:bg-slate-900/50 hover:bg-slate-100/30 dark:hover:bg-slate-950/20 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-355">{comp.etiket}</span>
+                        <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100/50 dark:bg-blue-950/50 text-blue-750 dark:text-blue-400 shrink-0">
+                          {comp.tip}
+                        </span>
+                      </div>
+                      {comp.yetkiliIsimleri.length > 0 ? (
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          {comp.yetkiliIsimleri.map((name, i) => {
+                            const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                            return (
+                              <div
+                                key={i}
+                                className="inline-flex items-center gap-1 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-slate-600 dark:text-slate-300 shadow-sm"
+                              >
+                                <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-[8px] text-white flex items-center justify-center uppercase font-extrabold shrink-0">
+                                  {initials}
+                                </div>
+                                <span>{name}</span>
                               </div>
-                              <span>{name}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                        <Users className="w-3 h-3" />
-                        <span>Yetkili atanmamış</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-550">
+                          <Users className="w-3 h-3" />
+                          <span>Yetkili atanmamış</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
-        {isOpen && children.length > 0 && (
-          <div className="mind-children">
-            {children.map((childId) => renderNode(childId))}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {isOpen && children.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+              className="mind-children"
+            >
+              {children.map((childId) => renderNode(childId))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -513,33 +533,41 @@ export default function FlowMapPage() {
               <p className="hint text-xs font-semibold text-slate-450 mt-4">Filtreye uygun akış bulunamadı.</p>
             ) : null}
 
-            <div className="flow-map-list custom-scrollbar mt-4 space-y-2">
-              {filteredFlows.map((flow) => {
-                const isSelected = selectedFlowId === flow.akisId;
-                return (
-                  <button
-                    key={flow.akisId}
-                    type="button"
-                    className={`w-full text-left p-3 rounded-2xl border transition-all duration-150 ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50/45 dark:border-blue-400 dark:bg-blue-950/20'
-                        : 'border-slate-200 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700/80'
-                    }`}
-                    onClick={() => setSelectedFlowId(flow.akisId)}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <strong className="text-sm font-bold truncate text-slate-800 dark:text-slate-100">{flow.akisAdi}</strong>
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
-                        ID: {flow.akisId}
-                      </span>
-                    </div>
-                    {flow.aciklama && (
-                      <p className="text-xs text-slate-450 dark:text-slate-505 truncate mt-1">{flow.aciklama}</p>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            <motion.div layout className="flow-map-list custom-scrollbar mt-4 space-y-2">
+              <AnimatePresence initial={false}>
+                {filteredFlows.map((flow) => {
+                  const isSelected = selectedFlowId === flow.akisId;
+                  return (
+                    <motion.button
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      whileHover={{ scale: 1.01, x: 2 }}
+                      whileTap={{ scale: 0.99 }}
+                      key={flow.akisId}
+                      type="button"
+                      className={`w-full text-left p-3 rounded-2xl border transition-all duration-150 ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50/45 dark:border-blue-400 dark:bg-blue-950/20'
+                          : 'border-slate-200 bg-white hover:border-slate-350 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700/80'
+                      }`}
+                      onClick={() => setSelectedFlowId(flow.akisId)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <strong className="text-sm font-bold truncate text-slate-800 dark:text-slate-100">{flow.akisAdi}</strong>
+                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                          ID: {flow.akisId}
+                        </span>
+                      </div>
+                      {flow.aciklama && (
+                        <p className="text-xs text-slate-450 dark:text-slate-555 truncate mt-1">{flow.aciklama}</p>
+                      )}
+                    </motion.button>
+                  )
+                })}
+              </AnimatePresence>
+            </motion.div>
           </aside>
 
           <section className="flow-map-main flex-1 space-y-4">
