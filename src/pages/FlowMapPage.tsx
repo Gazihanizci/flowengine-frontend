@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo, useEffect, useState, useRef } from 'react'
 import {
   Play,
   GitBranch,
@@ -9,8 +9,11 @@ import {
   Users,
   ChevronRight,
   ChevronDown,
-  Activity
+  Activity,
+  Download,
+  Image as ImageIcon
 } from 'lucide-react'
+import { toPng } from 'html-to-image'
 import { fetchFlowMap, fetchFlows, type FlowListItem, type FlowMapResponse } from '../services/flowApi'
 
 type StepNode = FlowMapResponse['adimlar'][number] & {
@@ -106,6 +109,54 @@ export default function FlowMapPage() {
   const [error, setError] = useState<string | null>(null)
   const [openNodeIds, setOpenNodeIds] = useState<number[]>([])
   const [visibleNodeIds, setVisibleNodeIds] = useState<number[]>([])
+  const [downloading, setDownloading] = useState(false)
+  const canvasRef = useRef<HTMLDivElement>(null)
+
+  const handleDownloadImage = async () => {
+    if (!canvasRef.current || !flowMap) return
+
+    try {
+      setDownloading(true)
+      // Delay slightly to ensure browser has completed layout updates and styling
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Check dark mode
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                     document.body.classList.contains('dark') ||
+                     document.documentElement.classList.contains('dark')
+
+      const dataUrl = await toPng(canvasRef.current, {
+        cacheBust: true,
+        backgroundColor: isDark ? '#112038' : '#f8fbff',
+        style: {
+          borderRadius: '16px',
+          padding: '24px',
+          margin: '0',
+          width: 'auto',
+          height: 'auto',
+          maxWidth: 'none',
+          maxHeight: 'none',
+        },
+        pixelRatio: 2, // High resolution output
+      })
+
+      const flowName = flowMap.akisAdi || 'akis'
+      const sanitizedFileName = `${flowName
+        .replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '_')}_akis_semasi.png`
+
+      const link = document.createElement('a')
+      link.download = sanitizedFileName
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Akış şeması indirilirken hata oluştu:', err)
+      alert('Akış şeması görseli indirilirken bir hata oluştu. Lütfen tekrar deneyin.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -534,7 +585,41 @@ export default function FlowMapPage() {
                   </div>
                 </div>
 
-                <div className="mind-tree-canvas">
+                {/* Download Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                      <ImageIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        Akış Görselini İndir
+                      </h4>
+                      <p className="text-xs font-medium text-slate-450 dark:text-slate-500">
+                        Akış şemasını yüksek çözünürlüklü PNG dosyası olarak kaydedin.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadImage}
+                    disabled={downloading}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-700 hover:to-indigo-750 transition-all rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 select-none cursor-pointer group"
+                  >
+                    {downloading ? (
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      <Download className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5" />
+                    )}
+                    <span>{downloading ? 'Görsel Hazırlanıyor...' : 'PNG Olarak İndir'}</span>
+                  </button>
+                </div>
+
+                <div className="mind-tree-canvas" ref={canvasRef}>
                   {graph.rootId ? renderNode(graph.rootId) : <p className="hint text-xs font-semibold text-slate-450">Kök adım bulunamadı.</p>}
                 </div>
               </>
